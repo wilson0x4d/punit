@@ -1,0 +1,33 @@
+[tool.poetry]
+name = "pUnit"
+version = "0.0.0"
+description = "A modernized unit-test framework for Python."
+authors = ["Shaun Wilson <mrshaunwilson@msn.com>"]
+license = "MIT"
+readme = "README.md"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+exclude = [
+    "sys",
+    "tests"
+]
+packages = [
+    { include = "**/*.py", from = "src", to = "punit", format = ["sdist", "wheel"] }
+]
+
+[tool.poetry.urls]
+documentation = "https://github.com/wilson0x4d/punit/docs"
+homepage = "https://github.com/wilson0x4d/punit"
+repository = "https://github.com/wilson0x4d/punit.git"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
