@@ -230,11 +230,11 @@ Options:
         if not self.__no_default_patterns:
             # if no other patterns specified, default to including all files found in the directory matching `testPackageName`
             if len(self.__includePatterns) == 0:
-                self.__includePatterns.append(f'/{self.testPackageName}/')
+                self.__includePatterns.append(f'/{self.testPackageName}/*.py')
             # always exclude dot-folders (.git, .venv, etc)
-            self.__excludePatterns.append('/.*/')
+            self.__excludePatterns.append('/.*')
             # always exclude dunder files
-            self.__excludePatterns.append('__*__')
+            self.__excludePatterns.append('/__*__')
 
     @staticmethod
     def parse(argv:list[str] = sys.argv) -> CommandLineInterface:
