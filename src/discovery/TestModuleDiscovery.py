@@ -3,15 +3,18 @@
 
 import os
 import re
+from ..cli import CommandLineInterface
 
 class TestModuleDiscovery:
 
+    __cli:CommandLineInterface
     __excludePatterns:list[re.Pattern]
     __filenames:list[str]
     __includePatterns:list[re.Pattern]
     __workdir:str
 
-    def __init__(self, workdir:str, includePatterns:list[str], excludePatterns:list[str]):
+    def __init__(self, workdir:str, includePatterns:list[str], excludePatterns:list[str], cli:CommandLineInterface):
+        self.__cli = cli
         self.__excludePatterns = []
         if excludePatterns is not None:
             for pattern in excludePatterns:
@@ -32,7 +35,7 @@ class TestModuleDiscovery:
     def __convertPatternToRegex(self, pattern:str):
         result = re.escape(pattern)\
             .replace('\\\\', '/')\
-            .replace('\\*', r'.*')\
+            .replace('\\*', r'.+')\
             .replace('?', '.')
         return result
 
@@ -52,9 +55,13 @@ class TestModuleDiscovery:
         filenames = []
         if os.path.isdir(path):
             for dname, dlist, flist in os.walk(path, topdown=True):
+                if self.__cli.verbose:
+                    print(f'.. discovery for: {dname}')
                 dname2 = dname.replace('\\', '/')
                 if self.__testAnyExclude(dname2):
                     # directory is excluded, prune all children
+                    if self.__cli.verbose:
+                        print(f'Excluded: {dname}')
                     while len(dlist) > 0:
                         del dlist[0]
                     while len(flist) > 0:
@@ -64,12 +71,16 @@ class TestModuleDiscovery:
                 for dlname in dlnames:
                     dlname2 = dlname.replace('\\', '/')
                     if self.__testAnyExclude(dlname2):
+                        if self.__cli.verbose:
+                            print(f'Excluded: {dlname}')
                         dlist.remove(dlname)
                 # determine if any individual files should be pruned
                 for fname in flist:
                     fname2 = os.path.join(dname, fname).replace('\\', '/')
                     if self.__testAnyInclude(fname2) and not self.__testAnyExclude(fname2):
                         if fname.endswith('.py'):
+                            if self.__cli.verbose:
+                                print(f'Included: {fname}')
                             filenames.append(fname2)
         return filenames
 
@@ -78,5 +89,9 @@ class TestModuleDiscovery:
         return self.__filenames
         
     def discover(self) -> list[str]:
+        if self.__cli.verbose:
+            print(f'.. starting test discovery')
         self.__filenames = self.__walkDirectory(self.__workdir)
+        if self.__cli.verbose:
+            print('.. finished test dicovery.')
         return self.__filenames
