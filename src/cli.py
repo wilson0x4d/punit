@@ -98,7 +98,7 @@ class CommandLineInterface:
                     extractIncludePattern = True
                 case '-q' | '--quiet':
                     self.__quiet = True
-                case '-w' | '--workdir':
+                case '-w' | '--working-directory':
                     self.__workdir = None
                 case '-v' | '--verbose':
                     self.__verbose = True
