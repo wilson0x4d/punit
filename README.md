@@ -1,5 +1,7 @@
 `pUnit` is a modernized unit-testing framework for Python, inspired by xUnit.
 
+This README is only a high-level introduction to **pUnit**. For more detailed documentation, please view the official docs at [https://pUnit.readthedocs.io](https://pUnit.readthedocs.io).
+
 ## Command-Line Usage
 
 Running pUnit with no arguments will perform test auto-discovery and execution:
@@ -84,13 +86,11 @@ Options:
 
 You can write your tests as functions, class methods, instance methods, or static methods with all forms offering identical functionality. You can also utilize async/await syntax without any additional overhead
 
-Similar to `xUnit`, `pUnit` operates around the fundamental concepts of `Fact` and `Theory`. These are codified using decorators, aptly named `@fact` and `@theory`. Consider these two examples:
+**pUnit** is based upon the fundamental concepts of `Facts` and `Theories`. These are codified using decorators, aptly named `@fact` and `@theory`. Consider these two examples:
 
 ```python
 
-from punit.facts import fact
-from punit.theories import theory
-from punit.assertions import *
+from punit import *
 
 @fact
 async def MyLibrary_WhenInitialized_TouchMustReturnTrue:
@@ -118,6 +118,7 @@ class MyTestFixture:
 
     @fact
     def verifyCalcErrorCondition(self) -> None:
+        from punit.exceptions import raises
         # assert errors are raised, or not
         def calc_None():
             self.calc(None)
@@ -132,10 +133,6 @@ Because `pUnit` is a decorative framework you are afforded the utmost freedom in
 Unlike other testing frameworks, the names you use for functions, classes, and methods is not relevant. There is no requirement to inherit classes from specific abstract/base classes for any particular functionality. There is no requirement that your tests be organized into modules with `__init__.py` files.
 
 You will want to take particular note of the `--exclude` command-line parameter which allows you to restrict what `pUnit` will consider to be a valid test. While the default behavior will fit 99% of use-cases, you _can_ exercise more control over the discovery process.
-
-## More Information
-
-For more detailed documentation, please view the official docs on RTD at [https://punit.readthedocs.io](https://punit.readthedocs.io).
 
 ## Vision, Future, and LTS
 
