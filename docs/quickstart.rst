@@ -47,7 +47,7 @@ You can view a complete listing of arguments by passing ``--help``:
 The Test Package
 ----------------
 
-**pUnit** looks for tests within a "Test Package", this is a directory sitting within the working directory that contains all of your test files.
+**pUnit** looks for tests within a "Test Package", this is a subdirectory of the working directory, it is expected to contain all of your test files.
 
 .. admonition:: Why?
 
@@ -55,24 +55,28 @@ The Test Package
 
 By default the Test Package **pUnit** expects to find is named "tests", and therefore all tests in the ``tests/`` directory will be executed.
 
-You can change the Test Package by passing a ``--test-package`` argument indicating the target package name.
+.. rubric:: How to override the default
+
+You can change the Test Package by passing a ``--test-package`` argument indicating the target package name. For example:
 
 .. code:: bash
 
     python3 -m punit --test-package foo
 
-In this example only the tests in  ``foo/`` will be run, and all relative imports will be resolved from the context of the ``foo`` module.
+In this example only the tests in  ``foo/`` will be run, and all relative imports will be resolved from the context of ``foo``.
 
-There is no requirement that you implement an `__init__.py` for your Test Package and whether or not you do every Python source file ``*.py`` will be included as a test file (unless it would be excluded via ``--exclude``.)
+.. rubric:: Is is necessary to create ``__init__.py`` or ``__main__.py``?
+
+No. There is no requirement that ``__init__`` or ``__main__`` exist. If they exist they will be ignored (by default.)
 
 Test Discovery
 --------------
 
-**pUnit** scans all subdirectories of the Test Package looking for Python files (``*.py``) to be used for testing.
+**pUnit** scans the Test Package directory, and all subdirectories, looking for Python files (``*.py``) to be used for testing.
 
 You can modify this behavior through a combination of ``--exclude`` and ``--include`` arguments.
 
-The ``--exclude`` and ``--include`` arguments accept simple wildcard patterns to determine if a file or directory should be excluded or included, respectively. Do not confuse these with "globs" as they are not globs. The only valid wildcard expressions are `*` (match 1 or more of any character) and `?` (match any single character.)
+The ``--exclude`` and ``--include`` arguments accept simple wildcard patterns to determine if a file or directory should be excluded or included, respectively. Do not confuse these with "globs" as they are not globs. The only valid wildcard expressions are ``*`` (match 1 or more of any character) and ``?`` (match any single character.)
 
 Order does not matter, and ``--exclude`` will override a target even if an ``--include`` pattern would normally have included it.
 
@@ -85,7 +89,7 @@ The default behavior is equivalent to the following:
 
     python3 -m punit --working-directory . --test-package tests --include '/tests/*.py' --exclude '/.*' --exclude '/__*__'
 
-This ensures all Python files under the ``tests/`` directory in the current directory are executed as tests, except those in "dot-directories" or having "dunder-names".
+This ensures all Python files under the ``tests/`` subdirectory are executed as tests, except for Python files within "dot-directories" or having "dunder-names".
 
 Diagnosing Problems
 -------------------

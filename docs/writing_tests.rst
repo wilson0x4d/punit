@@ -6,7 +6,7 @@ Writing Tests
 What is a Test?
 ---------------
 
-In **pUnit** a `test` is a `function` or `method` that arranges `state` and performs `assertions` to verify expectations.
+In **pUnit** a `test` is a `function` or `method` that arranges `state` and performs `assertions` of expectations.
 
 What is Test Failure?
 ---------------------
@@ -36,18 +36,18 @@ Facts and Theories
 
 .. _what-are-facts:
 
-A **Fact** is a `test` that makes `assertions` for an invariant arrangement of `state`. For a **Fact**, state is usually codified or hardcoded as part of test definition. In **pUnit**, **Facts** are tests that have been decorated with :py:func:`fact`.
+A **Fact** is a `test` that makes `assertions` for an invariant arrangement of `state`. For a **Fact**, state is usually codified or hardcoded as part of test definition. In **pUnit**, **Facts** are tests that have been decorated with ``@fact``.
 
 .. _what-are-theories:
 
-A **Theory** is a `test` that makes `assertions` for a variant arrangement` of `state`. For a **Theory**, state is usually acquired from an external source, separated from the test definition. In **pUnit**, **Theories** are tests that have been decorated with :py:func:`theory` and at lease one data decorator such as :py:func:`inlinedata`.
+A **Theory** is a `test` that makes `assertions` for a variant arrangement of `state`. For a **Theory**, state is usually acquired from an external source, separated from the test definition. In **pUnit**, **Theories** are tests that have been decorated with ``@theory`` and at least one data decorator such as ``@inlinedata()``.
 
-.. note:: In the current version of **pUnit** there is only a single source of variant state, the :py:func:`inlinedata` decorator.
+.. note:: In the current version of **pUnit** there is only a single data decorator: ``@inlinedata()``.
 
 Examples
 --------
 
-The section provides a series of referential examples which attempt to illustrate how tests can be written using `pUnit`. For the purpose of thesse examples assume they all reside in the same Python source file.
+This section provides a series of referential examples which attempt to illustrate how tests can be written using `pUnit`. For brevity assume they all reside in a single Python source file.
 
 .. rubric:: A test function using ``@fact``:
 
