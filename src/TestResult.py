@@ -166,7 +166,7 @@ class TestResult:
         elif took >= 0.000000001:
             return f'{(took*1000000):.3f}'.rstrip('0').rstrip('.') + 'μs'
         else:
-            return f'{(took*1000):.3f}'.rstrip('0').rstrip('.') + 'ns'
+            return f'{(took*1000):.3f}'.rstrip('0').rstrip('.') + 'ms'
 
 
     def captureOutput(self, quiet:bool = False) -> tuple[TextIO, TextIO]:
