@@ -61,3 +61,12 @@ class TheoryClass:
     def meth3(a, b, c) -> None:
         """Static Method BVT"""
         assert (a == '7' and b == '8' and c == '9') or (a == '8' and b == '9' and c == '0')
+
+@theory
+def theory_nodata() -> None:
+    assert False, '@theory with no data will not be run.'
+
+@theory
+@inlinedata()
+def theory_nodata() -> None:
+    assert False, '@theory with empty data will not be run.'

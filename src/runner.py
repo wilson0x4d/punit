@@ -36,7 +36,7 @@ class TestRunner:
                 data = '(???)'
         print(f'{glyph} {testResult.moduleName}/{"" if testResult.className is None or len(testResult.className) == 0 else f"{testResult.className}/"}{testResult.testName}{data} [{testResult.tookPretty}]')
         if self.__cli.verbose and (not testResult.isSuccess) and testResult.exception is not None:
-            print(f'Test File:\n    {testResult.filename}\nError:\n    {testResult.exception}\n    Traceback:\n{"".join(traceback.format_tb(testResult.exception.__traceback__))}')
+            print(f'Test File:\n    {testResult.fileName}\nError:\n    {testResult.exception}\n    Traceback:\n{"".join(traceback.format_tb(testResult.exception.__traceback__))}')
 
     async def run(self) -> list[TestResult]:
         results:list[TestResult] = []

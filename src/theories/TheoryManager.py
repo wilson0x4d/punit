@@ -34,9 +34,10 @@ class TheoryManager:
     def put(self, theory:Theory) -> None:
         l = self.get(theory.moduleName)
         d = self.__datas.get(theory.target)
-        d.reverse()
-        for data in d:
-            theory.datas.append(data)
+        if d is not None:
+            d.reverse()
+            for data in d:
+                theory.datas.append(data)
         l.append(theory)
 
     def withData(self, target:Callable, data:tuple) -> None:

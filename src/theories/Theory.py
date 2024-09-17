@@ -78,6 +78,7 @@ def theory(target:Callable) -> Callable:
 
 def inlinedata(*args) -> Callable:
     def wrapper(target:Callable) -> Callable:
-        TheoryManager.instance().withData(target, args)
+        if args is not None and len(args) > 0:
+            TheoryManager.instance().withData(target, args)
         return target
     return wrapper
