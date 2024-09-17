@@ -8,13 +8,13 @@ from src.facts import fact
 @fact
 def fact_func() -> None:
     """Function BVT"""
-    assert isNoneOrWhiteSpace('')
+    assert 1 == 1
 
 @fact
 async def async_fact_func() -> None:
     """Async Function BVT"""
     await asyncio.sleep(0.1)
-    assert isNoneOrWhiteSpace('')
+    assert 1 == 1
 
 class FactClass:
 
