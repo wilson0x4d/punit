@@ -20,7 +20,8 @@ async def main():
     testModuleDiscovery = TestModuleDiscovery(
         os.path.join(cli.workdir, cli.testPackageName),
         cli.includePatterns,
-        cli.excludePatterns)
+        cli.excludePatterns,
+        cli)
     testModuleDiscovery.discover()
     testRunner = TestRunner(cli.testPackageName, testModuleDiscovery.filenames, cli)
     results = await testRunner.run()
