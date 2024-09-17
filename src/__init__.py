@@ -3,9 +3,6 @@
 
 __version__ = '0.0.0'
 
-__all__ = [
-    'assertions',
-    'facts',
-    'reports',
-    'theories'
-]
+from .assertions import *
+from .facts import *
+from .theories import *
