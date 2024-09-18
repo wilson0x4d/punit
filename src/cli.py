@@ -217,7 +217,7 @@ Options:
                 print(f'\t{pattern}')
 
     def printVersion(self) -> None:
-        print(f'punit {__version__}')
+        print(f'pUnit {__version__}')
 
     def validate(self) -> None:
         if self.__workdir is None or len(self.__workdir.lstrip()) == 0 or self.__workdir.startswith('-'):

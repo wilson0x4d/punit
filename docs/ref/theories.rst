@@ -1,7 +1,7 @@
 Theories
 ========
 
-A **Theory** is a `test` that makes `assertions` for a variant arrangement` of `state`. For a **Theory**, state is usually acquired from an external source, separated from the test definition. In **pUnit**, **Theories** are tests that have been decorated with :py:func:`theory` and at lease one data decorator such as :py:func:`inlinedata`.
+A **Theory** is a `test` that makes `assertions` for a variant arrangement` of `state`. For a **Theory**, state is usually acquired from an external source, separated from the test definition. In **pUnit**, **Theories** are tests that have been decorated with ``@theory`` and at least one data decorator such as ``@inlinedata(...)``.
 
 Decorators
 ----------

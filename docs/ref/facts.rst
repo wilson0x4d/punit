@@ -1,7 +1,7 @@
 Facts
 =====
 
-A **Fact** is a `test` that makes `assertions` for an invariant arrangement of `state`. For a **Fact**, state is usually codified or hardcoded as part of test definition. In **pUnit**, **Facts** are tests that have been decorated with :py:func:`fact`.
+A **Fact** is a `test` that makes `assertions` for an invariant arrangement of `state`. For a **Fact**, state is usually codified or hardcoded as part of test definition. In **pUnit**, **Facts** are tests that have been decorated with ``@fact``.
 
 Decorators
 ----------

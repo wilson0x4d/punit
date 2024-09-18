@@ -47,7 +47,7 @@ A **Theory** is a `test` that makes `assertions` for a variant arrangement of `s
 Examples
 --------
 
-This section provides a series of referential examples which attempt to illustrate how tests can be written using `pUnit`. For brevity assume they all reside in a single Python source file.
+This section provides a series of referential examples which attempt to illustrate how tests can be written using **pUnit**. For brevity assume they all reside in a single Python source file.
 
 .. rubric:: A test function using ``@fact``:
 
@@ -89,6 +89,6 @@ This section provides a series of referential examples which attempt to illustra
         def theoryMethod(self, x, y, z, message):
             assert x + y == z, message
 
-As you can see from these examples, writing tests with `pUnit` is easy.
+As you can see from these examples, writing tests with **pUnit** is easy.
 
 **Theories** offer a convenient way to write tests that verify expectations over a series of `states`, without having to write the same test over and over.
