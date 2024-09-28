@@ -10,13 +10,14 @@ TheoryManager = ForwardRef('TheoryManager')
 class TheoryManager:
 
     __instance:'TheoryManager' = None
-    __modules:dict[str, Theory] = {}
-    __datas:dict[Callable, list[tuple]] = {}
+    __modules:dict[str, list[Theory]]
+    __datas:dict[Callable, list[tuple]]
     
     def __init__(self):
         if TheoryManager.__instance is not None:
             raise Exception('Cannot create more than one instance of TheoryManager')
         self.__modules = {}
+        self.__datas = {}
 
     @staticmethod
     def instance() -> TheoryManager:
@@ -25,10 +26,10 @@ class TheoryManager:
         return TheoryManager.__instance
         
     def get(self, moduleName:str) -> list[Theory]:
-        l = TheoryManager.__modules.get(moduleName)
+        l = self.__modules.get(moduleName)
         if l is None:
             l = []
-            TheoryManager.__modules[moduleName] = l
+            self.__modules[moduleName] = l
         return l
 
     def put(self, theory:Theory) -> None:
