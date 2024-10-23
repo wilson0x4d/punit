@@ -5,7 +5,7 @@ Exception Helpers
 
 .. py:function:: raises[TError:Exception](action:Callable, *, exact:bool = False, expect:TError = None) -> bool
 
-    Use ``@raises`` to assert that a function, method, or lambda expression raises an expected ``Exception``.
+    Use ``raises()`` to assert that a function, method, or lambda expression raises an expected ``Exception``.
 
     :param action: The ``Callable`` being tested, usually a function or method reference.
 
