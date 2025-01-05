@@ -42,7 +42,7 @@ class TestRunner:
         results:list[TestResult] = []
         # TODO: aliasing
         hostName:str = socket.gethostname()
-        testPackagePath = os.path.join(os.path.abspath(os.curdir), self.__testPackageName)
+        testPackagePath = os.path.join(os.path.abspath(os.curdir), self.__testPackageName).replace('\\', '/')
         for filename in self.__filenames:
             ts = time.time()
             moduleImportName = filename.replace(testPackagePath, '').replace('/', '.').replace('.py', '')
