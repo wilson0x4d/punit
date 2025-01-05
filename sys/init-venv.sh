@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: MIT
 #
 # initializes the venv for the project in the current
-# directory. installs poetry in that env for dep mgmt
-# and then installs deps using poetry.
+# directory, including performing initial dependency
+# installation.
 ##
 set -eo pipefail
 if [[ "$PYTHON_VERSION" != "" ]]; then
@@ -12,8 +12,8 @@ if [[ "$PYTHON_VERSION" != "" ]]; then
 else
     PYPATH="python3"
 fi
-$PYPATH -m venv --prompt "pUnit" .venv
-source .venv/bin/activate
+$PYPATH -m venv --prompt "pUnit" .venv-bash
+source .venv-bash/bin/activate
 pip install poetry
 if [ -e pyproject.toml ]; then
     poetry install --no-root
