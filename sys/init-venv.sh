@@ -14,8 +14,5 @@ else
 fi
 $PYPATH -m venv --prompt "pUnit" .venv-bash
 source .venv-bash/bin/activate
-pip install poetry
-if [ -e pyproject.toml ]; then
-    poetry install --no-root
-fi
+pip install -r requirements-dev.txt
 deactivate

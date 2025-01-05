@@ -4,8 +4,10 @@ __pycache__
 .venv-bash/
 .venv-pwsh/
 .DS_Store
+build/
 dist/
+punit/
+*.egg-info/
 docs/_build/
-poetry.lock
 *.xml
 *.html

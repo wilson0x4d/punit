@@ -1,33 +1,39 @@
-[tool.poetry]
+[project]
 name = "pUnit"
 version = "0.0.0"
 description = "A modernized unit-test framework for Python."
-authors = ["Shaun Wilson <mrshaunwilson@msn.com>"]
-license = "MIT"
+keywords = ["test", "unittest", "unit-test"]
+authors = [
+    { name="Shaun Wilson", email="mrshaunwilson@msn.com" }
+]
 readme = "README.md"
+requires-python = ">=3.12"
 classifiers = [
+    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Topic :: Software Development :: Libraries :: Python Modules"
-]
-exclude = [
-    "sys",
-    "tests"
-]
-packages = [
-    { include = "**/*.py", from = "src", to = "punit", format = ["sdist", "wheel"] }
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Intended Audience :: Developers"
 ]
 
-[tool.poetry.urls]
-documentation = "https://github.com/wilson0x4d/punit/docs"
-homepage = "https://github.com/wilson0x4d/punit"
-repository = "https://github.com/wilson0x4d/punit.git"
+[project.urls]
+Documentation = "https://github.com/wilson0x4d/punit/docs"
+Homepage = "https://github.com/wilson0x4d/punit"
+Repository = "https://github.com/wilson0x4d/punit.git"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-
+[project.scripts]
+punit = "punit:__main__.main"
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+exclude = [
+    "docs",
+    "src",
+    "src.*",
+    "tests",
+    "tests.*"
+]

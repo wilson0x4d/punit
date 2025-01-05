@@ -7,7 +7,7 @@ from .discovery import *
 from .reports import HtmlReportGenerator, JUnitReportGenerator
 from .runner import *
 
-async def main():
+async def async_main():
     ts = time.time()
     cli = CommandLineInterface.parse()
     if cli.help:
@@ -48,4 +48,8 @@ async def main():
     if failureCount > 0:
         exit(119)
 
-asyncio.run(main())
+def main():
+    asyncio.run(async_main())
+
+if (__name__ == '__main__'):
+    main()

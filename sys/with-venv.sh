@@ -16,6 +16,3 @@ source ~/.bashrc
 export PS1='\$ '
 echo -n -e "\033]0;pUnit\007"
 source .venv-bash/bin/activate
-if [ -e pyproject.toml ]; then
-    poetry shell
-fi
