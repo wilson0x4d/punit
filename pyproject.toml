@@ -18,7 +18,7 @@ classifiers = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/wilson0x4d/punit/docs"
+Documentation = "https://punit.readthedocs.io/"
 Homepage = "https://github.com/wilson0x4d/punit"
 Repository = "https://github.com/wilson0x4d/punit.git"
 
