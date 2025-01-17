@@ -1,5 +1,5 @@
 [project]
-name = "pUnit"
+name = "punit"
 version = "0.0.0"
 description = "A modernized unit-test framework for Python."
 keywords = ["test", "unittest", "unit-test"]
