@@ -45,7 +45,6 @@ class TheoryManager:
 
     def put(self, theory:Theory) -> None:
         filterName:str = theory.target.__name__
-        print(filterName)
         if hasattr(theory.target, '__qualname__'):
             filterName = theory.target.__qualname__
         if len(self.__filterPattern.findall(filterName)) > 0:

@@ -45,9 +45,9 @@ Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
                         [-f|--failfast]
                         [-p|--test-package NAME]
-                        [-t|--filter PATTERN]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
+                        [-t|--filter PATTERN]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
                         [-r|--report {junit|json}]
@@ -57,9 +57,6 @@ Options:
     -h, --help           Show this help text and exit
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output
-    -t, --filter PATTERN
-        Only execute tests matching PATTERN
-        Default: '*'
     -f, --failfast       Stop on first failure or error
     -p, --test-package NAME
         Use NAME as the test package, all tests should
@@ -71,6 +68,9 @@ Options:
     -e, --exclude PATTERN
         Exclude any tests matching PATTERN, overriding --include
         Default: '__*__' (dunder files), '/.*/' (dot-directories)
+    -t, --filter PATTERN
+        Only execute tests matching PATTERN
+        Default: '*'
     -w, --working-directory DIRECTORY
         Working directory (defaults to start directory)
     -n, --no-default-patterns

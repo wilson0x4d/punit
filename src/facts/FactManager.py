@@ -43,7 +43,6 @@ class FactManager:
 
     def put(self, fact:Fact) -> None:
         filterName:str = fact.target.__name__
-        print(filterName)
         if hasattr(fact.target, '__qualname__'):
             filterName = fact.target.__qualname__
         if len(self.__filterPattern.findall(filterName)) > 0:
