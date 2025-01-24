@@ -63,7 +63,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. code:: python
 
-    class MyTestClass:
+    class MyTests:
         @fact
         def factMethod(self):
             assert 2 + 2 == 4, "It's a fact!"
@@ -82,7 +82,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. code:: python
 
-    class MyTestClass:
+    class MyOtherTests:
         @theory
         @inlinedata(2, 2, 4, "It's a fact!")
         @inlinedata(1, 1, 2, "It's a fact!")
