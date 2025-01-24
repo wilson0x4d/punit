@@ -3,6 +3,9 @@
 
 import os
 import re
+
+from ..facts import FactManager
+from ..theories import TheoryManager
 from ..cli import CommandLineInterface
 
 class TestModuleDiscovery:
@@ -10,6 +13,7 @@ class TestModuleDiscovery:
     __cli:CommandLineInterface
     __excludePatterns:list[re.Pattern]
     __filenames:list[str]
+    __filterPattern:re.Pattern
     __includePatterns:list[re.Pattern]
     __workdir:str
 
@@ -23,6 +27,7 @@ class TestModuleDiscovery:
                         self.__convertPatternToRegex(pattern),
                         re.IGNORECASE))
         self.__filenames = []
+        self.__filterPattern = re.compile(self.__convertPatternToRegex(cli.filterPattern))
         self.__includePatterns = []
         if includePatterns is not None:
             for pattern in includePatterns:
@@ -89,9 +94,11 @@ class TestModuleDiscovery:
         return self.__filenames
         
     def discover(self) -> list[str]:
+        FactManager.instance().filterPattern = self.__filterPattern
+        TheoryManager.instance().filterPattern = self.__filterPattern
         if self.__cli.verbose:
             print(f'.. starting test discovery')
         self.__filenames = self.__walkDirectory(self.__workdir)
         if self.__cli.verbose:
-            print('.. finished test dicovery.')
+            print('.. finished test discovery.')
         return self.__filenames

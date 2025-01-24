@@ -12,6 +12,7 @@ class CommandLineInterface:
 
     __excludePatterns:list[str]
     __failfast:bool
+    __filterPattern:str
     __help:bool
     __includePatterns:list[str]
     __no_default_patterns:bool
@@ -26,6 +27,7 @@ class CommandLineInterface:
         self.__aliases = {}
         self.__excludePatterns = []
         self.__failfast = False
+        self.__filterPattern = '*'
         self.__help = False
         self.__includePatterns = []
         self.__no_default_patterns = False
@@ -38,6 +40,7 @@ class CommandLineInterface:
 
     def __parse(self, argv:list[str]) -> CommandLineInterface:
         aliasName:str = None
+        extractFilterPattern:bool = False
         extractExcludePattern:bool = False
         extractIncludePattern:bool = False
         extractAliasName:bool = False
@@ -45,6 +48,10 @@ class CommandLineInterface:
         extractReportFormat:bool = False
         extractOutputFilename:bool = False
         for arg in argv:
+            if extractFilterPattern:
+                self.__filterPattern = arg
+                extractFilterPattern = False
+                continue
             if extractIncludePattern:
                 self.__includePatterns.append(arg)
                 extractIncludePattern = False
@@ -88,6 +95,8 @@ class CommandLineInterface:
                     self.__help = True
                 case '-a':
                     extractAliasName = True
+                case '-t' | '--filter':
+                    extractFilterPattern = True
                 case '-e' | '--exclude':
                     extractExcludePattern = True
                 case '-f' | '--failfast':
@@ -119,6 +128,10 @@ class CommandLineInterface:
     @property
     def failfast(self) -> bool:
         return self.__failfast
+
+    @property
+    def filterPattern(self) -> str:
+        return self.__filterPattern
 
     @property
     def excludePatterns(self) -> list[str]:
@@ -162,6 +175,7 @@ class CommandLineInterface:
 """
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
+                        [-t|--filter PATTERN]
                         [-f|--failfast]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
@@ -175,6 +189,9 @@ Options:
     -h, --help           Show this help text and exit
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output
+    -t, --filter
+        Only execute tests matching PATTERN
+        Default: '*'
     -f, --failfast       Stop on first failure or error
     -p, --test-package NAME
         Use NAME as the test package, all tests should
@@ -215,7 +232,8 @@ Options:
             print('Exclude Patterns:')
             for pattern in self.__excludePatterns:
                 print(f'\t{pattern}')
-
+        print('Filter Pattern:')
+        print(f'\t{self.__filterPattern}')
     def printVersion(self) -> None:
         print(f'pUnit {__version__}')
 

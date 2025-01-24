@@ -45,6 +45,7 @@ Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
                         [-f|--failfast]
                         [-p|--test-package NAME]
+                        [-t|--filter PATTERN]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
                         [-w|--workdir DIRECTORY]
@@ -56,6 +57,9 @@ Options:
     -h, --help           Show this help text and exit
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output
+    -t, --filter PATTERN
+        Only execute tests matching PATTERN
+        Default: '*'
     -f, --failfast       Stop on first failure or error
     -p, --test-package NAME
         Use NAME as the test package, all tests should

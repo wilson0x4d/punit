@@ -80,6 +80,22 @@ The ``--exclude`` and ``--include`` arguments accept simple wildcard patterns to
 
 Order does not matter, and ``--exclude`` will override a target even if an ``--include`` pattern would normally have included it.
 
+Test Filtering
+--------------
+
+Separate from the **Test Discovery** process, **pUnit** can be instructed to execute only a subset of discovered tests by providing a ``--filter`` argument. This argument can be used to restrict test execution to a specific test, test class, test module, or (if tests are named well) a range of tests spanning the test hierarchy -- such as testing a feature.
+
+.. code:: bash
+
+    # the default behavior is equivalent to..
+    python3 -m punit --filter '*'
+    # but imagine you had a series of tests targeting "Widgets"..
+    python3 -m punit --filter 'Widget'
+
+The same filter rules that apply to ``--include`` and ``--exclude`` arguments also apply to ``--filter``, but take note that unlike ``--include`` and ``--exclude`` multiple ``--filter`` arguments will not be honored (last-in wins.)
+
+The ``--filter`` argument is intended as a human QOL feature. Build workflows should use ``--include`` and ``--exclude`` for maximum flexibility and control.
+
 Default Behavior
 ----------------
 

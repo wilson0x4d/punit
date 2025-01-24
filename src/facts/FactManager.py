@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 ##
 
+import re
 from typing import ForwardRef
 
 Fact = ForwardRef('Fact')
@@ -9,12 +10,14 @@ FactManager = ForwardRef('FactManager')
 
 class FactManager:
 
+    __filterPattern:re.Pattern
     __instance:'FactManager' = None
     __modules:dict[str, list[Fact]]
     
     def __init__(self):
         if FactManager.__instance is not None:
             raise Exception('Cannot create more than one instance of FactManager')
+        self.__filterPattern = None
         self.__modules = {}
 
     @staticmethod
@@ -23,6 +26,14 @@ class FactManager:
             FactManager.__instance = FactManager()
         return FactManager.__instance
         
+    @property
+    def filterPattern(self) -> re.Pattern:
+        return self.__filterPattern
+    
+    @filterPattern.setter
+    def filterPattern(self, value:re.Pattern) -> None:
+        self.__filterPattern = value
+
     def get(self, moduleName:str) -> list[Fact]:
         l = self.__modules.get(moduleName)
         if l is None:
@@ -31,5 +42,10 @@ class FactManager:
         return l
 
     def put(self, fact:Fact) -> None:
-        l = self.get(fact.moduleName)
-        l.append(fact)
+        filterName:str = fact.target.__name__
+        print(filterName)
+        if hasattr(fact.target, '__qualname__'):
+            filterName = fact.target.__qualname__
+        if len(self.__filterPattern.findall(filterName)) > 0:
+            l = self.get(fact.moduleName)
+            l.append(fact)
