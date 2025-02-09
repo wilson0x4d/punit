@@ -7,23 +7,13 @@ Quick Start
 Installation
 ------------
 
-For the moment, installation is only possible from the public Github repository:
-
-.. rubric:: Using ``pip``:
+You can install the library from `PyPI <https://pypi.org/project/punit/>`_ using typical methods, such as ``pip``:
 
 .. code:: bash
 
-    pip install git+https://github.com/wilson0x4d/punit.git
+   python3 -m pip install punit
 
-.. rubric:: Using ``poetry``:
-
-.. code:: bash
-
-    poetry add git+https://github.com/wilson0x4d/punit.git
-
-We are `working on getting published to PyPI <https://github.com/pypi/support/issues/4760>`_, but due to a huge backlog of requests this may take a long time.
-
-Command-Line Interface
+Usage
 ----------------------
 
 For the simplest usage you can run **pUnit** from the root of a repository, it will discover and run all tests.

@@ -22,9 +22,6 @@ Documentation = "https://punit.readthedocs.io/"
 Homepage = "https://github.com/wilson0x4d/punit"
 Repository = "https://github.com/wilson0x4d/punit.git"
 
-[project.scripts]
-punit = "punit:__main__.main"
-
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
