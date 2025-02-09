@@ -14,4 +14,4 @@ rm -rf dist/
 rm -rf *.egg-info/
 ln -s ./src ./punit
 python3 -m build
-#python3 -m twine upload --repository $PYPI_REPO dist/*
+python3 -m twine upload --repository $PYPI_REPO dist/*
