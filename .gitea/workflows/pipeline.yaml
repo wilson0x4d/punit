@@ -10,8 +10,8 @@ on:
     - 'src/**'
     - 'pyproject.toml'
     - 'README.md'
-    - '!docs/**'
-    - '!.gitea/workflows/pipeline.yaml'
+    - 'docs/**'
+    - '.gitea/workflows/pipeline.yaml'
 jobs:
   publish:
     name: "Publish Package"
