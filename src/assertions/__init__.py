@@ -3,5 +3,6 @@
 
 __all__ = [
     'collections',
-    'exceptions'
+    'exceptions',
+    'strings'
 ]

@@ -11,5 +11,6 @@ To assist with test definitions **pUnit** provides helpers for performing assert
 
     collections
     exceptions
+    strings
 
 .. automodule:: punit.assertions
