@@ -15,3 +15,20 @@ from src.theories import *
 @inlinedata('Both Is None', None, None, True)
 def areSame(when:str, a:Sequence, b:Sequence, then:bool):
     assert then == collections.areSame(a, b)
+
+@theory
+@inlinedata('Sequence Is None', None, 0, True)
+@inlinedata('Sequence Is Empty', [], 0, True)
+@inlinedata('Sequence Is Not None And Has Length', [1], 1, True)
+@inlinedata('Sequence Is Not Empty And Has Length', [1], 1, True)
+@inlinedata('Sequence Is Not None And Has No Length', [1], None, False)
+@inlinedata('Sequence Is Not Empty And Has No Length', [1], None, False)
+def hasLength(when:str, sequence:Sequence, expected:int, then:bool):
+    assert then == collections.hasLength(sequence, expected)
+
+@theory
+@inlinedata('Sequence Is None', None, True)
+@inlinedata('Sequence Is Not None And Is Empty', [], True)
+@inlinedata('Sequence Is Not None And Is Not Empty', [1], False)
+def isNoneOrEmpty(when:str, sequence:Sequence, then:bool):
+    assert then == collections.isNoneOrEmpty(sequence)
