@@ -42,8 +42,8 @@ async def async_main():
         if cli.outputFilename is None:
             print(report)
         else:
-            with open(cli.outputFilename, 'wt') as file:
-                file.write(report)
+            with open(cli.outputFilename, 'wb') as file:
+                file.write(report.encode())
             print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
     if failureCount > 0:
         exit(119)
