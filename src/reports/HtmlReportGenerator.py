@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2024 Shaun Wilson
+# SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 
 import traceback

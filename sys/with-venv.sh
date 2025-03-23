@@ -1,5 +1,5 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: © 2024 Shaun Wilson
+# SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 #
 # use this script to drop into a venv.

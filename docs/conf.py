@@ -13,7 +13,7 @@ import src
 sys.modules['punit'] = src
 
 project = 'pUnit'
-copyright = '2024, Shaun Wilson'
+copyright = 'Shaun Wilson'
 author = 'Shaun Wilson'
 release = '1.0'
 

@@ -1,5 +1,5 @@
 #!/bin/pwsh
-# SPDX-FileCopyrightText: © 2025 Shaun Wilson
+# SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 #
 # initializes the venv for the project in the current
