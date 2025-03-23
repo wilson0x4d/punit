@@ -25,3 +25,7 @@ def AssertRaises_WithKwarg():
     assert raises(raisesCustomException, exact=False, expect=Exception)
     assert raises(raisesCustomException, exact=True, expect=CustomException)
     assert not raises(raisesCustomException, exact=True, expect=Exception)
+
+@fact
+def AssertRaises_WhenNoException_MustReturnFalse():
+    assert not raises[ValueError](lambda: None)

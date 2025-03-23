@@ -31,3 +31,4 @@ class raises[TError:Exception]:
                 return type(ex) is expected
             else:
                 return issubclass(type(ex), expected)
+        return False
