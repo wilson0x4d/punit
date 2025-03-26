@@ -95,11 +95,11 @@ class CommandLineInterface:
                     self.__help = True
                 case '-a':
                     extractAliasName = True
-                case '-t' | '--filter':
+                case '-f' | '--filter':
                     extractFilterPattern = True
                 case '-e' | '--exclude':
                     extractExcludePattern = True
-                case '-f' | '--failfast':
+                case '-z' | '--failfast':
                     self.__failfast = True
                 case '-p' | '--test-package':
                     self.__testPackageName = None
@@ -175,11 +175,11 @@ class CommandLineInterface:
 """
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
-                        [-f|--failfast]
+                        [-z|--failfast]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
-                        [-t|--filter PATTERN]
+                        [-f|--filter PATTERN]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
                         [-r|--report {junit|json}]
@@ -189,7 +189,7 @@ Options:
     -h, --help           Show this help text and exit
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output
-    -f, --failfast       Stop on first failure or error
+    -z, --failfast       Stop on first failure or error
     -p, --test-package NAME
         Use NAME as the test package, all tests should
         be locatable as modules in the named package.
@@ -200,7 +200,7 @@ Options:
     -e, --exclude PATTERN
         Exclude any tests matching PATTERN, overriding --include
         Default: '__*__' (dunder files), '/.*/' (dot-directories)
-    -t, --filter
+    -f, --filter
         Only execute tests matching PATTERN
         Default: '*'
     -w, --working-directory DIRECTORY
