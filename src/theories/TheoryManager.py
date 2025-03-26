@@ -44,10 +44,7 @@ class TheoryManager:
         return l
 
     def put(self, theory:Theory) -> None:
-        filterName:str = theory.target.__name__
-        if hasattr(theory.target, '__qualname__'):
-            filterName = theory.target.__qualname__
-        if len(self.__filterPattern.findall(filterName)) > 0:
+        if len(self.__filterPattern.findall(theory.filterName)) > 0:
             l = self.get(theory.moduleName)
             d = self.__datas.get(theory.target)
             if d is not None:

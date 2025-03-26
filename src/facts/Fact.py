@@ -34,6 +34,10 @@ class Fact:
     @property
     def testName(self) -> str:
         return self.__testName
+    
+    @property
+    def filterName(self) -> str:
+        return f'{self.moduleName}/{"" if self.className is None or len(self.className) == 0 else f"{self.className}/"}{self.testName}'
 
     async def execute(self, module:ModuleType) -> None:
         coro:Coroutine = None

@@ -42,9 +42,6 @@ class FactManager:
         return l
 
     def put(self, fact:Fact) -> None:
-        filterName:str = fact.target.__name__
-        if hasattr(fact.target, '__qualname__'):
-            filterName = fact.target.__qualname__
-        if len(self.__filterPattern.findall(filterName)) > 0:
+        if len(self.__filterPattern.findall(fact.filterName)) > 0:
             l = self.get(fact.moduleName)
             l.append(fact)
