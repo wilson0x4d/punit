@@ -53,7 +53,7 @@ class HtmlReportGenerator:
             lines.append(f'<div>Total Failed: <span class="fail">{failureCount}</span></div>')
         lines.append('<div>&nbsp;</div>')
         percentstyle = 'pass' if failureCount == 0 else 'fail'
-        lines.append(f'<div class="passfail-percent">Pass/Fail&nbsp;<span class="percent-{percentstyle}">{100-((failureCount/totalCount)*100):.1f}%</span></div>')
+        lines.append(f'<div class="passfail-percent">Pass/Fail&nbsp;<span class="percent-{percentstyle}">{100-(((failureCount/totalCount) if totalCount > 0 else 1)*100):.1f}%</span></div>')
         lines.append('<div>&nbsp;</div>')
         lines.append('</div>')
         currentModuleName = None
