@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 from typing import Optional
-from src.assertions import *
-from src.facts import *
-from src.theories import *
+from punit.assertions import *
+from punit.facts import *
+from punit.theories import *
 
 @theory
 @inlinedata('Values Match', 'hello', 'hello', True)

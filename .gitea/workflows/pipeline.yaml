@@ -7,7 +7,7 @@ on:
     branches:
     - master
     paths:
-    - 'src/**'
+    - 'punit/**'
     - 'pyproject.toml'
     - 'README.md'
     - 'docs/**'

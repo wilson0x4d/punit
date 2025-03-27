@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from src.assertions import *
-from src.facts import fact
+from punit.assertions import *
+from punit.facts import fact
 
 @fact
 def fact_func() -> None:

@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from src.assertions import *
-from src.facts import fact
-from src.theories import theory, inlinedata
-from src.traits import trait
+from punit.assertions import *
+from punit.facts import fact
+from punit.theories import theory, inlinedata
+from punit.traits import trait
 
 @theory
 @inlinedata('1','2','3')

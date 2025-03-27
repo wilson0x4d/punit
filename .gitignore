@@ -6,7 +6,6 @@ __pycache__
 .DS_Store
 build/
 dist/
-punit/
 *.egg-info/
 docs/_build/
 *.xml

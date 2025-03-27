@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from src.assertions.exceptions import *
-from src.facts import fact
+from punit.assertions.exceptions import *
+from punit.facts import fact
 
 class CustomException(Exception):
     pass

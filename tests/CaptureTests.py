@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import sys
-from src.facts import fact
-from src.TestResult import TextIOCapture
+from punit.facts import fact
+from punit.TestResult import TextIOCapture
 
 @fact
 def TextIOCapture_CapturesStdOut() -> None:

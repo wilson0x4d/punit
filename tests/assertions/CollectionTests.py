@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 from typing import Sequence
-from src.assertions import *
-from src.facts import *
-from src.theories import *
+from punit.assertions import *
+from punit.facts import *
+from punit.theories import *
 
 @theory
 @inlinedata('Values Match', [1,2,3], [1,2,3], True)

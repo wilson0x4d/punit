@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from src.facts import fact
+from punit.facts import fact
 
 @fact
 def unicodeShouldNotFailReportWriter() -> None:
