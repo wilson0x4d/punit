@@ -6,3 +6,4 @@ __version__ = '0.0.0'
 from .assertions import *
 from .facts import *
 from .theories import *
+from .traits import *

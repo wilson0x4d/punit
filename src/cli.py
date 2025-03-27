@@ -5,16 +5,19 @@ import os
 import sys
 import typing
 from . import __version__
+from .traits import Trait
 
 CommandLineInterface = typing.ForwardRef('CommandLineInterface')
 
 class CommandLineInterface:
 
     __excludePatterns:list[str]
+    __excludeTraits:list[Trait]
     __failfast:bool
     __filterPattern:str
     __help:bool
     __includePatterns:list[str]
+    __includeTraits:list[Trait]
     __no_default_patterns:bool
     __outputFilename:str
     __quiet:bool
@@ -26,10 +29,12 @@ class CommandLineInterface:
     def __init__(self):
         self.__aliases = {}
         self.__excludePatterns = []
+        self.__excludeTraits = []
         self.__failfast = False
         self.__filterPattern = '*'
         self.__help = False
         self.__includePatterns = []
+        self.__includeTraits = []
         self.__no_default_patterns = False
         self.__outputFilename = None
         self.__quiet = False
@@ -42,6 +47,7 @@ class CommandLineInterface:
         aliasName:str = None
         extractFilterPattern:bool = False
         extractExcludePattern:bool = False
+        extractTrait:bool = False
         extractIncludePattern:bool = False
         extractAliasName:bool = False
         extractAliasPath:bool = False
@@ -55,6 +61,17 @@ class CommandLineInterface:
             if extractIncludePattern:
                 self.__includePatterns.append(arg)
                 extractIncludePattern = False
+                continue
+            elif extractTrait:
+                isExclude = arg.startswith('!')
+                arg = arg.lstrip('!')
+                parts = arg.split('=')
+                trait = Trait(parts[0], parts[1]) if len(parts) == 2 else Trait(arg)
+                if isExclude:
+                    self.__excludeTraits.append(trait)
+                else:
+                    self.__includeTraits.append(trait)
+                extractTrait = False
                 continue
             elif extractExcludePattern:
                 self.__excludePatterns.append(arg)
@@ -117,6 +134,8 @@ class CommandLineInterface:
                     extractReportFormat = True
                 case '-o' | '--output':
                     extractOutputFilename = True
+                case '-t' | '--trait':
+                    extractTrait = True
                 case _:
                     continue
         return self
@@ -136,6 +155,10 @@ class CommandLineInterface:
     @property
     def excludePatterns(self) -> list[str]:
         return self.__excludePatterns
+    
+    @property
+    def excludeTraits(self) -> list[Trait]:
+        return self.__excludeTraits
 
     @property
     def help(self) -> bool:
@@ -144,6 +167,10 @@ class CommandLineInterface:
     @property
     def includePatterns(self) -> list[str]:
         return self.__includePatterns
+    
+    @property
+    def includeTraits(self) -> list[Trait]:
+        return self.__includeTraits
 
     @property
     def outputFilename(self) -> str|None:
@@ -180,6 +207,7 @@ Usage: python3 -m punit [-h|--help]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
                         [-f|--filter PATTERN]
+                        [-t|--trait [!]NAME[:VALUE]]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
                         [-r|--report {junit|json}]
@@ -203,6 +231,11 @@ Options:
     -f, --filter
         Only execute tests matching PATTERN
         Default: '*'
+    -t, --trait [!]NAME[:VALUE]
+        Only execute tests with the specified trait, optionally negated by prefixing with '!'.
+        If VALUE is specified, only matches tests with the trait having specified value.
+        If VALUE is not specified, matches any test with the trait having any value.
+        Default: No filtering based on traits.        
     -w, --working-directory DIRECTORY
         Working directory (defaults to start directory)
     -n, --no-default-patterns

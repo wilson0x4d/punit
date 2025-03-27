@@ -7,14 +7,17 @@ import re
 from ..facts import FactManager
 from ..theories import TheoryManager
 from ..cli import CommandLineInterface
+from ..traits import Trait
 
 class TestModuleDiscovery:
 
     __cli:CommandLineInterface
     __excludePatterns:list[re.Pattern]
+    __excludeTraits:list[Trait]
     __filenames:list[str]
     __filterPattern:re.Pattern
     __includePatterns:list[re.Pattern]
+    __includeTraits:list[Trait]
     __workdir:str
 
     def __init__(self, workdir:str, includePatterns:list[str], excludePatterns:list[str], cli:CommandLineInterface):
@@ -27,8 +30,10 @@ class TestModuleDiscovery:
                         self.__convertPatternToRegex(pattern),
                         re.IGNORECASE))
         self.__filenames = []
-        self.__filterPattern = re.compile(self.__convertPatternToRegex(cli.filterPattern))
+        self.__filterPattern = re.compile(self.__convertPatternToRegex(cli.filterPattern))        
         self.__includePatterns = []
+        self.__excludeTraits = cli.excludeTraits
+        self.__includeTraits = cli.includeTraits
         if includePatterns is not None:
             for pattern in includePatterns:
                 self.__includePatterns.append(
@@ -94,8 +99,12 @@ class TestModuleDiscovery:
         return self.__filenames
         
     def discover(self) -> list[str]:
+        FactManager.instance().excludeTraits = self.__excludeTraits
         FactManager.instance().filterPattern = self.__filterPattern
+        FactManager.instance().includeTraits = self.__includeTraits
+        TheoryManager.instance().excludeTraits = self.__excludeTraits
         TheoryManager.instance().filterPattern = self.__filterPattern
+        TheoryManager.instance().includeTraits = self.__includeTraits
         if self.__cli.verbose:
             print(f'.. starting test discovery')
         self.__filenames = self.__walkDirectory(self.__workdir)

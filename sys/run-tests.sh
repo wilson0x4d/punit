@@ -4,4 +4,4 @@
 ##
 set -eo pipefail
 source .venv-bash/bin/activate
-python -m src -a punit src -a punit.facts src.facts --report html --output results.html
+python -m src -a punit src --trait '!integration' --report html --output results.html

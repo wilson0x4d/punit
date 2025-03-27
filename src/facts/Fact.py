@@ -3,8 +3,11 @@
 
 import inspect
 from types import FunctionType, MethodType, ModuleType
-from typing import Any, Callable, Coroutine
+from typing import Any, Callable, Coroutine, ForwardRef
 from .FactManager import FactManager
+
+Trait = ForwardRef('Trait')
+
 
 class Fact:
 
@@ -12,12 +15,14 @@ class Fact:
     __moduleName:str
     __target:FunctionType|MethodType
     __testName:str
+    __traits:list[Trait]
 
     def __init__(self, moduleName:str, target:FunctionType|MethodType, className:str = None, testName:str = None):
         self.__className = className
         self.__moduleName = moduleName
         self.__target = target
         self.__testName = testName
+        self.__traits = []
 
     @property
     def className(self) -> str:
@@ -33,11 +38,15 @@ class Fact:
 
     @property
     def testName(self) -> str:
-        return self.__testName
+        return self.__testName if self.__testName is not None else self.__target.__qualname__.split('.')[-1]
     
     @property
     def filterName(self) -> str:
         return f'{self.moduleName}/{"" if self.className is None or len(self.className) == 0 else f"{self.className}/"}{self.testName}'
+
+    @property
+    def traits(self) -> list[Trait]:
+        return self.__traits
 
     async def execute(self, module:ModuleType) -> None:
         coro:Coroutine = None
@@ -63,6 +72,7 @@ class Fact:
             coro = self.__target()
         if inspect.iscoroutine(coro):
             await coro
+
 
 def fact(target:Callable) -> Callable:
     if (not inspect.isfunction(target)) and (not isinstance(target, classmethod)) and (not isinstance(target, staticmethod)):

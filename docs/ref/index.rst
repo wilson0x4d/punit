@@ -7,6 +7,7 @@ Reference
 
     Facts <facts>
     Theories <theories>
+    Traits <traits>
     Assertions <assertions/index>
 
 .. automodule:: punit
