@@ -207,7 +207,7 @@ Usage: python3 -m punit [-h|--help]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
                         [-f|--filter PATTERN]
-                        [-t|--trait [!]NAME[:VALUE]]
+                        [-t|--trait [!]NAME[=VALUE]]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
                         [-r|--report {junit|json}]
@@ -231,9 +231,9 @@ Options:
     -f, --filter
         Only execute tests matching PATTERN
         Default: '*'
-    -t, --trait [!]NAME[:VALUE]
-        Only execute tests with the specified trait, optionally negated by prefixing with '!'.
-        If VALUE is specified, only matches tests with the trait having specified value.
+    -t, --trait [!]NAME[=VALUE]
+        Execute tests with the specified trait, negated by prefixing with '!'.
+        If VALUE is specified, matches tests with the trait having specified value.
         If VALUE is not specified, matches any test with the trait having any value.
         Default: No filtering based on traits.        
     -w, --working-directory DIRECTORY

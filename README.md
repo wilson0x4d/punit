@@ -43,11 +43,12 @@ Outputs:
 ```plaintext
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
-                        [-f|--failfast]
+                        [-z|--failfast]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
-                        [-t|--filter PATTERN]
+                        [-f|--filter PATTERN]
+                        [-t|--trait [!]NAME[=VALUE]]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
                         [-r|--report {junit|json}]
@@ -57,7 +58,7 @@ Options:
     -h, --help           Show this help text and exit
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output
-    -f, --failfast       Stop on first failure or error
+    -z, --failfast       Stop on first failure or error
     -p, --test-package NAME
         Use NAME as the test package, all tests should
         be locatable as modules in the named package.
@@ -68,9 +69,14 @@ Options:
     -e, --exclude PATTERN
         Exclude any tests matching PATTERN, overriding --include
         Default: '__*__' (dunder files), '/.*/' (dot-directories)
-    -t, --filter PATTERN
+    -f, --filter PATTERN
         Only execute tests matching PATTERN
         Default: '*'
+    -t, --trait [!]NAME[=VALUE]
+        Execute tests with the specified trait, negated by prefixing with '!'.
+        If VALUE is specified, matches tests with the trait having specified value.
+        If VALUE is not specified, matches any test with the trait having any value.
+        Default: No filtering based on traits.        
     -w, --working-directory DIRECTORY
         Working directory (defaults to start directory)
     -n, --no-default-patterns
