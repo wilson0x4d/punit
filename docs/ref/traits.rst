@@ -45,6 +45,7 @@ Decorators
 .. rubric:: Example (functions):
 
 .. code:: python
+
     from punit import *
 
     @theory
@@ -57,6 +58,7 @@ Decorators
 .. rubric:: Example (methods):
 
 .. code:: python
+
     from punit import *
 
     class MyClass:
