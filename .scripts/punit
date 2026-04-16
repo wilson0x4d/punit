@@ -2,8 +2,6 @@
 # SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 ##
-"""A tiny wrapper that forwards everything to `python -m punit`."""
-def main() -> None:
-    from subprocess import run
-    from sys import executable
-    run([ executable, "-m", "punit" ] + sys.argv[1:], check=True)
+from subprocess import run
+from sys import executable, argv
+run([ executable, "-m", "punit" ] + argv[1:], check=True)
