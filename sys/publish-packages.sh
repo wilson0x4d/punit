@@ -10,4 +10,4 @@ rm -rf build/
 rm -rf dist/
 rm -rf *.egg-info/
 python3 -m build
-python3 -m twine upload --repository $PYPI_REPO dist/*
+python3 -m twine upload --verbose --repository $PYPI_REPO dist/*
