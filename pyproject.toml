@@ -22,9 +22,6 @@ Documentation = "https://punit.readthedocs.io/"
 Homepage = "https://github.com/wilson0x4d/punit"
 Repository = "https://github.com/wilson0x4d/punit.git"
 
-[tool.setuptools.data-files]
-bin = ["scripts/punit"]
-
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
@@ -35,3 +32,6 @@ exclude = [
     "tests",
     "tests.*"
 ]
+
+[tool.setuptools.data-files]
+bin = [".scripts/punit"]
