@@ -28,7 +28,7 @@ jobs:
           echo "SEMVER=$SEMVER" >> "$GITHUB_ENV"
           echo "SEMVER=$SEMVER" >> "$GITHUB_OUTPUT"
           echo "PYPI_REPO=${{ vars.PYPI_REPO }}" >> "$GITHUB_ENV"
-          emit-context "pending" "SEMVER" "${{ gitea.api_url }}" "${{ gitea.repository }}" "${{ gitea.sha }}" "${{ secrets.GITEA_TOKEN }}" "$SEMVER"
+          emit-context "success" "SEMVER" "${{ gitea.api_url }}" "${{ gitea.repository }}" "${{ gitea.sha }}" "${{ secrets.GITEA_TOKEN }}" "$SEMVER"
           .scripts/init-venv
       - name: "Test"
         id: run-tests
