@@ -10,3 +10,4 @@ dist/
 docs/_build/
 *.xml
 *.html
+requirement*.txt

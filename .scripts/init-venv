@@ -1,0 +1,50 @@
+#!/bin/bash
+# SPDX-FileCopyrightText: © Shaun Wilson
+# SPDX-License-Identifier: MIT
+##
+#
+# init-venv.sh
+#
+# creates or updates a venv for the entire repo to draw from:
+#
+# ```
+# .scripts/init-venv.sh
+# ```
+#
+# if you want a venv shell, `source` the script instead:
+#
+# ```
+# source .scripts/init-venv
+# ```
+#
+# to use a specific python version (other than your system default), set `PYTHON_VERSION` env var, first:
+#
+# ```
+# export PYTHON_VERSION=3.14
+# source .scripts/init-venv
+# ```
+#
+##
+set -uo pipefail
+
+# initialize
+if [ ! -z "$(which deactivate)" ]; then
+    echo "..deactivating current venv"
+    deactivate
+fi
+if [ ! -d ".venv" ]; then
+    "python${PYTHON_VERSION:-3}" -m venv --prompt "punit" .venv
+fi
+
+# activate
+export PS1='\$ '
+echo -n -e "\033]0;punit\007"
+source .venv/bin/activate
+
+# tools and deps
+pip install --upgrade pip
+pip install pip-tools
+pip-compile -o requirements.txt --all-extras --strip-extras pyproject.toml
+if [ -f requirements.txt ]; then
+    pip install -r requirements.txt
+fi

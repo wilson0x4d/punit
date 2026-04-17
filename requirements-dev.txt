@@ -1,4 +1,0 @@
--r requirements.txt
-build
-setuptools
-twine

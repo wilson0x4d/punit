@@ -16,6 +16,15 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Intended Audience :: Developers"
 ]
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "setuptools",
+    "twine"
+]
 
 [project.urls]
 Documentation = "https://punit.readthedocs.io/"
