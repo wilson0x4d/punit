@@ -14,5 +14,7 @@ if ($env:PYTHON_VERSION -ne "") {
 }
 & $PYPATH -m venv --prompt "pUnit" .venv-pwsh
 . .\.venv-pwsh\Scripts\Activate.ps1
-& python -m pip install -r requirements-dev.txt
-deactivate
+& pip install --upgrade pip
+& pip install pip-tools
+& pip-compile -o requirements.txt --all-extras --strip-extras pyproject.toml
+& python -m pip install -r requirements.txt
