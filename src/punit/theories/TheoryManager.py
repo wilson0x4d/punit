@@ -14,7 +14,7 @@ class TheoryManager:
     __excludeTraits:list[Trait]
     __filterPattern:Optional[re.Pattern]
     __includeTraits:list[Trait]
-    __instance:'TheoryManager'|None = None
+    __instance:Optional['TheoryManager'] = None
     __modules:dict[str, list[Theory]]
     __datas:dict[Callable, list[tuple]]
     __traits:dict[Callable, list[Trait]]

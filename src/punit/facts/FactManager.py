@@ -13,7 +13,7 @@ class FactManager:
 
     __excludeTraits:list[Trait]    
     __filterPattern:Optional[re.Pattern]
-    __instance:'FactManager'|None = None
+    __instance:Optional['FactManager'] = None
     __includeTraits:list[Trait]
     __modules:dict[str, list[Fact]]
     __traits:dict[Callable, list[Trait]]
