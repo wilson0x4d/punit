@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © Shaun Wilson
+# SPDX-FileCopyrightText: © 2025 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
 from typing import Any

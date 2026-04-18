@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © Shaun Wilson
+# SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
 __version__ = '0.0.0'

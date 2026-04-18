@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.abspath('../src'))
 import punit
 
 project = 'pUnit'
-copyright = 'Shaun Wilson'
+copyright = '2024 Shaun Wilson'
 author = 'Shaun Wilson'
 release = '1.0'
 
