@@ -19,7 +19,7 @@ Collection Helpers
 
 .. code:: python
 
-    from punit import *
+    from punit import collections
 
     a = [1,2,3]
     b = [1,2,3]
@@ -46,7 +46,7 @@ Collection Helpers
 
 .. code:: python
 
-    from punit import *
+    from punit import collections
 
     a = [1]
     b = [1,2]
@@ -69,7 +69,7 @@ Collection Helpers
 
 .. code:: python
 
-    from punit import *
+    from punit import collections
 
     a = [1,2,3]
     b = []

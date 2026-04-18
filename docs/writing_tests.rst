@@ -53,7 +53,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. code:: python
 
-    from punit import *
+    from punit import fact
 
     @fact
     def factFunc():
@@ -71,6 +71,8 @@ This section provides a series of referential examples which attempt to illustra
 .. rubric:: A test function using ``@theory``:
 
 .. code:: python
+
+    from punit import theory, inlinedata
 
     @theory
     @inlinedata(2, 2, 4, "It's a fact!")

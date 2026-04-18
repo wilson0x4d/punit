@@ -100,7 +100,7 @@ You can write tests as functions, class methods, instance methods, or static met
 
 ```python
 
-from punit import *
+from punit import fact, theory, inlinedata
 
 @fact
 async def MyLibrary_WhenInitialized_TouchMustReturnTrue:

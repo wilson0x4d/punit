@@ -2,10 +2,13 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from .cli import *
-from .discovery import *
+import os
+import time
+from .cli import CommandLineInterface
+from .discovery import TestModuleDiscovery
 from .reports import HtmlReportGenerator, JUnitReportGenerator
-from .runner import *
+from .runner import TestRunner
+
 
 async def async_main():
     ts = time.time()
@@ -33,18 +36,19 @@ async def async_main():
     if not cli.quiet:
         print(f'Total: {len(results)}, Failures: {failureCount}, Took: {totalTime:.3f}s')
     if cli.reportFormat is not None:
-        report:str = None
+        report:str|None = None
         match cli.reportFormat:
             case 'html':
                 report = HtmlReportGenerator().generate(results)
             case 'junit':
                 report = JUnitReportGenerator().generate(results)
-        if cli.outputFilename is None:
-            print(report)
-        else:
-            with open(cli.outputFilename, 'wb') as file:
-                file.write(report.encode())
-            print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
+        if report is not None:
+            if cli.outputFilename is None:
+                print(report)
+            else:
+                with open(cli.outputFilename, 'wb') as file:
+                    file.write(report.encode())
+                print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
     if failureCount > 0:
         exit(119)
 

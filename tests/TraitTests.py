@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from punit.assertions import *
 from punit.facts import fact
 from punit.theories import theory, inlinedata
 from punit.traits import trait

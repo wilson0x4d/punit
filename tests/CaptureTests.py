@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import sys
-from punit.facts import fact
+from punit import fact
 from punit.TestResult import TextIOCapture
 
 @fact

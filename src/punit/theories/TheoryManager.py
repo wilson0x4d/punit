@@ -3,19 +3,18 @@
 ##
 
 import re
-from typing import Callable, ForwardRef
+from typing import Callable, Optional
 
-Theory = ForwardRef('Theory')
-TheoryManager = ForwardRef('TheoryManager')
-Trait = ForwardRef('Trait')
+from ..traits.Trait import Trait
+from .Theory import Theory
 
 
 class TheoryManager:
 
     __excludeTraits:list[Trait]
-    __filterPattern:re.Pattern
+    __filterPattern:Optional[re.Pattern]
     __includeTraits:list[Trait]
-    __instance:'TheoryManager' = None
+    __instance:'TheoryManager'|None = None
     __modules:dict[str, list[Theory]]
     __datas:dict[Callable, list[tuple]]
     __traits:dict[Callable, list[Trait]]
@@ -42,7 +41,7 @@ class TheoryManager:
         self.__excludeTraits = value
 
     @property
-    def filterPattern(self) -> re.Pattern:
+    def filterPattern(self) -> Optional[re.Pattern]:
         return self.__filterPattern
     
     @filterPattern.setter
@@ -79,7 +78,7 @@ class TheoryManager:
         return l
 
     def put(self, theory:Theory) -> None:
-        if len(self.__filterPattern.findall(theory.filterName)) > 0:
+        if self.__filterPattern is None or len(self.__filterPattern.findall(theory.filterName)) > 0:
             l = self.get(theory.moduleName)
             d = self.__datas.get(theory.target)
             if d is not None:

@@ -33,12 +33,12 @@ if [ ! -z "$(which deactivate)" ]; then
     deactivate
 fi
 if [ ! -d ".venv" ]; then
-    "python${PYTHON_VERSION:-3}" -m venv --prompt "punit" .venv
+    "python${PYTHON_VERSION:-3}" -m venv --prompt "pUnit" .venv
 fi
 
 # activate
 export PS1='\$ '
-echo -n -e "\033]0;punit\007"
+echo -n -e "\033]0;pUnit\007"
 source .venv/bin/activate
 
 # tools and deps

@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: MIT
 
 import sys
-from typing import TextIO
+from typing import Any, TextIO, Optional, cast
+
 
 class TextIOCapture:
 
     __quiet:bool
-    output:str = None
+    output:str|None = None
     target:TextIO
 
     def __init__(self, target:TextIO, quiet:bool = False) -> None:
@@ -23,21 +24,22 @@ class TextIOCapture:
         if not self.__quiet:
             self.target.write(text)
 
+
 class TestResult:
 
-    __className:str
-    __exception:Exception
-    __fileName:str
-    __hostName:str
-    __isSuccess:bool
-    __moduleName:str
-    __packageName:str
-    __properties:dict[str, str]
-    __startTime:float
-    __stderrCapture:TextIOCapture
-    __stdoutCapture:TextIOCapture
-    __stopTime:float
-    __testName:str
+    __className:Optional[str]
+    __exception:Exception|None
+    __fileName:str|None
+    __hostName:str|None
+    __isSuccess:bool|None
+    __moduleName:str|None
+    __packageName:str|None
+    __properties:dict[str, Any]
+    __startTime:float|None
+    __stderrCapture:TextIOCapture|None
+    __stdoutCapture:TextIOCapture|None
+    __stopTime:float|None
+    __testName:str|None
 
     def __init__(self):
         self.__className = None
@@ -47,7 +49,7 @@ class TestResult:
         self.__isSuccess = None
         self.__moduleName = None
         self.__packageName = None
-        self.__properties = {}
+        self.__properties = dict[str,Any]()
         self.__startTime = None
         self.__stderrCapture = None
         self.__stdoutCapture = None
@@ -55,15 +57,15 @@ class TestResult:
         self.__testName = None
 
     @property
-    def className(self) -> str:
+    def className(self) -> Optional[str]:
         return self.__className
     
     @className.setter
-    def className(self, value:str) -> None:
+    def className(self, value:Optional[str]) -> None:
         self.__className = value
 
     @property
-    def exception(self) -> Exception:
+    def exception(self) -> Exception|None:
         return self.__exception
     
     @exception.setter
@@ -71,7 +73,7 @@ class TestResult:
         self.__exception = value
 
     @property
-    def fileName(self) -> str:
+    def fileName(self) -> str|None:
         return self.__fileName
     
     @fileName.setter
@@ -79,7 +81,7 @@ class TestResult:
         self.__fileName = value
 
     @property
-    def hostName(self) -> str:
+    def hostName(self) -> str|None:
         return self.__hostName
     
     @hostName.setter
@@ -88,7 +90,7 @@ class TestResult:
 
     @property
     def isSuccess(self) -> bool:
-        return self.__isSuccess
+        return False if self.__isSuccess is None else self.__isSuccess
     
     @isSuccess.setter
     def isSuccess(self, value:bool) -> None:
@@ -96,14 +98,14 @@ class TestResult:
 
     @property
     def moduleName(self) -> str:
-        return self.__moduleName
+        return cast(str,self.__moduleName)
     
     @moduleName.setter
     def moduleName(self, value:str) -> None:
         self.__moduleName = value
 
     @property
-    def packageName(self) -> str:
+    def packageName(self) -> str|None:
         return self.__packageName
     
     @packageName.setter
@@ -111,7 +113,7 @@ class TestResult:
         self.__packageName = value
 
     @property
-    def properties(self) -> dict[str, str]:
+    def properties(self) -> dict[str, Any]:
         return self.__properties
     
     @properties.setter
@@ -119,7 +121,7 @@ class TestResult:
         self.__properties = value
 
     @property
-    def startTime(self) -> float:
+    def startTime(self) -> float|None:
         return self.__startTime
     
     @startTime.setter
@@ -127,15 +129,15 @@ class TestResult:
         self.__startTime = value
 
     @property
-    def stderr(self) -> str:
+    def stderr(self) -> str|None:
         return None if self.__stderrCapture is None else self.__stderrCapture.output
 
     @property
-    def stdout(self) -> str:
+    def stdout(self) -> str|None:
         return None if self.__stdoutCapture is None else self.__stdoutCapture.output
 
     @property
-    def stopTime(self) -> float:
+    def stopTime(self) -> float|None:
         return self.__stopTime
     
     @stopTime.setter
@@ -143,7 +145,7 @@ class TestResult:
         self.__stopTime = value
 
     @property
-    def testName(self) -> str:
+    def testName(self) -> str|None:
         return self.__testName
     
     @testName.setter
@@ -151,13 +153,15 @@ class TestResult:
         self.__testName = value
 
     @property
-    def took(self) -> float:
-        return self.__stopTime - self.__startTime
+    def took(self) -> float|None:
+        return None if self.__stopTime is None or self.__startTime is None else self.__stopTime - self.__startTime
 
     @property
     def tookPretty(self) -> str:
         took = self.took
-        if took >= 1:
+        if took is None:
+            return 'N/A'
+        elif took >= 1:
             return f'{took:.1f}'.rstrip('0').rstrip('.') + 's'
         elif took >= 0.001:
             return f'{(took*1000):.0f}ms'
@@ -169,12 +173,14 @@ class TestResult:
             return f'{(took*1000):.3f}'.rstrip('0').rstrip('.') + 'ms'
 
 
-    def captureOutput(self, quiet:bool = False) -> tuple[TextIO, TextIO]:
+    def captureOutput(self, quiet:bool = False) -> None:
         self.__stdoutCapture = TextIOCapture(sys.stdout, quiet)
         self.__stderrCapture = TextIOCapture(sys.stderr, quiet)
         sys.stdout = self.__stdoutCapture
         sys.stderr = self.__stderrCapture
 
     def releaseOutput(self) -> None:
-        sys.stdout = self.__stdoutCapture.target
-        sys.stderr = self.__stderrCapture.target
+        if self.__stdoutCapture is not None and self.__stdoutCapture.target is not None:
+            sys.stdout = self.__stdoutCapture.target
+        if self.__stderrCapture is not None and self.__stderrCapture.target is not None:
+            sys.stderr = self.__stderrCapture.target

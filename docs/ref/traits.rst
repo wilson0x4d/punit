@@ -46,7 +46,7 @@ Decorators
 
 .. code:: python
 
-    from punit import *
+    from punit import theory, inlinedata, trait
 
     @theory
     @inlinedata(0, 1, 1)
@@ -59,7 +59,7 @@ Decorators
 
 .. code:: python
 
-    from punit import *
+    from punit import fact, trait
 
     class MyClass:
         @fact

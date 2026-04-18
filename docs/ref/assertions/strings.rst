@@ -11,7 +11,7 @@ String Helpers
 
 .. code:: python
 
-    from punit import *
+    from punit import strings
 
     a = 'hello'
     b = 'hello'
@@ -33,7 +33,7 @@ String Helpers
 
 .. code:: python
 
-    from punit import *
+    from punit import strings
 
     a = 'hello'
     b = ''
@@ -53,7 +53,7 @@ String Helpers
 
 .. code:: python
 
-    from punit import *
+    from punit import strings
 
     a = 'hello'
     b = ' \t'

@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Sequence, Optional, cast
 
 
-def areSame(a:Sequence[Any]|None, b:Sequence[Any]|None, sort:bool=False, sortFunction:Callable[[Any], Any]=None) -> bool:
+def areSame(a:Sequence[Any]|None, b:Sequence[Any]|None, sort:bool=False, sortFunction:Optional[Callable[[Any], Any]]=None) -> bool:
     """
     Check if two sequences contain the same elements in the same order.
     
@@ -20,30 +20,31 @@ def areSame(a:Sequence[Any]|None, b:Sequence[Any]|None, sort:bool=False, sortFun
         return False
     elif a is not None and b is None:
         return False
-    elif len(a) != len(b):
-        return False
+    elif a is not None and b is not None:
+        if len(a) != len(b):
+            return False
 
-    if sort:
+        if sort:
+            if isinstance(a, dict) or isinstance(b, dict):
+                sortFunction = sortFunction if sortFunction is not None else lambda e: e[0]
+                a = sorted(cast(dict,a).items(), key=sortFunction)
+                b = sorted(cast(dict,b).items(), key=sortFunction)
+            else:
+                sortFunction = sortFunction if sortFunction is not None else lambda e: e
+                a = sorted(a, key=sortFunction)
+                b = sorted(b, key=sortFunction)
+
         if isinstance(a, dict) or isinstance(b, dict):
-            sortFunction = sortFunction if sortFunction is not None else lambda e: e[0]
-            a = sorted(a.items(), key=sortFunction)
-            b = sorted(b.items(), key=sortFunction)
-        else:
-            sortFunction = sortFunction if sortFunction is not None else lambda e: e
-            a = sorted(a, key=sortFunction)
-            b = sorted(b, key=sortFunction)
-
-    if isinstance(a, dict) or isinstance(b, dict):
-        for pairs in zip(a.items(), b.items()):
-            if not areSame(pairs[0], pairs[1]):
-                return False            
-    else:
-        for pairs in zip(a, b):
-            if isinstance(pairs[0], dict) or isinstance(pairs[1], dict):
+            for pairs in zip(cast(dict,a).items(), cast(dict,b).items()):
                 if not areSame(pairs[0], pairs[1]):
                     return False            
-            elif pairs[0] != pairs[1]:
-                    return False
+        else:
+            for pairs in zip(a, b):
+                if isinstance(pairs[0], dict) or isinstance(pairs[1], dict):
+                    if not areSame(pairs[0], pairs[1]):
+                        return False            
+                elif pairs[0] != pairs[1]:
+                        return False
     return True
 
 def hasLength(sequence:Sequence[Any]|None, expected:int|None) -> bool:
@@ -61,7 +62,7 @@ def hasLength(sequence:Sequence[Any]|None, expected:int|None) -> bool:
         return False
     elif sequence is not None and expected is None:
         return False
-    return len(sequence) == expected
+    return sequence is not None and len(sequence) == expected
 
 def isNoneOrEmpty(sequence:Sequence[Any]|None) -> bool:
     """

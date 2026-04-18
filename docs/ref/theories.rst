@@ -24,7 +24,7 @@ Decorators
 
 .. code:: python
 
-    from punit import *
+    from punit import theory, inlinedata
 
     @theory
     @inlinedata(0, 1, 1)
@@ -38,7 +38,7 @@ Decorators
 
 .. code:: python
 
-    from punit import *
+    from punit import theory, inlinedata
 
     class MyClass:
         @theory

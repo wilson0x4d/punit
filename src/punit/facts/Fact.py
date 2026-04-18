@@ -1,39 +1,31 @@
 # SPDX-FileCopyrightText: © Shaun Wilson
 # SPDX-License-Identifier: MIT
-##
 
 import inspect
 from types import FunctionType, MethodType, ModuleType
-from typing import Any, Callable, Coroutine, ForwardRef
-from .TheoryManager import TheoryManager
+from typing import Callable, Coroutine, Optional, cast
+
 from ..traits.Trait import Trait
 
-Trait = ForwardRef('Trait')
 
-class Theory:
+class Fact:
 
-    __className:str
-    __datas:list[tuple]
+    __className:Optional[str]
     __moduleName:str
     __target:FunctionType|MethodType
-    __testName:str
+    __testName:Optional[str]
     __traits:list[Trait]
 
-    def __init__(self, moduleName:str, target:FunctionType|MethodType, className:str = None, testName:str = None):
+    def __init__(self, moduleName:str, target:FunctionType|MethodType|Callable, className:Optional[str] = None, testName:Optional[str] = None):
         self.__className = className
-        self.__datas = []
         self.__moduleName = moduleName
         self.__target = target
         self.__testName = testName
         self.__traits = []
 
     @property
-    def className(self) -> str:
+    def className(self) -> Optional[str]:
         return self.__className
-
-    @property
-    def datas(self) -> list[tuple]:
-        return self.__datas
 
     @property
     def moduleName(self) -> str:
@@ -46,54 +38,45 @@ class Theory:
     @property
     def testName(self) -> str:
         return self.__testName if self.__testName is not None else self.__target.__qualname__.split('.')[-1]
+    
+    @property
+    def filterName(self) -> str:
+        return f'{self.moduleName}/{"" if self.className is None or len(self.className) == 0 else f"{self.className}/"}{self.testName}'
 
     @property
     def traits(self) -> list[Trait]:
         return self.__traits
 
-    @property
-    def filterName(self) -> str:
-        return f'{self.moduleName}/{"" if self.className is None or len(self.className) == 0 else f"{self.className}/"}{self.testName}'
-
-    async def execute(self, module:ModuleType, data:tuple) -> None:
-        coro:Coroutine = None
+    async def execute(self, module:ModuleType) -> None:
+        coro:Coroutine|None = None
         if hasattr(self.__target, '__qualname__') and self.__target.__qualname__.find('.') > -1:
             qnparts = self.__target.__qualname__.split('.')
             if isinstance(self.__target, staticmethod):
-                coro = self.__target(*data)
+                coro = self.__target()
                 self.__className = '.'.join(qnparts[0:-1])
                 self.__testName = qnparts[-1]
             else:
                 qntarget = module
-                self.__testName = qnparts[-1]
                 self.__className = '.'.join(qnparts[0:-1])
+                self.__testName = qnparts[-1]
                 for qnpart in qnparts[0:-1]:
                     qntarget = getattr(qntarget, qnpart)
                 if isinstance(self.__target, classmethod):
-                    args = (qntarget,) + data
-                    coro = self.__target.__func__(*args)
+                    coro = self.__target.__func__(qntarget)
                 else:
-                    args = (qntarget(),) + data
-                    coro = self.__target(*args)
+                    coro = self.__target(cast(Callable,qntarget)())
         else:
             self.__className = None
             self.__testName = self.__target.__name__
-            coro = self.__target(*data)
+            coro = self.__target()
         if inspect.iscoroutine(coro):
             await coro
 
 
-def theory(target:Callable) -> Callable:
+def fact(target:Callable) -> Callable:
+    from .FactManager import FactManager
     if (not inspect.isfunction(target)) and (not isinstance(target, classmethod)) and (not isinstance(target, staticmethod)):
-        raise Exception('@theory can only be applied to functions and methods.')
-    theory:Theory = Theory(target.__module__, target)
-    TheoryManager.instance().put(theory)
+        raise Exception('@fact can only be applied to functions and methods.')
+    fact:Fact = Fact(target.__module__, target)
+    FactManager.instance().put(fact)
     return target
-
-
-def inlinedata(*args) -> Callable:
-    def wrapper(target:Callable) -> Callable:
-        if args is not None and len(args) > 0:
-            TheoryManager.instance().withData(target, args)
-        return target
-    return wrapper

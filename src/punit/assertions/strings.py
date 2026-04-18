@@ -14,17 +14,16 @@ def areSame(a:str|None, b:str|None) -> bool:
     Returns:
         True if the strings contain the same characters in the same order, False otherwise
     """
-    if a is b:
-        return True
-    elif a is None and b is not None:
+    if a is None and b is not None:
         return False
     elif a is not None and b is None:
         return False
-    elif len(a) != len(b):
-        return False
-    for i in range(len(a)):
-        if a[i] != b[i]:
+    elif a is not None and b is not None:
+        if len(a) != len(b):
             return False
+        for i in range(len(a)):
+            if a[i] != b[i]:
+                return False
     return True
 
 def isNoneOrEmpty(string:str|None) -> bool:

@@ -77,9 +77,10 @@ class HtmlReportGenerator:
                 lines.append('<div class="testresult-body">')
                 if not testResult.isSuccess:
                     lines.append('<div class="testresult-error">')
-                    if len(f'{testResult.exception}') > 0:
-                        lines.append(f'Error:<br/>&nbsp;&nbsp;{testResult.exception}<br/>')
-                    lines.append(f'Traceback:<br/>{"".join(traceback.format_tb(testResult.exception.__traceback__)).replace('\n', '<br/>').replace(' ', '&nbsp;')}')
+                    if testResult.exception is not None:
+                        if len(f'{testResult.exception}') > 0:
+                            lines.append(f'Error:<br/>&nbsp;&nbsp;{testResult.exception}<br/>')
+                        lines.append(f'Traceback:<br/>{"".join(traceback.format_tb(testResult.exception.__traceback__)).replace('\n', '<br/>').replace(' ', '&nbsp;')}')
                     lines.append('</pre></div>')
                 if testResult.stdout is not None:
                     lines.append(f'<div class="testresult-stdout"><pre>{testResult.stdout}</pre></div>')

@@ -17,7 +17,7 @@ Decorators
 
 .. code:: python
 
-    from punit import *
+    from punit import fact
 
     @fact
     def myFunction():
@@ -27,7 +27,7 @@ Decorators
 
 .. code:: python
 
-    from punit import *
+    from punit import fact
 
     class MyClass:
         @fact

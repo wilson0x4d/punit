@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from punit.assertions import *
-from punit.facts import fact
+from punit import collections, exceptions, strings
+from punit import fact
+
 
 @fact
 def fact_func() -> None:
@@ -15,6 +16,7 @@ async def async_fact_func() -> None:
     """Async Function BVT"""
     await asyncio.sleep(0.1)
     assert 1 == 1
+
 
 class FactClass:
 

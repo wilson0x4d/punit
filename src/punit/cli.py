@@ -3,14 +3,14 @@
 
 import os
 import sys
-import typing
+from typing import Optional
 from . import __version__
 from .traits import Trait
 
-CommandLineInterface = typing.ForwardRef('CommandLineInterface')
 
 class CommandLineInterface:
 
+    __aliases:dict[str,str]
     __excludePatterns:list[str]
     __excludeTraits:list[Trait]
     __failfast:bool
@@ -19,15 +19,15 @@ class CommandLineInterface:
     __includePatterns:list[str]
     __includeTraits:list[Trait]
     __no_default_patterns:bool
-    __outputFilename:str
+    __outputFilename:Optional[str]
     __quiet:bool
-    __reportFormat:str
-    __testPackageName:str
+    __reportFormat:Optional[str]
+    __testPackageName:str|None
     __verbose:bool
-    __workdir:str
+    __workdir:str|None
 
     def __init__(self):
-        self.__aliases = {}
+        self.__aliases = dict[str,str]()
         self.__excludePatterns = []
         self.__excludeTraits = []
         self.__failfast = False
@@ -43,8 +43,8 @@ class CommandLineInterface:
         self.__workdir = os.path.curdir
         self.__verbose = False
 
-    def __parse(self, argv:list[str]) -> CommandLineInterface:
-        aliasName:str = None
+    def __parse(self, argv:list[str]) -> 'CommandLineInterface':
+        aliasName:str|None = None
         extractFilterPattern:bool = False
         extractExcludePattern:bool = False
         extractTrait:bool = False
@@ -82,7 +82,7 @@ class CommandLineInterface:
                 extractAliasName = False
                 extractAliasPath = True
                 continue
-            elif extractAliasPath:
+            elif extractAliasPath and aliasName is not None:
                 extractAliasPath = False
                 self.__aliases[aliasName] = arg
                 continue
@@ -141,7 +141,7 @@ class CommandLineInterface:
         return self
 
     @property
-    def aliases(self) -> bool:
+    def aliases(self) -> dict:
         return self.__aliases
 
     @property
@@ -186,7 +186,7 @@ class CommandLineInterface:
 
     @property
     def testPackageName(self) -> str:
-        return self.__testPackageName
+        return 'tests' if self.__testPackageName is None else self.__testPackageName
 
     @property
     def verbose(self) -> bool:
@@ -194,7 +194,7 @@ class CommandLineInterface:
 
     @property
     def workdir(self) -> str:
-        return self.__workdir
+        return os.path.curdir if self.__workdir is None else self.__workdir
 
     def printHelp(self) -> None:
         self.printVersion()

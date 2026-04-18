@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from punit.assertions import *
-from punit.theories import theory, inlinedata
+from punit import theory, inlinedata
+
 
 @theory
 @inlinedata('1','2','3')

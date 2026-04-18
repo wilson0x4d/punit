@@ -3,18 +3,17 @@
 ##
 
 import re
-from typing import Callable, ForwardRef
+from typing import Callable, Optional
 
-Fact = ForwardRef('Fact')
-FactManager = ForwardRef('FactManager')
-Trait = ForwardRef('Trait')
+from .Fact import Fact
+from ..traits.Trait import Trait
 
 
 class FactManager:
 
     __excludeTraits:list[Trait]    
-    __filterPattern:re.Pattern
-    __instance:'FactManager' = None
+    __filterPattern:Optional[re.Pattern]
+    __instance:'FactManager'|None = None
     __includeTraits:list[Trait]
     __modules:dict[str, list[Fact]]
     __traits:dict[Callable, list[Trait]]
@@ -41,7 +40,7 @@ class FactManager:
         self.__excludeTraits = value
 
     @property
-    def filterPattern(self) -> re.Pattern:
+    def filterPattern(self) -> Optional[re.Pattern]:
         return self.__filterPattern
     
     @filterPattern.setter
@@ -78,7 +77,7 @@ class FactManager:
         return l
 
     def put(self, fact:Fact) -> None:
-        if len(self.__filterPattern.findall(fact.filterName)) > 0:
+        if self.__filterPattern is None or len(self.__filterPattern.findall(fact.filterName)) > 0:
             l = self.get(fact.moduleName)
             t = self.__traits.get(fact.target)
             if t is not None:
