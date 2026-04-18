@@ -4,7 +4,7 @@
 import os
 import sys
 from typing import Optional
-from . import __version__
+from . import __version__, __commit__
 from .traits import Trait
 
 
@@ -268,7 +268,7 @@ Options:
         print('Filter Pattern:')
         print(f'\t{self.__filterPattern}')
     def printVersion(self) -> None:
-        print(f'pUnit {__version__}')
+        print(f'pUnit {__version__} ({__commit__})')
 
     def validate(self) -> None:
         if self.__workdir is None or len(self.__workdir.lstrip()) == 0 or self.__workdir.startswith('-'):
