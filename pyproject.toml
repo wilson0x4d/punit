@@ -45,3 +45,6 @@ exclude = [
 
 [tool.setuptools.data-files]
 bin = [".scripts/punit"]
+
+[tool.setuptools.package-data]
+"punit" = ["py.typed"]

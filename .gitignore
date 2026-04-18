@@ -11,3 +11,4 @@ docs/_build/
 *.xml
 *.html
 requirement*.txt
+.mypy_cache
