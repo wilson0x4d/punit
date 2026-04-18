@@ -3,5 +3,6 @@
 # SPDX-License-Identifier: MIT
 ##
 from subprocess import run
-from sys import executable, argv
-run([ executable, "-m", "punit" ] + argv[1:], check=True)
+from sys import executable, argv, exit
+result = run([ executable, "-m", "punit" ] + argv[1:], check=False)
+exit(result.returncode)
