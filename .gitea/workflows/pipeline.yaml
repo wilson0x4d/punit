@@ -7,7 +7,7 @@ on:
       - master
     paths:
       - '.scripts/punit'
-      - 'punit/**'
+      - 'src/**'
       - 'pyproject.toml'
       - 'README.md'
       - 'docs/**'
@@ -34,7 +34,7 @@ jobs:
         id: run-tests
         run: |
           .scripts/run-tests
-          .scripts/build-docs # does not publish, compilation only.
+          .scripts/make-docs # does not publish, compilation only.
       - name: "Package"
         id: build-package
         run: |
