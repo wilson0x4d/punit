@@ -14,7 +14,7 @@ import punit
 project = 'pUnit'
 copyright = '2024 Shaun Wilson'
 author = 'Shaun Wilson'
-release = '1.0'
+release = '0.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
