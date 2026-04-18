@@ -6,4 +6,6 @@ set -eo pipefail
 if [ -z "$VIRTUAL_ENV" ]; then
     source .venv/bin/activate
 fi
+mypy src
+MYPYPATH=src mypy tests
 PYTHONPATH=src python -m punit --trait '!integration' --trait '!hardcoded' --trait '!longrunning' --trait '!manual' # --report html --output report.html

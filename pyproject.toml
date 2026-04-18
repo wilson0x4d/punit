@@ -22,9 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "build",
-    "setuptools",
-    "twine"
+    "mypy"
 ]
 
 [project.urls]
