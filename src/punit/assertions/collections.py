@@ -4,7 +4,7 @@
 from typing import Any, Callable, Sequence, Optional, cast
 
 
-def areSame(a:Sequence[Any]|None, b:Sequence[Any]|None, sort:bool=False, sortFunction:Optional[Callable[[Any], Any]]=None) -> bool:
+def areSame(a:Sequence[Any]|list[Any]|dict[Any,Any]|None, b:Sequence[Any]|list[Any]|dict[Any,Any]|None, sort:bool=False, sortFunction:Optional[Callable[[Any], Any]]=None) -> bool:
     """
     Check if two sequences contain the same elements in the same order.
     
@@ -47,7 +47,7 @@ def areSame(a:Sequence[Any]|None, b:Sequence[Any]|None, sort:bool=False, sortFun
                         return False
     return True
 
-def hasLength(sequence:Sequence[Any]|None, expected:int|None) -> bool:
+def hasLength(sequence:Sequence[Any]|list[Any]|dict[Any,Any]|None, expected:int|None) -> bool:
     """
     Check if a sequence has the expected number of elements.
     
@@ -64,7 +64,7 @@ def hasLength(sequence:Sequence[Any]|None, expected:int|None) -> bool:
         return False
     return sequence is not None and len(sequence) == expected
 
-def isNoneOrEmpty(sequence:Sequence[Any]|None) -> bool:
+def isNoneOrEmpty(sequence:Sequence[Any]|list[Any]|dict[Any,Any]|None) -> bool:
     """
     Check if a sequence is None or empty.
 
