@@ -26,7 +26,7 @@ class FactManager:
         self.__traits = {}
 
     @staticmethod
-    def instance() -> FactManager:
+    def instance() -> 'FactManager':
         if FactManager.__instance is None:
             FactManager.__instance = FactManager()
         return FactManager.__instance

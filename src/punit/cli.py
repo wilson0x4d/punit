@@ -288,7 +288,7 @@ Options:
             self.__excludePatterns.append('/__*__')
 
     @staticmethod
-    def parse(argv:list[str] = sys.argv) -> CommandLineInterface:
+    def parse(argv:list[str] = sys.argv) -> 'CommandLineInterface':
         result = CommandLineInterface().__parse(argv)
         result.validate()
         return result

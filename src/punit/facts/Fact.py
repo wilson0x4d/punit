@@ -12,7 +12,7 @@ class Fact:
 
     __className:Optional[str]
     __moduleName:str
-    __target:FunctionType|MethodType
+    __target:FunctionType|MethodType|Callable
     __testName:Optional[str]
     __traits:list[Trait]
 
@@ -32,7 +32,7 @@ class Fact:
         return self.__moduleName
 
     @property
-    def target(self) -> FunctionType|MethodType:
+    def target(self) -> FunctionType|MethodType|Callable:
         return self.__target
 
     @property

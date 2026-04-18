@@ -28,7 +28,7 @@ class TheoryManager:
         self.__traits = {}
 
     @staticmethod
-    def instance() -> TheoryManager:
+    def instance() -> 'TheoryManager':
         if TheoryManager.__instance is None:
             TheoryManager.__instance = TheoryManager()
         return TheoryManager.__instance

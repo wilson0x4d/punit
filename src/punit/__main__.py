@@ -10,7 +10,7 @@ from .reports import HtmlReportGenerator, JUnitReportGenerator
 from .runner import TestRunner
 
 
-async def async_main():
+async def async_main() -> None:
     ts = time.time()
     cli = CommandLineInterface.parse()
     if cli.help:
@@ -36,13 +36,13 @@ async def async_main():
     if not cli.quiet:
         print(f'Total: {len(results)}, Failures: {failureCount}, Took: {totalTime:.3f}s')
     if cli.reportFormat is not None:
-        report:str|None = None
+        report:str = ''
         match cli.reportFormat:
             case 'html':
                 report = HtmlReportGenerator().generate(results)
             case 'junit':
                 report = JUnitReportGenerator().generate(results)
-        if report is not None:
+        if len(report) > 0:
             if cli.outputFilename is None:
                 print(report)
             else:

@@ -40,6 +40,7 @@ class TestRunner:
 
     async def run(self) -> list[TestResult]:
         results:list[TestResult] = []
+        result:TestResult
         # TODO: aliasing
         hostName:str = socket.gethostname()
         testPackagePath = os.path.join(os.path.abspath(os.curdir), self.__testPackageName).replace('\\', '/')
@@ -52,7 +53,7 @@ class TestRunner:
                 # execute all facts
                 facts = FactManager.instance().get(testModule.__name__)
                 for fact in facts:
-                    result:TestResult = TestResult()
+                    result = TestResult()
                     result.hostName = hostName
                     result.packageName = self.__testPackageName
                     result.fileName = filename
@@ -77,7 +78,7 @@ class TestRunner:
                 theories = TheoryManager.instance().get(testModule.__name__)
                 for theory in theories:
                     for data in theory.datas:
-                        result:TestResult = TestResult()
+                        result = TestResult()
                         result.hostName = hostName
                         result.packageName = self.__testPackageName
                         result.properties['data'] = data

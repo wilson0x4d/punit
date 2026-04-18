@@ -14,7 +14,7 @@ class Theory:
     __className:Optional[str]
     __datas:list[tuple]
     __moduleName:str
-    __target:FunctionType|MethodType
+    __target:FunctionType|MethodType|Callable
     __testName:Optional[str]
     __traits:list[Trait]
 
@@ -39,7 +39,7 @@ class Theory:
         return self.__moduleName
 
     @property
-    def target(self) -> FunctionType|MethodType:
+    def target(self) -> FunctionType|MethodType|Callable:
         return self.__target
 
     @property

@@ -68,5 +68,5 @@ def theory_nodata() -> None:
 
 @theory
 @inlinedata()
-def theory_nodata() -> None:
+def theory_emptydata() -> None:
     assert False, '@theory with empty data will not be run.'

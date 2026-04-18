@@ -54,7 +54,6 @@ class JUnitTestSuite:
     name:Optional[str] = None
     hostname:Optional[str] = None
     id:Optional[int] = None
-    name:Optional[str] = None
     package:Optional[str] = None
     timestamp:Optional[datetime.datetime] = None
     # eles
@@ -97,7 +96,7 @@ class JUnitTestSuite:
         return result
 
     @property
-    def tests(self) -> float:
+    def tests(self) -> int:
         return 0 if self.testCases is None else len(self.testCases)
 
     @property
@@ -117,11 +116,12 @@ class JUnitReportGenerator:
     def generate(self, testResults:list[TestResult]) -> str:
         # transform to intermediary model
         testSuites:dict[str, JUnitTestSuite] = {}
-        ts = 0
+        testSuite:JUnitTestSuite|None
+        ts:float = 0
         for testResult in testResults:
             if testResult.stopTime is not None and ts < testResult.stopTime:
                 ts = testResult.stopTime
-            testSuite:JUnitTestSuite|None = testSuites.get(testResult.moduleName)
+            testSuite = testSuites.get(testResult.moduleName)
             if testSuite is None:
                 testSuite = JUnitTestSuite()
                 testSuite.name = testResult.moduleName
@@ -139,10 +139,10 @@ class JUnitReportGenerator:
         totalErrorCount = 0
         totalFailureCount = 0
         totalTestCount = 0
-        totalTime = 0
+        totalTime:float = 0
         testSuitesEle:et.Element = et.Element('testsuites')
         for testSuiteName in testSuites:
-            testSuite:JUnitTestSuite|None = testSuites[testSuiteName]
+            testSuite = testSuites[testSuiteName]
             if testSuite is not None:
                 totalTime += testSuite.time
                 totalDisabledCount += testSuite.disabled

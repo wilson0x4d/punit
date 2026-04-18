@@ -33,8 +33,8 @@ jobs:
       - name: "Test"
         id: run-tests
         run: |
-          .scripts/run-tests
           .scripts/make-docs # does not publish, compilation only.
+          .scripts/run-tests
       - name: "Package"
         id: build-package
         run: |
