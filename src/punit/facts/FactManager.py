@@ -20,7 +20,7 @@ class FactManager:
     
     def __init__(self):
         if FactManager.__instance is not None:
-            raise Exception('Cannot create more than one instance of FactManager')
+            raise Exception('Cannot create more than one instance of FactManager') # pragma: no cover
         self.__filterPattern = None
         self.__modules = {}
         self.__traits = {}
@@ -56,13 +56,13 @@ class FactManager:
         self.__includeTraits = value
 
     def __excludeByTraits(self, fact:Fact) -> bool:
-        if self.__excludeTraits is not None and len(self.__excludeTraits) > 0:
-            for trait in self.__excludeTraits:
+        if self.excludeTraits is not None and len(self.excludeTraits) > 0:
+            for trait in self.excludeTraits:
                 for L_trait in fact.traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return True
-        if self.__includeTraits is not None and len(self.__includeTraits) > 0:
-            for trait in self.__includeTraits:
+        if self.includeTraits is not None and len(self.includeTraits) > 0:
+            for trait in self.includeTraits:
                 for L_trait in fact.traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return False
@@ -77,7 +77,7 @@ class FactManager:
         return l
 
     def put(self, fact:Fact) -> None:
-        if self.__filterPattern is None or len(self.__filterPattern.findall(fact.filterName)) > 0:
+        if self.filterPattern is None or len(self.filterPattern.findall(fact.filterName)) > 0:
             l = self.get(fact.moduleName)
             t = self.__traits.get(fact.target)
             if t is not None:

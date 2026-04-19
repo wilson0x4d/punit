@@ -8,4 +8,4 @@ if [ -z "$VIRTUAL_ENV" ]; then
 fi
 mypy src
 MYPYPATH=src mypy --namespace-packages --explicit-package-bases tests
-PYTHONPATH=src python -m punit --trait '!integration' --trait '!hardcoded' --trait '!longrunning' --trait '!manual' # --report html --output report.html
+PYTHONPATH=src coverage run -m punit -p tests --trait '!integration' --trait '!hardcoded' --trait '!longrunning' --trait '!manual' --verbose --filter '*' --include '*' --exclude 'jabba-have-a-wookie-cookie' -a fig newton "$@"

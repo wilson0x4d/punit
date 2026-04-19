@@ -48,3 +48,8 @@ pip-compile -o requirements.txt --all-extras --strip-extras pyproject.toml
 if [ -f requirements.txt ]; then
     pip install -r requirements.txt
 fi
+export PYTHONPATH=src
+export SFPATH="$(realpath '.scripts')"
+if ! [[ ":PATH:" == *":$SFPATH:"* ]]; then
+    export PATH="$SFPATH:$PATH"
+fi

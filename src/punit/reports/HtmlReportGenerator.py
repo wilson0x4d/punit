@@ -4,10 +4,8 @@
 import traceback
 from ..TestResult import TestResult
 
-class HtmlReportGenerator:
 
-    def __init__(self):
-        pass
+class HtmlReportGenerator:
 
     def generate(self, testResults:list[TestResult]) -> str:
         failureCount = 0
@@ -44,7 +42,6 @@ class HtmlReportGenerator:
                      .test-time-fail { background-color: #FEE }
                      </style>
                      """)
-        
         lines.append('<div class="testresults-summary">')
         lines.append('<div>&nbsp;</div>')
         lines.append(f'<div>Total Executed: <span class="pass">{totalCount-failureCount}</span></div>')

@@ -12,6 +12,7 @@ from punit import theory, inlinedata
 @inlinedata('Left Is None', None, 'hello', False)
 @inlinedata('Right Is None', 'hello', None, False)
 @inlinedata('Both Are None', None, None, True)
+@inlinedata('Lnegths Differ', 'two', 'three', False)
 def areSame(when: str, a: Optional[str], b: Optional[str], then: bool):
     assert then == strings.areSame(a, b)
 

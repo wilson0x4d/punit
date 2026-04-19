@@ -4,6 +4,7 @@
 import asyncio
 from punit import collections, exceptions, strings
 from punit import fact
+from punit.assertions.exceptions import raises
 
 
 @fact
@@ -50,3 +51,12 @@ class FactClass:
     def meth3() -> None:
         """Static Method BVT"""
         assert not hasattr(FactClass, '__valueTest')
+
+
+try:
+    @fact
+    class NonClass:
+        pass
+    assert False, 'did not receive expected exception!' # pragma: no cover
+except Exception as ex:
+    assert strings.areSame(str(ex), '@fact can only be applied to functions and methods.'), f'Unexpected Exception Message: {ex}'

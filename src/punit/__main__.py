@@ -13,11 +13,11 @@ from .runner import TestRunner
 async def async_main() -> None:
     ts = time.time()
     cli = CommandLineInterface.parse()
-    if cli.help:
+    if cli.help: # pragma: no cover
         cli.printHelp()
-    elif cli.verbose and not cli.quiet:
+    elif cli.verbose and not cli.quiet: # pragma: no cover
         cli.printSummary()
-    elif not cli.quiet:
+    elif not cli.quiet: # pragma: no cover
         cli.printVersion()
     os.chdir(cli.workdir)
     testModuleDiscovery = TestModuleDiscovery(
@@ -32,10 +32,10 @@ async def async_main() -> None:
     failureCount = 0
     for result in results:
         if not result.isSuccess:
-            failureCount += 1
+            failureCount += 1 # pragma: no cover
     if not cli.quiet:
         print(f'Total: {len(results)}, Failures: {failureCount}, Took: {totalTime:.3f}s')
-    if cli.reportFormat is not None:
+    if cli.reportFormat is not None: # pragma: no cover
         report:str = ''
         match cli.reportFormat:
             case 'html':
@@ -50,7 +50,7 @@ async def async_main() -> None:
                     file.write(report.encode())
                 print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
     if failureCount > 0:
-        exit(119)
+        exit(119) # pragma: no cover
 
 def main():
     asyncio.run(async_main())

@@ -21,6 +21,7 @@ async def traited_fact_func() -> None:
 
 @fact
 @trait('integration')
+# pragma: no cover
 async def traited_integration_test() -> None:
     await asyncio.sleep(0.1)
     assert False, 'unit test run excludes "integration" tests.'

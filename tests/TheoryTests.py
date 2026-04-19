@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+from punit import strings
 import asyncio
 from punit import theory, inlinedata
 
@@ -64,9 +65,17 @@ class TheoryClass:
 
 @theory
 def theory_nodata() -> None:
-    assert False, '@theory with no data will not be run.'
+    assert False, '@theory with no data will not be run.' # pragma: no cover
 
 @theory
 @inlinedata()
 def theory_emptydata() -> None:
-    assert False, '@theory with empty data will not be run.'
+    assert False, '@theory with empty data will not be run.' # pragma: no cover
+
+try:
+    @theory
+    class NonClass:
+        pass
+    assert False, 'did not receive expected exception!' # pragma: no cover
+except Exception as ex:
+    assert strings.areSame(str(ex), '@theory can only be applied to functions and methods.'), f'Unexpected Exception Message: {ex}'

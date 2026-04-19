@@ -4,14 +4,6 @@
 from typing import Any, Callable, Optional, cast, get_args
 
 
-def isNoneOrWhiteSpace(input:str):
-    return input is None or len(input.lstrip()) == 0
-
-
-def isNoneOrEmpty(input:str):
-    return input is None or len(input) == 0
-
-
 class raises[TError:Exception]:
     
     __action:Callable

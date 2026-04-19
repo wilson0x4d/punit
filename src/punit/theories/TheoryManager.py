@@ -21,7 +21,7 @@ class TheoryManager:
     
     def __init__(self):
         if TheoryManager.__instance is not None:
-            raise Exception('Cannot create more than one instance of TheoryManager')
+            raise Exception('Cannot create more than one instance of TheoryManager') # pragma: no cover
         self.__filterPattern = None
         self.__modules = {}
         self.__datas = {}
@@ -32,9 +32,10 @@ class TheoryManager:
         if TheoryManager.__instance is None:
             TheoryManager.__instance = TheoryManager()
         return TheoryManager.__instance
+        
     @property
     def excludeTraits(self) -> list[Trait]:
-        return [] if self.__excludeTraits is None else self.excludeTraits
+        return [] if self.__excludeTraits is None else self.__excludeTraits
     
     @excludeTraits.setter
     def excludeTraits(self, value:list[Trait]) -> None:
@@ -50,20 +51,20 @@ class TheoryManager:
 
     @property
     def includeTraits(self) -> list[Trait]:
-        return [] if self.__includeTraits is None else self.includeTraits
+        return [] if self.__includeTraits is None else self.__includeTraits
     
     @includeTraits.setter
     def includeTraits(self, value:list[Trait]) -> None:
         self.__includeTraits = value
 
     def __excludeByTraits(self, theory:Theory) -> bool:
-        if self.__excludeTraits is not None and len(self.__excludeTraits) > 0:
-            for trait in self.__excludeTraits:
+        if self.excludeTraits is not None and len(self.__excludeTraits) > 0:
+            for trait in self.excludeTraits:
                 for L_trait in theory.traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return True
-        if self.__includeTraits is not None and len(self.__includeTraits) > 0:
-            for trait in self.__includeTraits:
+        if self.includeTraits is not None and len(self.includeTraits) > 0:
+            for trait in self.includeTraits:
                 for L_trait in theory.traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return False
@@ -78,7 +79,7 @@ class TheoryManager:
         return l
 
     def put(self, theory:Theory) -> None:
-        if self.__filterPattern is None or len(self.__filterPattern.findall(theory.filterName)) > 0:
+        if self.filterPattern is None or len(self.filterPattern.findall(theory.filterName)) > 0:
             l = self.get(theory.moduleName)
             d = self.__datas.get(theory.target)
             if d is not None:

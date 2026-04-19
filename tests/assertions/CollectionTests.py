@@ -46,6 +46,7 @@ def areSameWithSort(when:str, a:Sequence, b:Sequence, then:bool):
 
 @theory
 @inlinedata('Sequence Is None', None, 0, True)
+@inlinedata('Sequence Is None and Has Length', None, 1, False)
 @inlinedata('Sequence Is Empty', [], 0, True)
 @inlinedata('Sequence Is Not None And Has Length', [1], 1, True)
 @inlinedata('Sequence Is Not Empty And Has Length', [1], 1, True)

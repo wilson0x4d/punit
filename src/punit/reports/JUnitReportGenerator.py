@@ -110,9 +110,6 @@ class JUnitTestSuite:
 
 class JUnitReportGenerator:
 
-    def __init__(self):
-        pass
-
     def generate(self, testResults:list[TestResult]) -> str:
         # transform to intermediary model
         testSuites:dict[str, JUnitTestSuite] = {}

@@ -196,9 +196,11 @@ class CommandLineInterface:
     def workdir(self) -> str:
         return os.path.curdir if self.__workdir is None else self.__workdir
 
+    
     def printHelp(self) -> None:
-        self.printVersion()
-        print(
+        if True: # pragma: no cover
+            self.printVersion()
+            print(
 """
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
@@ -251,7 +253,7 @@ Options:
         suppress any program output.
 """
         )
-        exit(0)
+            exit(0)
 
     def printSummary(self) -> None:
         self.printVersion()
