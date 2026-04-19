@@ -22,6 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "furo",
     "coverage",
     "mypy",
     "twine"
