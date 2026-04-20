@@ -9,8 +9,8 @@ on:
       - '.scripts/punit'
       - 'src/**'
       - 'pyproject.toml'
-      - 'README.md'
-      - 'docs/**'
+      - '!README.md'
+      - '!docs/**'
       - '.gitea/workflows/pipeline.yaml'
 jobs:
   package-and-deploy:
