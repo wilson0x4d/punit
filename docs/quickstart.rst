@@ -84,7 +84,22 @@ Separate from the **Test Discovery** process, **pUnit** can be instructed to exe
 
 The same filter rules that apply to ``--include`` and ``--exclude`` arguments also apply to ``--filter``, but take note that unlike ``--include`` and ``--exclude`` multiple ``--filter`` arguments will not be honored (last-in wins.)
 
-The ``--filter`` argument is intended as a human QOL feature. Build workflows should use ``--include`` and ``--exclude`` for maximum flexibility and control.
+The ``--filter`` argument can also be provided a file spec pointing to a plaintext "filters file":
+
+.. code:: bash
+
+    # filter tests according to the filters defined in `tests/filters-file`
+    # (take note of the `@` prefix, which tells pUnit "this is a file")
+    python3 -m punit --filter '@tests/filters-file.txt'
+
+A filter file is a plaintext file where each line contains a filter pattern, for example:
+
+.. code:: text
+
+    *Widgets*
+    *integration*Tests*
+
+These filters are applied in the same way as the singular ``--filter PATTERN`` would be applied. If it works with ``---filter PATTERN`` it should also work within a filters file.
 
 Default Behavior
 ----------------
@@ -93,7 +108,7 @@ The default behavior is equivalent to the following:
 
 .. code:: bash
 
-    python3 -m punit --working-directory . --test-package tests --include '/tests/*.py' --exclude '/.*' --exclude '/__*__'
+    python3 -m punit --working-directory . --test-package tests --include '*.py' --exclude '/.*' --exclude '/__*__' --filter '*'
 
 This ensures all Python files under the ``tests/`` subdirectory are executed as tests, except for Python files within "dot-directories" or having "dunder-names".
 

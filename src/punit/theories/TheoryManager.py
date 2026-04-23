@@ -12,7 +12,7 @@ from .Theory import Theory
 class TheoryManager:
 
     __excludeTraits:list[Trait]
-    __filterPattern:Optional[re.Pattern]
+    __filterPatterns:Optional[list[re.Pattern]]
     __includeTraits:list[Trait]
     __instance:Optional['TheoryManager'] = None
     __modules:dict[str, list[Theory]]
@@ -22,7 +22,7 @@ class TheoryManager:
     def __init__(self):
         if TheoryManager.__instance is not None:
             raise Exception('Cannot create more than one instance of TheoryManager') # pragma: no cover
-        self.__filterPattern = None
+        self.__filterPatterns = None
         self.__modules = {}
         self.__datas = {}
         self.__traits = {}
@@ -42,12 +42,12 @@ class TheoryManager:
         self.__excludeTraits = value
 
     @property
-    def filterPattern(self) -> Optional[re.Pattern]:
-        return self.__filterPattern
+    def filterPatterns(self) -> Optional[list[re.Pattern]]:
+        return self.__filterPatterns
     
-    @filterPattern.setter
-    def filterPattern(self, value:re.Pattern) -> None:
-        self.__filterPattern = value
+    @filterPatterns.setter
+    def filterPatterns(self, value:list[re.Pattern]) -> None:
+        self.__filterPatterns = value
 
     @property
     def includeTraits(self) -> list[Trait]:
@@ -79,7 +79,13 @@ class TheoryManager:
         return l
 
     def put(self, theory:Theory) -> None:
-        if self.filterPattern is None or len(self.filterPattern.findall(theory.filterName)) > 0:
+        matchesFilterPattern:bool = self.filterPatterns is None
+        if self.filterPatterns is not None and len(self.filterPatterns) > 0:
+            for filterPattern in self.filterPatterns:
+                if len(filterPattern.findall(theory.filterName)) > 0:
+                    matchesFilterPattern = True
+                    break
+        if matchesFilterPattern:
             l = self.get(theory.moduleName)
             d = self.__datas.get(theory.target)
             if d is not None:

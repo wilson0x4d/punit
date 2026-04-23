@@ -8,4 +8,4 @@ def unicodeShouldNotFailReportWriter() -> None:
     """
     Report writer was observed failing to encode the following unicode sequences.
     """
-    print(u'\U0001f7e9')
+    print(u'test output --> \U0001f7e9 <-- test output') 

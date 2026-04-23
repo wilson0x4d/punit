@@ -208,7 +208,7 @@ Usage: python3 -m punit [-h|--help]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
-                        [-f|--filter PATTERN]
+                        [-f|--filter PATTERN|@FILEPATH]
                         [-t|--trait [!]NAME[=VALUE]]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
@@ -230,9 +230,11 @@ Options:
     -e, --exclude PATTERN
         Exclude any tests matching PATTERN, overriding --include
         Default: '__*__' (dunder files), '/.*/' (dot-directories)
-    -f, --filter
+    -f, --filter PATTERN|@FILEPATH
         Only execute tests matching PATTERN
         Default: '*'
+        To specify a file containing a list of filters, prefix
+        with '@' and provide the path to the file.
     -t, --trait [!]NAME[=VALUE]
         Execute tests with the specified trait, negated by prefixing with '!'.
         If VALUE is specified, matches tests with the trait having specified value.
@@ -267,8 +269,15 @@ Options:
             print('Exclude Patterns:')
             for pattern in self.__excludePatterns:
                 print(f'\t{pattern}')
-        print('Filter Pattern:')
-        print(f'\t{self.__filterPattern}')
+        if self.__filterPattern.startswith('@'):
+            print(f'Filter Patterns: (from {self.__filterPattern[1:]})')
+            if not os.path.exists(os.path.realpath(self.__filterPattern[1:])):
+                print(f'\tFILTERS FILE DOES NOT EXIST, ABORTING!')
+                exit(5)
+        else:
+            print('Filter Pattern:')
+            print(f'\t{self.__filterPattern}')
+
     def printVersion(self) -> None:
         print(f'pUnit {__version__} ({__commit__})')
 
@@ -283,7 +292,7 @@ Options:
         if not self.__no_default_patterns:
             # if no other patterns specified, default to including all files found in the directory matching `testPackageName`
             if len(self.__includePatterns) == 0:
-                self.__includePatterns.append(f'/{self.testPackageName}/*.py')
+                self.__includePatterns.append(f'*.py')
             # always exclude dot-folders (.git, .venv, etc)
             self.__excludePatterns.append('/.*')
             # always exclude dunder files

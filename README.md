@@ -47,7 +47,7 @@ Usage: python3 -m punit [-h|--help]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
                         [-e|--exclude PATTERN]
-                        [-f|--filter PATTERN]
+                        [-f|--filter PATTERN|@FILEPATH]
                         [-t|--trait [!]NAME[=VALUE]]
                         [-w|--workdir DIRECTORY]
                         [-n|--no-default-patterns]
@@ -69,9 +69,11 @@ Options:
     -e, --exclude PATTERN
         Exclude any tests matching PATTERN, overriding --include
         Default: '__*__' (dunder files), '/.*/' (dot-directories)
-    -f, --filter PATTERN
+    -f, --filter PATTERN|@FILEPATH
         Only execute tests matching PATTERN
         Default: '*'
+        To specify a file containing a list of filters, prefix
+        with '@' and provide the path to the file.
     -t, --trait [!]NAME[=VALUE]
         Execute tests with the specified trait, negated by prefixing with '!'.
         If VALUE is specified, matches tests with the trait having specified value.
