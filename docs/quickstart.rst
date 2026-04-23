@@ -70,8 +70,8 @@ The ``--exclude`` and ``--include`` arguments accept simple wildcard patterns to
 
 Order does not matter, and ``--exclude`` will override a target even if an ``--include`` pattern would normally have included it.
 
-Test Filtering
---------------
+Test Filters
+------------
 
 Separate from the **Test Discovery** process, **pUnit** can be instructed to execute only a subset of discovered tests by providing a ``--filter`` argument. This argument can be used to restrict test execution to a specific test, test class, test module, or (if tests are named well) a range of tests spanning the test hierarchy -- such as testing a feature.
 
@@ -82,9 +82,14 @@ Separate from the **Test Discovery** process, **pUnit** can be instructed to exe
     # but imagine you had a series of tests targeting "Widgets"..
     python3 -m punit --filter 'Widget'
 
-The same filter rules that apply to ``--include`` and ``--exclude`` arguments also apply to ``--filter``, but take note that unlike ``--include`` and ``--exclude`` multiple ``--filter`` arguments will not be honored (last-in wins.)
+The same filter rules that apply to ``--include`` and ``--exclude`` arguments also apply to ``--filter``.
 
-The ``--filter`` argument can also be provided a file spec pointing to a plaintext "filters file":
+.. tip:: pUnit v1.2.21 changed ``--filter`` so that you may specify it multiple times to define multiple filters.
+
+Filters File
+------------
+
+The ``--filter`` argument can also specify a **Filters File** containing your filters:
 
 .. code:: bash
 
@@ -92,18 +97,22 @@ The ``--filter`` argument can also be provided a file spec pointing to a plainte
     # (take note of the `@` prefix, which tells pUnit "this is a file")
     python3 -m punit --filter '@tests/filters-file.txt'
 
-A filter file is a plaintext file where each line contains a filter pattern, except lines starting with ``#`` which are treated as comments. For example:
+A **Filters File** is a plaintext file where each line contains a filter pattern.
 
 .. code:: text
 
-    # this filter exludes any test with "donotrun" it its name
-    !*donotrun*
-    # this filter includes "all tests"
-    *
+    # this is a comment
+    !*widgets* # this is an "exclude" filter, due to the `!` prefix
+    * # this is an "include all" filter
 
-In this example any tests having "widgets" in their name will be included, except those having "integration" in their name will be excluded (this because of the ``!`` prefix which negates the filter.)
+.. tip:: Filter order matters. If an "include filter" precedes an "exclude filter", and a test matches both filters, the include filter will take precedence since it appears first.
 
-.. tip:: **PLEASE NOTE**: The order of filters in the filter file is respected, thus if an "include filter" precedes an "exclude filter", and you expected the "exclude filter" to take precedence, then you will need to re-order your filters such that the "exclude filter" appears earlier in the filters file.
+Additionally, filters can be piped via stdin. The following is functionally identical to the above example except the filters file is sent via stdin:
+
+.. code:: bash
+
+    cat tests/filters-file.txt | python3 -m punit --filter '@stdin'
+
 
 Default Behavior
 ----------------
