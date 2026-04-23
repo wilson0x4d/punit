@@ -64,10 +64,10 @@ Options:
         be locatable as modules in the named package.
         Default: 'tests'
     -i, --include PATTERN
-        Include any tests matching PATTERN
+        Include test files matching PATTERN
         Default: '*.py'
     -e, --exclude PATTERN
-        Exclude any tests matching PATTERN, overriding --include
+        Exclude test files matching PATTERN, overriding --include
         Default: '__*__' (dunder files), '/.*/' (dot-directories)
     -f, --filter PATTERN|@FILEPATH
         Only execute tests matching PATTERN
