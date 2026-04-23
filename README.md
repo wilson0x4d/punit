@@ -49,7 +49,7 @@ Usage: python3 -m punit [-h|--help]
                         [-e|--exclude PATTERN]
                         [-f|--filter PATTERN|@FILEPATH]
                         [-t|--trait [!]NAME[=VALUE]]
-                        [-w|--workdir DIRECTORY]
+                        [-w|--working-directory PATH]
                         [-n|--no-default-patterns]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
@@ -79,7 +79,7 @@ Options:
         If VALUE is specified, matches tests with the trait having specified value.
         If VALUE is not specified, matches any test with the trait having any value.
         Default: No filtering based on traits.        
-    -w, --working-directory DIRECTORY
+    -w, --working-directory PATH
         Working directory (defaults to start directory)
     -n, --no-default-patterns
         Do not apply any default include/exclude patterns.
