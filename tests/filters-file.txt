@@ -1,1 +1,4 @@
+# this filter exludes any test with "donotrun" it its name
+!*donotrun*
+# this filter includes "all tests"
 *

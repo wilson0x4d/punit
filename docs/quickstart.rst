@@ -92,14 +92,18 @@ The ``--filter`` argument can also be provided a file spec pointing to a plainte
     # (take note of the `@` prefix, which tells pUnit "this is a file")
     python3 -m punit --filter '@tests/filters-file.txt'
 
-A filter file is a plaintext file where each line contains a filter pattern, for example:
+A filter file is a plaintext file where each line contains a filter pattern, except lines starting with ``#`` which are treated as comments. For example:
 
 .. code:: text
 
-    *Widgets*
-    *integration*Tests*
+    # this filter exludes any test with "donotrun" it its name
+    !*donotrun*
+    # this filter includes "all tests"
+    *
 
-These filters are applied in the same way as the singular ``--filter PATTERN`` would be applied. If it works with ``---filter PATTERN`` it should also work within a filters file.
+In this example any tests having "widgets" in their name will be included, except those having "integration" in their name will be excluded (this because of the ``!`` prefix which negates the filter.)
+
+.. tip:: **PLEASE NOTE**: The order of filters in the filter file is respected, thus if an "include filter" precedes an "exclude filter", and you expected the "exclude filter" to take precedence, then you will need to re-order your filters such that the "exclude filter" appears earlier in the filters file.
 
 Default Behavior
 ----------------

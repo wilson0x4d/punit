@@ -9,13 +9,13 @@ from ..theories import TheoryManager
 from ..cli import CommandLineInterface
 from ..traits import Trait
 
+
 class TestModuleDiscovery:
 
     __cli:CommandLineInterface
     __excludePatterns:list[re.Pattern]
     __excludeTraits:list[Trait]
     __filenames:list[str]
-    __filterPatterns:list[re.Pattern]
     __includePatterns:list[re.Pattern]
     __includeTraits:list[Trait]
     __workdir:str
@@ -30,7 +30,6 @@ class TestModuleDiscovery:
                         self.__convertPatternToRegex(pattern),
                         re.IGNORECASE))
         self.__filenames = []
-        self.__filterPatterns = self.__buildFilterPatterns(cli.filterPattern)
         self.__includePatterns = []
         self.__excludeTraits = cli.excludeTraits
         self.__includeTraits = cli.includeTraits
@@ -42,25 +41,11 @@ class TestModuleDiscovery:
                         re.IGNORECASE))
         self.__workdir = workdir
 
-    def __buildFilterPatterns(self, input:str) -> list[re.Pattern]:
-        if input.startswith('@'):
-            # treat as a filepath containing one or more filter patterns
-            filepath = os.path.realpath(input[1:])
-            with open(filepath, 'rb') as f:
-                result = list[re.Pattern]()                
-                for line in f.read().decode().splitlines():
-                    if (self.__cli.verbose):
-                        print(f'\t{line}')
-                    result.append(re.compile(self.__convertPatternToRegex(line)))
-                return result
-        else:
-            # treat as a single filter pattern
-            return [re.compile(self.__convertPatternToRegex(input))]
 
     def __convertPatternToRegex(self, pattern:str) -> str:
         result = re.escape(pattern)\
             .replace('\\\\', '/')\
-            .replace('\\*', r'.+')\
+            .replace('\\*', r'.*')\
             .replace('?', '.')
         return result
 
@@ -115,10 +100,8 @@ class TestModuleDiscovery:
         
     def discover(self) -> list[str]:
         FactManager.instance().excludeTraits = self.__excludeTraits
-        FactManager.instance().filterPatterns = self.__filterPatterns
         FactManager.instance().includeTraits = self.__includeTraits
         TheoryManager.instance().excludeTraits = self.__excludeTraits
-        TheoryManager.instance().filterPatterns = self.__filterPatterns
         TheoryManager.instance().includeTraits = self.__includeTraits
         if self.__cli.verbose:
             print(f'.. starting test discovery')

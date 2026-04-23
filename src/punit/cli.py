@@ -5,6 +5,7 @@ import os
 import sys
 from typing import Optional
 from . import __version__, __commit__
+from .filters.FilterManager import FilterManager
 from .traits import Trait
 
 
@@ -14,7 +15,6 @@ class CommandLineInterface:
     __excludePatterns:list[str]
     __excludeTraits:list[Trait]
     __failfast:bool
-    __filterPattern:str
     __help:bool
     __includePatterns:list[str]
     __includeTraits:list[Trait]
@@ -26,12 +26,11 @@ class CommandLineInterface:
     __verbose:bool
     __workdir:str|None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__aliases = dict[str,str]()
         self.__excludePatterns = []
         self.__excludeTraits = []
         self.__failfast = False
-        self.__filterPattern = '*'
         self.__help = False
         self.__includePatterns = []
         self.__includeTraits = []
@@ -45,7 +44,7 @@ class CommandLineInterface:
 
     def __parse(self, argv:list[str]) -> 'CommandLineInterface':
         aliasName:str|None = None
-        extractFilterPattern:bool = False
+        extractFilter:bool = False
         extractExcludePattern:bool = False
         extractTrait:bool = False
         extractIncludePattern:bool = False
@@ -54,9 +53,9 @@ class CommandLineInterface:
         extractReportFormat:bool = False
         extractOutputFilename:bool = False
         for arg in argv:
-            if extractFilterPattern:
-                self.__filterPattern = arg
-                extractFilterPattern = False
+            if extractFilter:
+                self.__processFilterArg(arg)
+                extractFilter = False
                 continue
             if extractIncludePattern:
                 self.__includePatterns.append(arg)
@@ -113,7 +112,7 @@ class CommandLineInterface:
                 case '-a':
                     extractAliasName = True
                 case '-f' | '--filter':
-                    extractFilterPattern = True
+                    extractFilter = True
                 case '-e' | '--exclude':
                     extractExcludePattern = True
                 case '-z' | '--failfast':
@@ -138,7 +137,17 @@ class CommandLineInterface:
                     extractTrait = True
                 case _:
                     continue
+
+        if len(FilterManager.instance().filters) == 0:
+            FilterManager.instance().add('*')
+
         return self
+
+    def __processFilterArg(self, arg:str) -> None:
+        if arg.startswith('@'):
+            FilterManager.instance().load(arg[1:])
+        else:
+            FilterManager.instance().add(arg)
 
     @property
     def aliases(self) -> dict:
@@ -147,10 +156,6 @@ class CommandLineInterface:
     @property
     def failfast(self) -> bool:
         return self.__failfast
-
-    @property
-    def filterPattern(self) -> str:
-        return self.__filterPattern
 
     @property
     def excludePatterns(self) -> list[str]:
@@ -262,21 +267,14 @@ Options:
         print(f'Working Directory:\n\t{self.__workdir}')
         print(f'Fail Fast: \n\t{"Yes" if self.__failfast else "No"}')
         if len(self.__includePatterns) > 0:
-            print('Include Patterns:')
+            print('Include Files:')
             for pattern in self.__includePatterns:
                 print(f'\t{pattern}')
         if len(self.__excludePatterns) > 0:
-            print('Exclude Patterns:')
+            print('Exclude Files:')
             for pattern in self.__excludePatterns:
                 print(f'\t{pattern}')
-        if self.__filterPattern.startswith('@'):
-            print(f'Filter Patterns: (from {self.__filterPattern[1:]})')
-            if not os.path.exists(os.path.realpath(self.__filterPattern[1:])):
-                print(f'\tFILTERS FILE DOES NOT EXIST, ABORTING!')
-                exit(5)
-        else:
-            print('Filter Pattern:')
-            print(f'\t{self.__filterPattern}')
+        FilterManager.instance().print()
 
     def printVersion(self) -> None:
         print(f'pUnit {__version__} ({__commit__})')

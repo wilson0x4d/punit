@@ -52,7 +52,7 @@ async def async_main() -> None:
     if failureCount > 0:
         exit(119) # pragma: no cover
 
-def main():
+def main() -> None:
     asyncio.run(async_main())
 
 if (__name__ == '__main__'):

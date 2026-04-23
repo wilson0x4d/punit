@@ -5,23 +5,22 @@
 import re
 from typing import Callable, Optional
 
-from .Fact import Fact
+from ..filters.FilterManager import FilterManager
 from ..traits.Trait import Trait
+from .Fact import Fact
 
 
 class FactManager:
 
     __excludeTraits:list[Trait]    
-    __filterPatterns:Optional[list[re.Pattern]]
     __instance:Optional['FactManager'] = None
     __includeTraits:list[Trait]
     __modules:dict[str, list[Fact]]
     __traits:dict[Callable, list[Trait]]
     
-    def __init__(self):
+    def __init__(self) -> None:
         if FactManager.__instance is not None:
             raise Exception('Cannot create more than one instance of FactManager') # pragma: no cover
-        self.__filterPatterns = None
         self.__modules = {}
         self.__traits = {}
 
@@ -38,14 +37,6 @@ class FactManager:
     @excludeTraits.setter
     def excludeTraits(self, value:list[Trait]) -> None:
         self.__excludeTraits = value
-
-    @property
-    def filterPatterns(self) -> Optional[list[re.Pattern]]:
-        return self.__filterPatterns
-    
-    @filterPatterns.setter
-    def filterPatterns(self, value:list[re.Pattern]) -> None:
-        self.__filterPatterns = value
 
     @property
     def includeTraits(self) -> list[Trait]:
@@ -77,13 +68,13 @@ class FactManager:
         return l
 
     def put(self, fact:Fact) -> None:
-        matchesFilterPattern:bool = self.filterPatterns is None
-        if self.filterPatterns is not None and len(self.filterPatterns) > 0:
-            for filterPattern in self.filterPatterns:
-                if len(filterPattern.findall(fact.filterName)) > 0:
-                    matchesFilterPattern = True
-                    break
-        if matchesFilterPattern:
+        filters = FilterManager.instance().filters
+        matches_filter:bool = False
+        for filter in filters:
+            if filter.re.fullmatch(fact.filterName) is not None:
+                matches_filter = not filter.isExclude
+                break
+        if matches_filter:
             l = self.get(fact.moduleName)
             t = self.__traits.get(fact.target)
             if t is not None:

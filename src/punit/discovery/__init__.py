@@ -3,7 +3,6 @@
 
 from .TestModuleDiscovery import TestModuleDiscovery
 
-
 __all__ = [
     'TestModuleDiscovery'
 ]

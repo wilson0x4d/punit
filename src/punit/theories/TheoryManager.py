@@ -5,6 +5,7 @@
 import re
 from typing import Callable, Optional
 
+from ..filters.FilterManager import FilterManager
 from ..traits.Trait import Trait
 from .Theory import Theory
 
@@ -12,17 +13,15 @@ from .Theory import Theory
 class TheoryManager:
 
     __excludeTraits:list[Trait]
-    __filterPatterns:Optional[list[re.Pattern]]
     __includeTraits:list[Trait]
     __instance:Optional['TheoryManager'] = None
     __modules:dict[str, list[Theory]]
     __datas:dict[Callable, list[tuple]]
     __traits:dict[Callable, list[Trait]]
     
-    def __init__(self):
+    def __init__(self) -> None:
         if TheoryManager.__instance is not None:
             raise Exception('Cannot create more than one instance of TheoryManager') # pragma: no cover
-        self.__filterPatterns = None
         self.__modules = {}
         self.__datas = {}
         self.__traits = {}
@@ -40,14 +39,6 @@ class TheoryManager:
     @excludeTraits.setter
     def excludeTraits(self, value:list[Trait]) -> None:
         self.__excludeTraits = value
-
-    @property
-    def filterPatterns(self) -> Optional[list[re.Pattern]]:
-        return self.__filterPatterns
-    
-    @filterPatterns.setter
-    def filterPatterns(self, value:list[re.Pattern]) -> None:
-        self.__filterPatterns = value
 
     @property
     def includeTraits(self) -> list[Trait]:
@@ -79,13 +70,13 @@ class TheoryManager:
         return l
 
     def put(self, theory:Theory) -> None:
-        matchesFilterPattern:bool = self.filterPatterns is None
-        if self.filterPatterns is not None and len(self.filterPatterns) > 0:
-            for filterPattern in self.filterPatterns:
-                if len(filterPattern.findall(theory.filterName)) > 0:
-                    matchesFilterPattern = True
-                    break
-        if matchesFilterPattern:
+        filters = FilterManager.instance().filters
+        matches_filter:bool = False
+        for filter in filters:
+            if filter.re.fullmatch(theory.filterName) is not None:
+                matches_filter = not filter.isExclude
+                break
+        if matches_filter:
             l = self.get(theory.moduleName)
             d = self.__datas.get(theory.target)
             if d is not None:
@@ -100,7 +91,7 @@ class TheoryManager:
                 l.append(theory)
 
     def withData(self, target:Callable, data:tuple) -> None:
-        # TODO: data acquisition should be deferred until put() since that is where filterPattern
+        # TODO: data acquisition should be deferred until put() since that is where `Filter` logic
         # is applied, but for current implementation `@inlinedata()` is not affected. more advanced
         # data decorators may benefit from deferral (for example, data coming from an API or DB.)
         d = self.__datas.get(target)

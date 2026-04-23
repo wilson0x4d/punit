@@ -16,13 +16,15 @@ class TextIOCapture:
         self.output = None
         self.target = target
 
-    def write(self, text:str):
+    def write(self, text:str) -> int:
         if self.output is None:
             self.output = text
         else:
             self.output += text
         if not self.__quiet:
             self.target.write(text)
+        return len(text)
+
 
 
 class TestResult:
@@ -41,7 +43,7 @@ class TestResult:
     __stopTime:float|None
     __testName:str|None
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__className = None
         self.__exception = None
         self.__fileName = None

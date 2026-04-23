@@ -24,7 +24,7 @@ class FactClass:
     __valueTest:int
     """Tests check this to verify that every test method execution gets a new class instance."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.__valueTest = 0
 
     @fact

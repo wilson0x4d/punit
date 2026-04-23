@@ -132,9 +132,9 @@ class MyTestFixture:
     def verifyCalcErrorCondition(self) -> None:
         from punit.exceptions import raises
         # assert errors are raised, or not
-        def calc_None():
+        def calc_None() -> None:
             self.calc(None)
-        def calc_1()
+        def calc_1() -> None:
             self.calc(1)
         assert raises[Exception](calc_None)
         assert not raises[Exception](calc_1)
