@@ -22,7 +22,7 @@ class Filter:
             .replace('\\\\', '/')\
             .replace('\\*', r'.*')\
             .replace('?', '.')
-        return re.compile(pattern)
+        return re.compile(pattern, re.IGNORECASE)
 
     @property
     def isExclude(self) -> bool:
