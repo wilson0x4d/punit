@@ -1,4 +1,4 @@
-# this filter exludes any test with "donotrun" it its name
-!*donotrun*
-# this filter includes "all tests"
+# this filter intentionall tests left-side of expression w/o wildcard (for regression)
+!filters.FilterTests/*donotrun*
+# this filter includes "all tests" if not previously excluded
 *
