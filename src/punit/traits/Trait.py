@@ -25,10 +25,8 @@ class Trait:
 
 def trait(name:str, value:Optional[str]=None) -> Callable:
     def wrapper(target:Callable) -> Callable:
-        from ..theories.TheoryManager import TheoryManager
-        from ..facts.FactManager import FactManager
+        from .TraitManager import TraitManager
         trait = Trait(name, value)
-        TheoryManager.instance().withTrait(target, trait)
-        FactManager.instance().withTrait(target, trait)
+        TraitManager.instance().put(target, trait)
         return target
     return wrapper

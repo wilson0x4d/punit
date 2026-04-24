@@ -6,8 +6,6 @@ import inspect
 from types import FunctionType, MethodType, ModuleType
 from typing import Callable, Coroutine, Optional, cast
 
-from ..traits.Trait import Trait
-
 
 class Theory:
 
@@ -16,7 +14,6 @@ class Theory:
     __moduleName:str
     __target:FunctionType|MethodType|Callable
     __testName:Optional[str]
-    __traits:list[Trait]
 
     def __init__(self, moduleName:str, target:FunctionType|MethodType|Callable, className:Optional[str] = None, testName:Optional[str] = None):
         self.__className = className
@@ -24,7 +21,6 @@ class Theory:
         self.__moduleName = moduleName
         self.__target = target
         self.__testName = testName
-        self.__traits = []
 
     @property
     def className(self) -> Optional[str]:
@@ -45,10 +41,6 @@ class Theory:
     @property
     def testName(self) -> str:
         return self.__testName if self.__testName is not None else self.__target.__qualname__.split('.')[-1]
-
-    @property
-    def traits(self) -> list[Trait]:
-        return self.__traits
 
     @property
     def filterName(self) -> str:

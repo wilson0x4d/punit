@@ -5,6 +5,7 @@ import inspect
 from types import FunctionType, MethodType, ModuleType
 from typing import Callable, Coroutine, Optional, cast
 
+from ..traits.TraitManager import TraitManager
 from ..traits.Trait import Trait
 
 
@@ -14,14 +15,10 @@ class Fact:
     __moduleName:str
     __target:FunctionType|MethodType|Callable
     __testName:Optional[str]
-    __traits:list[Trait]
-
-    def __init__(self, moduleName:str, target:FunctionType|MethodType|Callable, className:Optional[str] = None, testName:Optional[str] = None):
-        self.__className = className
-        self.__moduleName = moduleName
+    
+    def __init__(self, target:FunctionType|MethodType|Callable):
         self.__target = target
         self.__testName = testName
-        self.__traits = []
 
     @property
     def className(self) -> Optional[str]:
@@ -43,11 +40,8 @@ class Fact:
     def filterName(self) -> str:
         return f'{".".join(self.moduleName.split(".")[1:])}/{"" if self.className is None or len(self.className) == 0 else f"{self.className}/"}{self.testName}'
 
-    @property
-    def traits(self) -> list[Trait]:
-        return self.__traits
-
     async def execute(self, module:ModuleType) -> None:
+        # TODO: this needs more clean-up, and we already resolved the module once not sure why we're passing it in here :(
         coro:Coroutine|None = None
         if hasattr(self.__target, '__qualname__') and self.__target.__qualname__.find('.') > -1:
             qnparts = self.__target.__qualname__.split('.')

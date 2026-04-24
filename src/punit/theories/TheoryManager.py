@@ -7,6 +7,7 @@ from typing import Callable, Optional
 
 from ..filters.FilterManager import FilterManager
 from ..traits.Trait import Trait
+from ..traits.TraitManager import TraitManager
 from .Theory import Theory
 
 
@@ -17,14 +18,12 @@ class TheoryManager:
     __instance:Optional['TheoryManager'] = None
     __modules:dict[str, list[Theory]]
     __datas:dict[Callable, list[tuple]]
-    __traits:dict[Callable, list[Trait]]
     
     def __init__(self) -> None:
         if TheoryManager.__instance is not None:
             raise Exception('Cannot create more than one instance of TheoryManager') # pragma: no cover
         self.__modules = {}
         self.__datas = {}
-        self.__traits = {}
 
     @staticmethod
     def instance() -> 'TheoryManager':
@@ -49,14 +48,15 @@ class TheoryManager:
         self.__includeTraits = value
 
     def __excludeByTraits(self, theory:Theory) -> bool:
+        traits = TraitManager.instance().get(theory.target)
         if self.excludeTraits is not None and len(self.__excludeTraits) > 0:
             for trait in self.excludeTraits:
-                for L_trait in theory.traits:
+                for L_trait in traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return True
         if self.includeTraits is not None and len(self.includeTraits) > 0:
             for trait in self.includeTraits:
-                for L_trait in theory.traits:
+                for L_trait in traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return False
             return True
@@ -83,10 +83,6 @@ class TheoryManager:
                 d.reverse()
                 for data in d:
                     theory.datas.append(data)
-            t = self.__traits.get(theory.target)
-            if t is not None:
-                for trait in t:
-                    theory.traits.append(trait)
             if not self.__excludeByTraits(theory):
                 l.append(theory)
 
@@ -99,10 +95,3 @@ class TheoryManager:
             d = []
             self.__datas[target] = d
         d.append(data)
-
-    def withTrait(self, target:Callable, trait:Trait) -> None:
-        t = self.__traits.get(target)
-        if t is None:
-            t = []
-            self.__traits[target] = t
-        t.append(trait)

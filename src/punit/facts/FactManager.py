@@ -6,6 +6,7 @@ import re
 from typing import Callable, Optional
 
 from ..filters.FilterManager import FilterManager
+from ..traits.TraitManager import TraitManager
 from ..traits.Trait import Trait
 from .Fact import Fact
 
@@ -16,13 +17,11 @@ class FactManager:
     __instance:Optional['FactManager'] = None
     __includeTraits:list[Trait]
     __modules:dict[str, list[Fact]]
-    __traits:dict[Callable, list[Trait]]
     
     def __init__(self) -> None:
         if FactManager.__instance is not None:
             raise Exception('Cannot create more than one instance of FactManager') # pragma: no cover
         self.__modules = {}
-        self.__traits = {}
 
     @staticmethod
     def instance() -> 'FactManager':
@@ -47,14 +46,15 @@ class FactManager:
         self.__includeTraits = value
 
     def __excludeByTraits(self, fact:Fact) -> bool:
+        traits = TraitManager.instance().get(fact.target)
         if self.excludeTraits is not None and len(self.excludeTraits) > 0:
             for trait in self.excludeTraits:
-                for L_trait in fact.traits:
+                for L_trait in traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return True
         if self.includeTraits is not None and len(self.includeTraits) > 0:
             for trait in self.includeTraits:
-                for L_trait in fact.traits:
+                for L_trait in traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return False
             return True
@@ -76,16 +76,5 @@ class FactManager:
                 break
         if matches_filter:
             l = self.get(fact.moduleName)
-            t = self.__traits.get(fact.target)
-            if t is not None:
-                for trait in t:
-                    fact.traits.append(trait)
             if not self.__excludeByTraits(fact):
                 l.append(fact)
-
-    def withTrait(self, target:Callable, trait:Trait) -> None:
-        t = self.__traits.get(target)
-        if t is None:
-            t = []
-            self.__traits[target] = t
-        t.append(trait)
