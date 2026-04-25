@@ -2,66 +2,45 @@
 # SPDX-License-Identifier: MIT
 
 import inspect
-from types import FunctionType, MethodType, ModuleType
-from typing import Callable, Coroutine, Optional, cast
+from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, ModuleType
+from typing import Callable, Coroutine,  Union, cast
 
-from ..traits.TraitManager import TraitManager
-from ..traits.Trait import Trait
+from ..metadata import CallableMetadata
 
 
 class Fact:
 
-    __className:Optional[str]
-    __moduleName:str
-    __target:FunctionType|MethodType|Callable
-    __testName:Optional[str]
-    
-    def __init__(self, target:FunctionType|MethodType|Callable):
+    __target:Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]
+
+    def __init__(self, target:Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]):
+        self.__metadata = CallableMetadata(target)
         self.__target = target
-        self.__testName = testName
 
     @property
-    def className(self) -> Optional[str]:
-        return self.__className
+    def metadata(self) -> CallableMetadata:
+        return self.__metadata
 
     @property
-    def moduleName(self) -> str:
-        return self.__moduleName
-
-    @property
-    def target(self) -> FunctionType|MethodType|Callable:
+    def target(self) -> Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]:
         return self.__target
 
-    @property
-    def testName(self) -> str:
-        return self.__testName if self.__testName is not None else self.__target.__qualname__.split('.')[-1]
-    
-    @property
-    def filterName(self) -> str:
-        return f'{".".join(self.moduleName.split(".")[1:])}/{"" if self.className is None or len(self.className) == 0 else f"{self.className}/"}{self.testName}'
 
     async def execute(self, module:ModuleType) -> None:
-        # TODO: this needs more clean-up, and we already resolved the module once not sure why we're passing it in here :(
         coro:Coroutine|None = None
         if hasattr(self.__target, '__qualname__') and self.__target.__qualname__.find('.') > -1:
-            qnparts = self.__target.__qualname__.split('.')
             if isinstance(self.__target, staticmethod):
                 coro = self.__target()
-                self.__className = '.'.join(qnparts[0:-1])
-                self.__testName = qnparts[-1]
             else:
+                qnparts = self.__target.__qualname__.split('.')
                 qntarget = module
-                self.__className = '.'.join(qnparts[0:-1])
-                self.__testName = qnparts[-1]
                 for qnpart in qnparts[0:-1]:
                     qntarget = getattr(qntarget, qnpart)
                 if isinstance(self.__target, classmethod):
                     coro = self.__target.__func__(qntarget)
                 else:
+                    # every test execution gets a new instance of class
                     coro = self.__target(cast(Callable,qntarget)())
         else:
-            self.__className = None
-            self.__testName = self.__target.__name__
             coro = self.__target()
         if inspect.iscoroutine(coro):
             await coro
@@ -71,6 +50,6 @@ def fact(target:Callable) -> Callable:
     from .FactManager import FactManager
     if (not inspect.isfunction(target)) and (not isinstance(target, classmethod)) and (not isinstance(target, staticmethod)):
         raise Exception('@fact can only be applied to functions and methods.')
-    fact:Fact = Fact(target.__module__, target)
+    fact:Fact = Fact(target)
     FactManager.instance().put(fact)
     return target

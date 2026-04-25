@@ -2,12 +2,11 @@
 # SPDX-License-Identifier: MIT
 ##
 
-import re
-from typing import Callable, Optional
+from typing import Optional
 
 from ..filters.FilterManager import FilterManager
-from ..traits.TraitManager import TraitManager
 from ..traits.Trait import Trait
+from ..traits.TraitManager import TraitManager
 from .Fact import Fact
 
 
@@ -71,10 +70,10 @@ class FactManager:
         filters = FilterManager.instance().filters
         matches_filter:bool = False
         for filter in filters:
-            if filter.re.fullmatch(fact.filterName) is not None:
+            if filter.re.fullmatch(fact.metadata.filterName) is not None:
                 matches_filter = not filter.isExclude
                 break
         if matches_filter:
-            l = self.get(fact.moduleName)
+            l = self.get(fact.target.__module__)
             if not self.__excludeByTraits(fact):
                 l.append(fact)

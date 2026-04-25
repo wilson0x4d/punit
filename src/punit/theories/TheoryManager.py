@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: MIT
 ##
 
-import re
 from typing import Callable, Optional
 
 from ..filters.FilterManager import FilterManager
@@ -73,11 +72,11 @@ class TheoryManager:
         filters = FilterManager.instance().filters
         matches_filter:bool = False
         for filter in filters:
-            if filter.re.fullmatch(theory.filterName) is not None:
+            if filter.re.fullmatch(theory.metadata.filterName) is not None:
                 matches_filter = not filter.isExclude
                 break
         if matches_filter:
-            l = self.get(theory.moduleName)
+            l = self.get(theory.target.__module__)
             d = self.__datas.get(theory.target)
             if d is not None:
                 d.reverse()

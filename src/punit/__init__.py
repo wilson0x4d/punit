@@ -15,6 +15,7 @@ __all__ = [
     'collections', 'exceptions', 'strings',
     'facts',
     'fact',
+    'metadata',
     'theories',
     'theory', 'inlinedata',
     'traits',

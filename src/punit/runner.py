@@ -6,8 +6,10 @@ import os
 import socket
 import time
 import traceback
+
 from .cli import CommandLineInterface
 from .facts.FactManager import FactManager
+from .metadata.CallableMetadata import CallableMetadata
 from .theories.TheoryManager import TheoryManager
 from .TestResult import TestResult
 
@@ -68,8 +70,8 @@ class TestRunner:
                         result.exception = ex
                     result.releaseOutput()
                     result.stopTime = time.time()
-                    result.className = fact.className
-                    result.testName = fact.testName
+                    result.className = fact.metadata.className
+                    result.testName = fact.metadata.name
                     results.append(result)
                     self.printTestResult(result)
                     if self.__cli.failfast and not result.isSuccess:
@@ -94,8 +96,8 @@ class TestRunner:
                             result.exception = ex
                         result.releaseOutput()
                         result.stopTime = time.time()
-                        result.className = theory.className
-                        result.testName = theory.testName
+                        result.className = theory.metadata.className
+                        result.testName = theory.metadata.name
                         results.append(result)
                         self.printTestResult(result)
                         if self.__cli.failfast and not result.isSuccess:
