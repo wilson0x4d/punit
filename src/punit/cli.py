@@ -95,7 +95,7 @@ class CommandLineInterface:
                 extractReportFormat = False
                 self.__reportFormat = arg.lower()
                 match self.__reportFormat:
-                    case 'html' | 'junit':
+                    case 'html' | 'junit' | 'json':
                         pass
                     case _:
                         print(f'Unsupported value "{arg}" for --report argument, aborting.')

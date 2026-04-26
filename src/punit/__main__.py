@@ -6,7 +6,7 @@ import os
 import time
 from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
-from .reports import HtmlReportGenerator, JUnitReportGenerator
+from .reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
 from .runner import TestRunner
 
 
@@ -42,6 +42,8 @@ async def async_main() -> None:
                 report = HtmlReportGenerator().generate(results)
             case 'junit':
                 report = JUnitReportGenerator().generate(results)
+            case 'json':
+                report = JsonReportGenerator().generate(results)
         if len(report) > 0:
             if cli.outputFilename is None:
                 print(report)
