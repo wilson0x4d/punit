@@ -59,7 +59,7 @@ class HtmlReportGenerator:
                 if currentModuleName is not None:
                     lines.append('</div>')
                 lines.append('<div class="testresults-module">')
-                lines.append(f'<h2 class="module-name">{testResult.packageName}/{testResult.moduleName}</h2>')
+                lines.append(f'<h2 class="module-name">{testResult.moduleName}</h2>')
                 currentModuleName = testResult.moduleName
             passfailstyle = '-pass' if testResult.isSuccess else '-fail'
             passfailglyph = '🟩' if testResult.isSuccess else '🟥'
