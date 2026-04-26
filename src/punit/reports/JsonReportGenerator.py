@@ -21,8 +21,7 @@ class JsonReportGenerator:
             filterName = f'{filterName}/{testResult.testName}'
             data = testResult.properties.get('data')
             if data is not None and len(data) > 0:
-                datastr = f'({",".join([str(e) for e in data])})'
-                filterName = f'{filterName}{datastr}'
+                filterName = f'{filterName}{data}'
             result = dict[str, Any]({
                 'status': 'pass' if testResult.isSuccess else 'fail',
                 'name': filterName,
