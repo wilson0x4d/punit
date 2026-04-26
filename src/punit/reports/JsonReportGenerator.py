@@ -15,9 +15,17 @@ class JsonReportGenerator:
         testResults.sort(key=lambda e : e.moduleName)
         results = list[dict[str, Any]]()
         for testResult in testResults:
+            filterName:str = f'{testResult.packageName}/{testResult.moduleName}'
+            if testResult.className is not None:
+                filterName = f'{filterName}/{testResult.className}'
+            filterName = f'{filterName}/{testResult.testName}'
+            data = testResult.properties.get('data')
+            if data is not None and len(data) > 0:
+                datastr = f'({",".join([str(e) for e in data])})'
+                filterName = f'{filterName}{datastr}'
             result = dict[str, Any]({
                 'status': 'pass' if testResult.isSuccess else 'fail',
-                'name': testResult.testName,
+                'name': filterName,
             })
             if testResult.took is not None:
                 result['took'] = round(testResult.took * 1000, 3)

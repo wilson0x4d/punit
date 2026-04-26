@@ -60,14 +60,18 @@ class HtmlReportGenerator:
                     lines.append('</div>')
                 lines.append('<div class="testresults-module">')
                 lines.append(f'<h2 class="module-name">{testResult.packageName}/{testResult.moduleName}</h2>')
-                currentModuleName = testResult.moduleName                
+                currentModuleName = testResult.moduleName
             passfailstyle = '-pass' if testResult.isSuccess else '-fail'
             passfailglyph = '🟩' if testResult.isSuccess else '🟥'
             lines.append(f'<div class="testresult testresult{passfailstyle}">')
             lines.append('<div class="testresult-heading">')
             lines.append(f'<span class="glyph glyph{passfailstyle}">{passfailglyph}</span>')
-            lines.append(f'<span class="test-class">{"" if testResult.className is None else testResult.className}</span>')
-            lines.append(f'<span class="test-name">{testResult.testName}</span>')
+            className = "" if testResult.className is None else f"{testResult.className}."
+            data = testResult.properties.get('data')
+            if data is not None and len(data) > 0:
+                lines.append(f'<span class="test-class">{className}</span><span class="test-name">{testResult.testName}{data}</span>')
+            else:
+                lines.append(f'<span class="test-class">{className}</span><span class="test-name">{testResult.testName}</span>')
             lines.append(f'<span class="test-time test-time{passfailstyle}">{testResult.tookPretty}</span>')
             lines.append('</div>')
             if not testResult.isSuccess or testResult.stdout is not None or testResult.stderr is not None:

@@ -60,7 +60,7 @@ class TestResult:
 
     @property
     def className(self) -> Optional[str]:
-        return self.__className
+        return self.__className if self.__className is not None and len(self.__className) > 0 else None
     
     @className.setter
     def className(self, value:Optional[str]) -> None:
