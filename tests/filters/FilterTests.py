@@ -17,16 +17,16 @@ def three_donotrun_three() -> None:
     raise Exception('this test should have been excluded by `filters-file.txt`.') # pragma: no cover
 
 @theory
-@inlinedata('foo')
+@inlinedata('aaa')
 def donotrun_four(bar:str) -> None:
     raise Exception('this test should have been excluded by `filters-file.txt`.') # pragma: no cover
 
 @theory
-@inlinedata('foo')
+@inlinedata('bbb')
 def five_donotrun(bar:str) -> None:
     raise Exception('this test should have been excluded by `filters-file.txt`.') # pragma: no cover
 
 @theory
-@inlinedata('foo')
+@inlinedata('ccc')
 def six_donotrun_six(bar:str) -> None:
     raise Exception('this test should have been excluded by `filters-file.txt`.') # pragma: no cover
