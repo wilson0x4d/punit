@@ -32,6 +32,10 @@ class JsonReportGenerator:
                 if testResult.exception is not None:
                     result['message'] = f'{testResult.exception}\n{"".join(traceback.format_tb(testResult.exception.__traceback__))}'
                 else:
-                    result['message'] = 'Unknown Error'
+                    result['message'] = f'Unknown Error!\n\nstdout:\n{testResult.stdout}\n\nstderr:\n{testResult.stderr}'
+            elif testResult.stdout is not None:
+                result['message'] = testResult.stdout
+            elif testResult.stderr is not None:
+                result['message'] = testResult.stderr
             results.append(result)
         return json.dumps(results)
