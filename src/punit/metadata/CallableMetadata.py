@@ -27,7 +27,7 @@ class CallableMetadata:
         """
         The name used for pattern matched "Test Filtering".
         """
-        return f'{".".join(self.__moduleName.split(".")[1:])}/{"" if self.__className is None else f"{self.__className}/"}{self.__name}'
+        return f'{".".join(self.__moduleName.split(".")[1:])}/{"" if self.__className is None or len(self.__className) == 0 else f"{self.__className}/"}{self.__name}'
 
     @property
     def moduleName(self) -> str:
