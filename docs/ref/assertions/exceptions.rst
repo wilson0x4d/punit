@@ -40,15 +40,15 @@ Exception Helpers
 
 .. admonition:: LTS
     
-    This helper offers two syntaxes, one which relies on Python 3.12 "Type Parameters" and the other which relies on an explicit ``expect:type`` argument; the latter syntax exists solely for LTS purposes to preempt Python Core Developers breaking a dunder the Python 3.12 syntax is relying on.
+    This helper offers two syntaxes, one which relies on Python "Type Parameters" and the other which relies on an explicit ``expect:type`` argument; the latter syntax exists solely for LTS/backward-compatibility purposes.
 
 .. code:: python
 
     def myFunction:
         raise MyException()
 
-    # using Python 3.12 Type Parameter Syntax
+    # using Python >=3.11 syntax
     assert raises[MyException](myFunction)
-    # using LTS/failsafe `expect` syntax
+    # using Python <=3.11 syntax
     assert raises(myFunction, expect=MyException)
 

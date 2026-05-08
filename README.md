@@ -150,7 +150,7 @@ You will want to take particular note of the `--exclude` command-line parameter 
 
 The long-term vision is to provide both imperative and declarative syntaxes for testing while keeping `pUnit` as simple as possible in its implementation.
 
-`pUnit` is a Python 3.12+ package and there are no plans to backport it to earlier versions of Python, however, user contributions to support backward compatibility _will be accepted_ when it makes sense.
+`pUnit` is a Python 3.11+ package and there are no plans to backport it to earlier versions of Python, however, user requests (with proposed changes) _will be accepted_ when it makes sense (for example, `pUnit` currently supports Python 3.11, but originally only supported Python 3.12.)
 
 As Python progresses so will `pUnit` and SEMVER rules will be respected to provide developers with assurance that a major version of `pUnit` is fit for a particular purpose, thus, if there is ever a breaking change in Python that requires a breaking change in `pUnit` you can expect `pUnit` versioning to reflect this.
 

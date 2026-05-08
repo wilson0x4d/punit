@@ -1,10 +1,13 @@
-# SPDX-FileCopyrightText: © 2025 Shaun Wilson
+# SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from typing import Any, Callable, Optional, cast, get_args
+from typing import Any, Callable, Generic, Optional, TypeVar, cast, get_args
 
 
-class raises[TError:Exception]:
+TError = TypeVar('TError', bound=Exception)
+
+
+class raises(Generic[TError]):
     
     __action:Callable
     __exact:bool
@@ -27,3 +30,8 @@ class raises[TError:Exception]:
             elif expected is not None:
                 return issubclass(type(ex), cast(Any,expected))
         return False
+
+
+__all__ = [
+    'raises'
+]
