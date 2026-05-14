@@ -100,7 +100,7 @@ class CommandLineInterface:
                     case _:
                         print(f'Unsupported value "{arg}" for --report argument, aborting.')
                         print(f'(valid values are "json" and "junit")')
-                        exit(4)
+                        os._exit(4)
                 continue
             elif extractOutputFilename:
                 extractOutputFilename = False
@@ -260,7 +260,7 @@ Options:
         suppress any program output.
 """
         )
-            exit(0)
+            os._exit(0)
 
     def printSummary(self) -> None:
         self.printVersion()
@@ -282,10 +282,10 @@ Options:
     def validate(self) -> None:
         if self.__workdir is None or len(self.__workdir.lstrip()) == 0 or self.__workdir.startswith('-'):
             print(f'Invalid working directory specified: {self.__workdir}')
-            exit(1)
+            os._exit(1)
         elif not os.path.isdir(self.__workdir):
             print(f'Working directory does not exist: {self.__workdir}')
-            exit(2)
+            os._exit(2)
         self.__workdir = os.path.abspath(self.__workdir)
         if not self.__no_default_patterns:
             # if no other patterns specified, default to including all files found in the directory matching `testPackageName`

@@ -45,15 +45,15 @@ class FilterManager:
             ready, _, _ = select.select([sys.stdin], [], [], 5)
             if not ready:
                 print('No data from stdin, aborting.')
-                sys.exit(7)
+                os._exit(7)
             lines = sys.stdin.read().splitlines()
             if len(lines) == 0:
                 print('No filters from stdin, aborting.')
-                sys.exit(6)
+                os._exit(6)
         else:
             if not os.path.exists(filepath):
                 print(f'file missing or not accessible: {filepath}')
-                sys.exit(5)
+                os._exit(5)
             with open(filepath, 'rb') as f:
                 lines = f.read().decode().splitlines()
         for line in lines:
