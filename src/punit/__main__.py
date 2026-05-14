@@ -3,6 +3,7 @@
 
 import asyncio
 import os
+import sys
 import time
 from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
@@ -52,6 +53,14 @@ async def async_main() -> None:
                     file.write(report.encode())
                 print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
     if failureCount > 0:
+        sys.stdout.flush()
+        sys.stderr.flush()
+        try:
+            os.fsync(sys.stdout.fileno())
+            os.fsync(sys.stderr.fileno())
+        except (AttributeError, ValueError, OSError):
+            # Pass if the stream doesn't support fsync (e.g. some virtualized environments)
+            pass
         os._exit(119)  # pragma: no cover
 
 
