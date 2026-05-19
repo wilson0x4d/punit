@@ -3,16 +3,16 @@ Collection Helpers
 
 .. py:currentmodule:: punit.collections
 
-.. py:function:: areSame(a:Sequence, b:Sequence, sort:bool=False, sortFunction:Callable[[Any], Any]=None) -> bool
+.. py:function:: areSame(actual: Sequence, expected: Sequence, sort: bool = False, sort_function: Callable[[Any], Any] = None) -> bool
 
     Use :py:func:`~punit.collections.areSame` to assert that two sequences contain the same elements in the same order.
 
     Check if two sequences contain the same elements in the same order.
     
-    :param Sequence[Any]|None a: The sequence to check
-    :param Sequence[Any]|None b: The sequence to compare against
+    :param Sequence[Any]|None actaul: The sequence to check
+    :param Sequence[Any]|None expected: The sequence to compare against
     :param Optional[bool] sort: Sort sequences before performing comparisons.
-    :param Optional[Callable[[Any], Any]] sortFunction: Custom function to use when sorting.
+    :param Optional[Callable[[Any], Any]] sort_function: Custom function to use when sorting.
     :returns bool: True if the sequences contain the same elements in the same order, False otherwise.
     
 .. rubric:: Example

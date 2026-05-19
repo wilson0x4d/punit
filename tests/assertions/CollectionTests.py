@@ -5,6 +5,7 @@ from typing import Sequence
 from punit import collections
 from punit import theory, inlinedata
 
+
 @theory
 @inlinedata('Values Match', [1,2,3], [1,2,3], True)
 @inlinedata('Values Do Not Match', [1,1,1], [2,2,2], False)
@@ -12,8 +13,24 @@ from punit import theory, inlinedata
 @inlinedata('Left Is None', None, [1], False)
 @inlinedata('Right Is None', [1], None, False)
 @inlinedata('Both Is None', None, None, True)
-def areSameWhenLists(when:str, a:Sequence, b:Sequence, then:bool):
-    assert then == collections.areSame(a, b), f'when:{when}'
+def areSameWhenLists(when: str, a: list, b: list, then: bool):
+    assert a is None or isinstance(a, list)
+    assert b is None or isinstance(b, list)
+    assert then == collections.areSame(a, b), when
+
+
+@theory
+@inlinedata('Values Match', {1,2,3}, {1,2,3}, True)
+@inlinedata('Values Do Not Match', {1,1,1}, {2,2,2}, False)
+@inlinedata('Sizes Differ', {1}, {2,3}, False)
+@inlinedata('Left Is None', None, {1}, False)
+@inlinedata('Right Is None', {1}, None, False)
+@inlinedata('Both Is None', None, None, True)
+def areSameWhenSets(when: str, a: set, b: set, then: bool):
+    assert a is None or isinstance(a, set)
+    assert b is None or isinstance(b, set)
+    assert then == collections.areSame(a, b), when
+
 
 @theory
 @inlinedata('Values Match', (1,2,3), (1,2,3), True)
@@ -22,8 +39,11 @@ def areSameWhenLists(when:str, a:Sequence, b:Sequence, then:bool):
 @inlinedata('Left Is None', None, (1,), False)
 @inlinedata('Right Is None', (1,), None, False)
 @inlinedata('Both Is None', None, None, True)
-def areSameWhenTuples(when:str, a:Sequence, b:Sequence, then:bool):
-    assert then == collections.areSame(a, b), f'when:{when}'
+def areSameWhenTuples(when: str, a: tuple, b: tuple, then: bool):
+    assert a is None or isinstance(a, tuple)
+    assert b is None or isinstance(b, tuple)
+    assert then == collections.areSame(a, b), when
+
 
 @theory
 @inlinedata('Values Match', {'a':1,'b':2,'c':3}, {'a':1,'b':2,'c':3}, True)
@@ -34,15 +54,19 @@ def areSameWhenTuples(when:str, a:Sequence, b:Sequence, then:bool):
 @inlinedata('Left Is None', None, {'a':1}, False)
 @inlinedata('Right Is None', {'a':1}, None, False)
 @inlinedata('Both Is None', None, None, True)
-def areSameWhenDictionaries(when:str, a:Sequence, b:Sequence, then:bool):
-    assert then == collections.areSame(a, b), f'when:{when}'
+def areSameWhenDictionaries(when: str, a: dict, b: dict, then: bool):
+    assert a is None or isinstance(a, dict)
+    assert b is None or isinstance(b, dict)
+    assert then == collections.areSame(a, b), when
+
 
 @theory
 @inlinedata('For Dictionaries', {'b':2,'a':1,'c':3}, {'a':1,'b':2,'c':3}, True)
 @inlinedata('For Tuples', (1,3,2), (1,2,3), True)
 @inlinedata('For Lists', [2,3,1], [1,2,3], True)
-def areSameWithSort(when:str, a:Sequence, b:Sequence, then:bool):
-    assert then == collections.areSame(a, b, sort=True), f'when:{when}'
+def areSameWithSort(when: str, a: Sequence, b: Sequence, then: bool):
+    assert then == collections.areSame(a, b, sort=True), when
+
 
 @theory
 @inlinedata('Sequence Is None', None, 0, True)
@@ -52,12 +76,13 @@ def areSameWithSort(when:str, a:Sequence, b:Sequence, then:bool):
 @inlinedata('Sequence Is Not Empty And Has Length', [1], 1, True)
 @inlinedata('Sequence Is Not None And Has No Length', [1], None, False)
 @inlinedata('Sequence Is Not Empty And Has No Length', [1], None, False)
-def hasLength(when:str, sequence:Sequence, expected:int, then:bool):
-    assert then == collections.hasLength(sequence, expected), f'when:{when}'
+def hasLength(when: str, sequence: Sequence, expected: int, then: bool):
+    assert then == collections.hasLength(sequence, expected), when
+
 
 @theory
 @inlinedata('Sequence Is None', None, True)
 @inlinedata('Sequence Is Not None And Is Empty', [], True)
 @inlinedata('Sequence Is Not None And Is Not Empty', [1], False)
-def isNoneOrEmpty(when:str, sequence:Sequence, then:bool):
+def isNoneOrEmpty(when: str, sequence: Sequence, then: bool):
     assert then == collections.isNoneOrEmpty(sequence), f'when:{when}'

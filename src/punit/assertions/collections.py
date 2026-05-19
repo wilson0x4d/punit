@@ -1,45 +1,45 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from typing import Any, Callable, Sequence, Optional, cast
+from typing import Any, Callable, Optional, Sequence, cast
 
 
-def areSame(a:Sequence[Any]|list[Any]|dict[Any,Any]|None, b:Sequence[Any]|list[Any]|dict[Any,Any]|None, sort:bool=False, sortFunction:Optional[Callable[[Any], Any]]=None) -> bool:
+def areSame(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None, expected: Sequence[Any] | set[Any] | dict[Any, Any] | None, sort: bool = False, sort_function: Optional[Callable[[Any], Any]] = None) -> bool:
     """
     Check if two sequences contain the same elements in the same order.
     
-    :param Sequence[Any]|None a: The sequence to check
-    :param Sequence[Any]|None b: The sequence to compare against
-    :param Optional[bool] sort: Sort sequences before performing comparisons.
-    :param Optional[Callable[[Any], Any]] sortFunction: Custom function to use when sorting.
+    :param actual: The sequence to check
+    :param expected: The sequence to compare against
+    :param sort: Sort sequences before performing comparisons.
+    :param sort_function: Custom function to use when sorting.
     :returns bool: True if the sequences contain the same elements in the same order, False otherwise.
     """
-    if a is b:
+    if actual is expected:
         return True
-    elif a is None and b is not None:
+    elif actual is None and expected is not None:
         return False
-    elif a is not None and b is None:
+    elif actual is not None and expected is None:
         return False
-    elif a is not None and b is not None:
-        if len(a) != len(b):
+    elif actual is not None and expected is not None:
+        if len(actual) != len(expected):
             return False
 
         if sort:
-            if isinstance(a, dict) or isinstance(b, dict):
-                sortFunction = sortFunction if sortFunction is not None else lambda e: e[0]
-                a = sorted(cast(dict,a).items(), key=sortFunction)
-                b = sorted(cast(dict,b).items(), key=sortFunction)
+            if isinstance(actual, dict) or isinstance(expected, dict):
+                sort_function = sort_function if sort_function is not None else lambda e: e[0]
+                actual = sorted(cast(dict, actual).items(), key=sort_function)
+                expected = sorted(cast(dict, expected).items(), key=sort_function)
             else:
-                sortFunction = sortFunction if sortFunction is not None else lambda e: e
-                a = sorted(a, key=sortFunction)
-                b = sorted(b, key=sortFunction)
+                sort_function = sort_function if sort_function is not None else lambda e: e
+                actual = sorted(actual, key=sort_function)
+                expected = sorted(expected, key=sort_function)
 
-        if isinstance(a, dict) or isinstance(b, dict):
-            for pairs in zip(cast(dict,a).items(), cast(dict,b).items()):
+        if isinstance(actual, dict) or isinstance(expected, dict):
+            for pairs in zip(cast(dict, actual).items(), cast(dict, expected).items()):
                 if not areSame(pairs[0], pairs[1]):
                     return False            
         else:
-            for pairs in zip(a, b):
+            for pairs in zip(actual, expected):
                 if isinstance(pairs[0], dict) or isinstance(pairs[1], dict):
                     if not areSame(pairs[0], pairs[1]):
                         return False            
@@ -47,30 +47,30 @@ def areSame(a:Sequence[Any]|list[Any]|dict[Any,Any]|None, b:Sequence[Any]|list[A
                         return False
     return True
 
-def hasLength(sequence:Sequence[Any]|list[Any]|dict[Any,Any]|None, expected:int|None) -> bool:
+def hasLength(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None, expected: int | None) -> bool:
     """
-    Check if a sequence has the expected number of elements.
+    Check if actual value has the expected number of elements.
     
-    :param Sequence[Any]|None sequence: The sequence to check
+    :param actual: The actual value to check.
     :param int|None expected: The expected number of elements
         
     :returns bool: True if the sequence has exactly the expected number of elements, False otherwise
     """
-    if sequence is None and (expected is None or expected == 0):
+    if actual is None and (expected is None or expected == 0):
         return True
-    elif sequence is None and (expected is not None and expected != 0):
+    elif actual is None and (expected is not None and expected != 0):
         return False
-    elif sequence is not None and expected is None:
+    elif actual is not None and expected is None:
         return False
-    return sequence is not None and len(sequence) == expected
+    return actual is not None and len(actual) == expected
 
-def isNoneOrEmpty(sequence:Sequence[Any]|list[Any]|dict[Any,Any]|None) -> bool:
+def isNoneOrEmpty(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None) -> bool:
     """
-    Check if a sequence is None or empty.
+    Check if actual value is None or empty.
 
-    :param Sequence[Any]|None sequence: The sequence to check
-    :returns bool: True if the sequence is None or empty, False otherwise
+    :param actual: The actual to check.
+    :returns: True if the value is None or empty, False otherwise.
     """
-    if sequence is None:
+    if actual is None:
         return True
-    return len(sequence) == 0
+    return len(actual) == 0
