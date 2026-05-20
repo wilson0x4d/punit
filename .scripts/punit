@@ -4,6 +4,4 @@
 ##
 from subprocess import run
 from sys import executable, argv
-from os import _exit
 result = run([executable, "-m", "punit"] + argv[1:], check=False)
-_exit(result.returncode)

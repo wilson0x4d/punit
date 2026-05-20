@@ -61,7 +61,11 @@ async def async_main() -> None:
         except (AttributeError, ValueError, OSError):
             # Pass if the stream doesn't support fsync (e.g. some virtualized environments)
             pass
-        os._exit(119)  # pragma: no cover
+        # when not a coverage, profiler, or debug run, then emit a non-zero exitcode;
+        # we EXITCODE for error handling in shell scripts/etc, which these edge cases
+        # do not benefit from.
+        if os.environ.get('COVERAGE_RUN') is None and sys.gettrace() is None and 'debugpy' not in sys.modules:
+            sys.exit(119)  # pragma: no cover
 
 
 def main() -> None:
