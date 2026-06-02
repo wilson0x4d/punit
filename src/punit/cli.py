@@ -19,6 +19,7 @@ class CommandLineInterface:
     __includePatterns:list[str]
     __includeTraits:list[Trait]
     __no_default_patterns:bool
+    __no_exitcode:bool
     __outputFilename:Optional[str]
     __quiet:bool
     __reportFormat:Optional[str]
@@ -35,6 +36,7 @@ class CommandLineInterface:
         self.__includePatterns = []
         self.__includeTraits = []
         self.__no_default_patterns = False
+        self.__no_exitcode = False
         self.__outputFilename = None
         self.__quiet = False
         self.__reportFormat = None
@@ -129,6 +131,8 @@ class CommandLineInterface:
                     self.__verbose = True
                 case '-n' | '--no-default-patterns':
                     self.__no_default_patterns = True
+                case '--no-exitcode':
+                    self.__no_exitcode = True
                 case '-r' | '--report':
                     extractReportFormat = True
                 case '-o' | '--output':
@@ -201,12 +205,14 @@ class CommandLineInterface:
     def workdir(self) -> str:
         return os.path.curdir if self.__workdir is None else self.__workdir
 
+    @property
+    def no_exitcode(self) -> bool:
+        return self.__no_exitcode is True
     
     def printHelp(self) -> None:
-        if True: # pragma: no cover
+        if True:  # pragma: no cover
             self.printVersion()
-            print(
-"""
+            print("""
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
                         [-z|--failfast]
@@ -217,6 +223,7 @@ Usage: python3 -m punit [-h|--help]
                         [-t|--trait [!]NAME[=VALUE]]
                         [-w|--working-directory PATH]
                         [-n|--no-default-patterns]
+                        [--no-exitcode]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
 
@@ -244,11 +251,13 @@ Options:
         Execute tests with the specified trait, negated by prefixing with '!'.
         If VALUE is specified, matches tests with the trait having specified value.
         If VALUE is not specified, matches any test with the trait having any value.
-        Default: No filtering based on traits.        
+        Default: No filtering based on traits.
     -w, --working-directory PATH
         Working directory (defaults to start directory)
     -n, --no-default-patterns
         Do not apply any default include/exclude patterns.
+    --no-exitcode
+        Do not exit with an error code on unit test failure.
     -r, --report {html|junit}
         Generate a report to stdout using either an "html"
         or "junit" format. When generating a report to stdout
@@ -258,8 +267,7 @@ Options:
         If `--report` is used, instead of writing to stdout
         write to FILENAME. In this case `--report` does not
         suppress any program output.
-"""
-        )
+""")
             os._exit(0)
 
     def printSummary(self) -> None:
