@@ -42,8 +42,8 @@ exclude = [
     "tests.*"
 ]
 
-[tool.setuptools.data-files]
-bin = [".scripts/punit"]
+[project.scripts]
+punit = "punit.__main__:main"
 
 [tool.setuptools.package-data]
 "punit" = ["py.typed"]
