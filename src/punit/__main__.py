@@ -5,6 +5,8 @@ import asyncio
 import os
 import sys
 import time
+from pathlib import Path
+
 from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
 from .reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
@@ -22,10 +24,12 @@ async def async_main() -> None:
         cli.printVersion()
     os.chdir(cli.workdir)
     if cli.no_pathfix is not True:
-        if os.path.exists('src') and 'src' not in sys.path:
-            sys.path.append('src')
-        if '.' not in sys.path:
-            sys.path.append('src')
+        pathbase = str(Path.cwd())
+        srcbase = os.path.join(pathbase, 'src')
+        if os.path.exists(srcbase) and srcbase not in sys.path:
+            sys.path.append(srcbase)
+        if pathbase not in sys.path:
+            sys.path.append(pathbase)
     testModuleDiscovery = TestModuleDiscovery(
         os.path.join(cli.workdir, cli.testPackageName),
         cli.includePatterns,
