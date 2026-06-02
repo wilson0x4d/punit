@@ -20,6 +20,7 @@ class CommandLineInterface:
     __includeTraits:list[Trait]
     __no_default_patterns:bool
     __no_exitcode:bool
+    __no_pathfix:bool
     __outputFilename:Optional[str]
     __quiet:bool
     __reportFormat:Optional[str]
@@ -37,6 +38,7 @@ class CommandLineInterface:
         self.__includeTraits = []
         self.__no_default_patterns = False
         self.__no_exitcode = False
+        self.__no_pathfix = False
         self.__outputFilename = None
         self.__quiet = False
         self.__reportFormat = None
@@ -133,6 +135,8 @@ class CommandLineInterface:
                     self.__no_default_patterns = True
                 case '--no-exitcode':
                     self.__no_exitcode = True
+                case '--no-pathfix':
+                    self.__no_pathfix = True
                 case '-r' | '--report':
                     extractReportFormat = True
                 case '-o' | '--output':
@@ -208,7 +212,11 @@ class CommandLineInterface:
     @property
     def no_exitcode(self) -> bool:
         return self.__no_exitcode is True
-    
+
+    @property
+    def no_pathfix(self) -> bool:
+        return self.__no_pathfix is True
+
     def printHelp(self) -> None:
         if True:  # pragma: no cover
             self.printVersion()
@@ -224,6 +232,7 @@ Usage: python3 -m punit [-h|--help]
                         [-w|--working-directory PATH]
                         [-n|--no-default-patterns]
                         [--no-exitcode]
+                        [--no-pathfix]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
 
@@ -258,6 +267,8 @@ Options:
         Do not apply any default include/exclude patterns.
     --no-exitcode
         Do not exit with an error code on unit test failure.
+    --no-pathfix
+        Do not apply path fixes, rely on PYTHONPATH only.
     -r, --report {html|junit}
         Generate a report to stdout using either an "html"
         or "junit" format. When generating a report to stdout

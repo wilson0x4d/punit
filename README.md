@@ -51,6 +51,8 @@ Usage: python3 -m punit [-h|--help]
                         [-t|--trait [!]NAME[=VALUE]]
                         [-w|--working-directory PATH]
                         [-n|--no-default-patterns]
+                        [--no-exitcode]
+                        [--no-pathfix]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
 
@@ -83,6 +85,10 @@ Options:
         Working directory (defaults to start directory)
     -n, --no-default-patterns
         Do not apply any default include/exclude patterns.
+    --no-exitcode
+        Do not exit with an error code on unit test failure.
+    --no-pathfix
+        Do not apply path fixes, rely on PYTHONPATH only.
     -r, --report {html|junit}
         Generate a report to stdout using either an "html"
         or "junit" format. When generating a report to stdout

@@ -21,6 +21,11 @@ async def async_main() -> None:
     elif not cli.quiet:  # pragma: no cover
         cli.printVersion()
     os.chdir(cli.workdir)
+    if cli.no_pathfix is not True:
+        if os.path.exists('src') and 'src' not in sys.path:
+            sys.path.append('src')
+        if '.' not in sys.path:
+            sys.path.append('src')
     testModuleDiscovery = TestModuleDiscovery(
         os.path.join(cli.workdir, cli.testPackageName),
         cli.includePatterns,
