@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2026 Shaun Wilson
+# SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
 from typing import Any, Callable, Generic, Optional, TypeVar, cast, get_args
@@ -8,12 +8,12 @@ TError = TypeVar('TError', bound=Exception)
 
 
 class raises(Generic[TError]):
-    
-    __action:Callable
-    __exact:bool
-    __expect:Optional[TError|type]
 
-    def __init__(self, action:Callable, *, exact:bool = False, expect:Optional[TError|type] = None) -> None:
+    __action: Callable[[], Any]
+    __exact: bool
+    __expect: Optional[TError | type]
+
+    def __init__(self, action: Callable[[], Any], *, exact: bool = False, expect: Optional[TError | type] = None) -> None:
         self.__action = action
         self.__exact = exact
         self.__expect = expect
@@ -28,7 +28,7 @@ class raises(Generic[TError]):
             if self.__exact:
                 return type(ex) is expected
             elif expected is not None:
-                return issubclass(type(ex), cast(Any,expected))
+                return issubclass(type(ex), cast(Any, expected))
         return False
 
 
