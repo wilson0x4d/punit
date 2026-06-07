@@ -1,34 +1,38 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from punit.assertions.exceptions import raises
-from punit.facts import fact
+from punit import fact, raises
 
 
-class CustomException(Exception):
+class CustomError(Exception):
     pass
 
-def raisesCustomException() -> None:
-    raise CustomException()
+
+def raises_custom_exception() -> None:
+    raise CustomError()
+
 
 @fact
-def AssertRaises_MustCatchException() -> None:
-    assert raises[Exception](raisesCustomException)
+def raises_must_capture_errors() -> None:
+    assert raises[Exception](raises_custom_exception)
+
 
 @fact
-def AssertRaises_WithTypeVar() -> None:
+def raises_supports_typearg_syntax() -> None:
     # preferred syntax
-    assert raises[Exception](raisesCustomException, exact=False)
-    assert raises[CustomException](raisesCustomException, exact=True)
-    assert not raises[Exception](raisesCustomException, exact=True)
+    assert raises[Exception](raises_custom_exception, exact=False)
+    assert raises[CustomError](raises_custom_exception, exact=True)
+    assert not raises[Exception](raises_custom_exception, exact=True)
+
 
 @fact
-def AssertRaises_WithKwarg() -> None:
+def raises_supports_kwargs_syntax() -> None:
     # compatibility syntax
-    assert raises(raisesCustomException, exact=False, expect=Exception)
-    assert raises(raisesCustomException, exact=True, expect=CustomException)
-    assert not raises(raisesCustomException, exact=True, expect=Exception)
+    assert raises(raises_custom_exception, exact=False, expect=Exception), 'do not expect an exact type match.'
+    assert raises(raises_custom_exception, exact=True, expect=CustomError), 'must expect an exact type match'
+    assert not raises(raises_custom_exception, exact=True, expect=Exception)
+
 
 @fact
-def AssertRaises_WhenNoException_MustReturnFalse() -> None:
-    assert not raises[ValueError](lambda: None)
+def when_no_error_must_return_false() -> None:
+    assert not raises[ValueError](lambda: None), 'do not assert when no error raised.'

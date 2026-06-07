@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from punit.facts import fact
-from punit.theories import theory, inlinedata
-from punit.traits import trait
+from punit import fact
+from punit import theory, inlinedata
+from punit import trait
+
 
 @theory
-@inlinedata('1','2','3')
-@inlinedata('2','3','4')
+@inlinedata('1', '2', '3')
+@inlinedata('2', '3', '4')
 @trait('category', 'math')
-def traited_theory_func(a, b, c) -> None:
+def traited_theory_func(a: str, b: str, c: str) -> None:
     assert (a == '1' and b == '2' and c == '3') or (a == '2' and b == '3' and c == '4')
+
 
 @fact
 @trait('category', 'science')
@@ -19,8 +21,9 @@ async def traited_fact_func() -> None:
     await asyncio.sleep(0.1)
     assert True
 
+
 @fact
 @trait('integration')
-async def traited_integration_test() -> None: # pragma: no cover
+async def traited_integration_test() -> None:  # pragma: no cover
     await asyncio.sleep(0.1)
     assert False, 'unit test run excludes "integration" tests.'
