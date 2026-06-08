@@ -11,8 +11,8 @@ from .Filter import Filter
 
 class FilterManager:
 
-    __instance:Optional['FilterManager']|None = None
-    __filters:list[Filter]
+    __instance: Optional['FilterManager'] | None = None
+    __filters: list[Filter]
 
     def __init__(self) -> None:
         self.__filters = list[Filter]()
@@ -29,18 +29,18 @@ class FilterManager:
             FilterManager.__instance = instance
         return instance
 
-    def add(self, pattern:str) -> None:
+    def add(self, pattern: str) -> None:
         self.__filters.append(Filter(pattern))
 
-    def remove(self, pattern:str) -> None:
+    def remove(self, pattern: str) -> None:
         for filter in [e for e in self.__filters]:
             if filter.pattern == pattern:
                 self.__filters.remove(filter)
                 break
 
-    def load(self, filepath:str) -> None:
+    def load(self, filepath: str) -> None:
         # treat as a filepath containing one or more filter patterns
-        lines:list[str] = []
+        lines: list[str] = []
         if filepath == 'stdin':
             ready, _, _ = select.select([sys.stdin], [], [], 5)
             if not ready:
@@ -57,7 +57,7 @@ class FilterManager:
             with open(filepath, 'rb') as f:
                 lines = f.read().decode().splitlines()
         for line in lines:
-            line = line.split('#')[0].strip() # strip comments and prefix/postfix whitespace
+            line = line.split('#')[0].strip()  # strip comments and prefix/postfix whitespace
             if len(line) == 0:
                 # comments and empty lines
                 continue

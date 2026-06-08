@@ -79,7 +79,7 @@ def isclose(
         a_c = a if isinstance(a, complex) else complex(a, 0)
         b_c = b if isinstance(b, complex) else complex(b, 0)
         return math.isclose(a_c.real, b_c.real, rel_tol=rel_tol, abs_tol=abs_tol) and \
-               math.isclose(a_c.imag, b_c.imag, rel_tol=rel_tol, abs_tol=abs_tol)
+            math.isclose(a_c.imag, b_c.imag, rel_tol=rel_tol, abs_tol=abs_tol)
 
     # Both real: delegate to stdlib (safe float cast for int/float)
     return math.isclose(float(a), float(b), rel_tol=rel_tol, abs_tol=abs_tol)

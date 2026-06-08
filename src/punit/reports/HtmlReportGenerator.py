@@ -7,15 +7,15 @@ from ..TestResult import TestResult
 
 class HtmlReportGenerator:
 
-    def generate(self, testResults:list[TestResult]) -> str:
+    def generate(self, test_results: list[TestResult]) -> str:
         failureCount = 0
         totalCount = 0
-        for testResult in testResults:
+        for test_result in test_results:
             totalCount += 1
-            if not testResult.isSuccess:
+            if not test_result.is_success:
                 failureCount += 1
-        testResults = testResults.copy()
-        testResults.sort(key=lambda e : e.moduleName)
+        test_results = test_results.copy()
+        test_results.sort(key=lambda e: e.module_name)
         lines = []
         lines.append('<html>')
         lines.append('<head><title>Test Results</title></head>')
@@ -54,40 +54,40 @@ class HtmlReportGenerator:
         lines.append('<div>&nbsp;</div>')
         lines.append('</div>')
         currentModuleName = None
-        for testResult in testResults:
-            if currentModuleName != testResult.moduleName:
+        for test_result in test_results:
+            if currentModuleName != test_result.module_name:
                 if currentModuleName is not None:
                     lines.append('</div>')
                 lines.append('<div class="testresults-module">')
-                lines.append(f'<h2 class="module-name">{testResult.moduleName}</h2>')
-                currentModuleName = testResult.moduleName
-            passfailstyle = '-pass' if testResult.isSuccess else '-fail'
-            passfailglyph = '🟩' if testResult.isSuccess else '🟥'
+                lines.append(f'<h2 class="module-name">{test_result.module_name}</h2>')
+                currentModuleName = test_result.module_name
+            passfailstyle = '-pass' if test_result.is_success else '-fail'
+            passfailglyph = '🟩' if test_result.is_success else '🟥'
             lines.append(f'<div class="testresult testresult{passfailstyle}">')
             lines.append('<div class="testresult-heading">')
             lines.append(f'<span class="glyph glyph{passfailstyle}">{passfailglyph}</span>')
-            className = "" if testResult.className is None else f"{testResult.className}."
-            data = testResult.properties.get('data')
+            class_name = "" if test_result.class_name is None else f"{test_result.class_name}."
+            data = test_result.properties.get('data')
             if data is not None and len(data) > 0:
-                lines.append(f'<span class="test-class">{className}</span><span class="test-name">{testResult.testName}{data}</span>')
+                lines.append(f'<span class="test-class">{class_name}</span><span class="test-name">{test_result.test_name}{data}</span>')
             else:
-                lines.append(f'<span class="test-class">{className}</span><span class="test-name">{testResult.testName}</span>')
-            lines.append(f'<span class="test-time test-time{passfailstyle}">{testResult.tookPretty}</span>')
+                lines.append(f'<span class="test-class">{class_name}</span><span class="test-name">{test_result.test_name}</span>')
+            lines.append(f'<span class="test-time test-time{passfailstyle}">{test_result.tookPretty}</span>')
             lines.append('</div>')
-            if not testResult.isSuccess or testResult.stdout is not None or testResult.stderr is not None:
+            if not test_result.is_success or test_result.stdout is not None or test_result.stderr is not None:
                 lines.append('<div class="testresult-body">')
-                if not testResult.isSuccess:
+                if not test_result.is_success:
                     lines.append('<div class="testresult-error">')
-                    if testResult.exception is not None:
-                        if len(f'{testResult.exception}') > 0:
-                            lines.append(f'Error:<br/>&nbsp;&nbsp;{testResult.exception}<br/>')
-                        tbstr = "".join(traceback.format_tb(testResult.exception.__traceback__)).replace('\n', '<br/>').replace(' ', '&nbsp;')
+                    if test_result.exception is not None:
+                        if len(f'{test_result.exception}') > 0:
+                            lines.append(f'Error:<br/>&nbsp;&nbsp;{test_result.exception}<br/>')
+                        tbstr = "".join(traceback.format_tb(test_result.exception.__traceback__)).replace('\n', '<br/>').replace(' ', '&nbsp;')
                         lines.append(f'Traceback:<br/>{tbstr}')
                     lines.append('</pre></div>')
-                if testResult.stdout is not None:
-                    lines.append(f'<div class="testresult-stdout"><pre>{testResult.stdout}</pre></div>')
-                if testResult.stderr is not None:
-                    lines.append(f'<div class="testresult-stderr"><pre>{testResult.stderr}</pre></div>')
+                if test_result.stdout is not None:
+                    lines.append(f'<div class="testresult-stdout"><pre>{test_result.stdout}</pre></div>')
+                if test_result.stderr is not None:
+                    lines.append(f'<div class="testresult-stderr"><pre>{test_result.stderr}</pre></div>')
                 lines.append('</div>')
             lines.append('</div>')
         lines.append('</body>')

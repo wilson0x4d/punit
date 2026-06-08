@@ -7,16 +7,16 @@ from typing import Any, TextIO, Optional, cast
 
 class TextIOCapture:
 
-    __quiet:bool
-    output:str|None = None
-    target:TextIO
+    __quiet: bool
+    output: str | None = None
+    target: TextIO
 
-    def __init__(self, target:TextIO, quiet:bool = False) -> None:
+    def __init__(self, target: TextIO, quiet: bool = False) -> None:
         self.__quiet = quiet
         self.output = None
         self.target = target
 
-    def write(self, text:str) -> int:
+    def write(self, text: str) -> int:
         if self.output is None:
             self.output = text
         else:
@@ -26,137 +26,136 @@ class TextIOCapture:
         return len(text)
 
 
-
 class TestResult:
 
-    __className:Optional[str]
-    __exception:Exception|None
-    __fileName:str|None
-    __hostName:str|None
-    __isSuccess:bool|None
-    __moduleName:str|None
-    __packageName:str|None
-    __properties:dict[str, Any]
-    __startTime:float|None
-    __stderrCapture:TextIOCapture|None
-    __stdoutCapture:TextIOCapture|None
-    __stopTime:float|None
-    __testName:str|None
+    __class_name: Optional[str]
+    __exception: Exception | None
+    __file_name: str | None
+    __host_name: str | None
+    __is_success: bool | None
+    __module_name: str | None
+    __package_name: str | None
+    __properties: dict[str, Any]
+    __start_time: float | None
+    __stderr_capture: TextIOCapture | None
+    __stdout_capture: TextIOCapture | None
+    __stop_time: float | None
+    __test_name: str | None
 
     def __init__(self) -> None:
-        self.__className = None
+        self.__class_name = None
         self.__exception = None
-        self.__fileName = None
-        self.__hostName = None
-        self.__isSuccess = None
-        self.__moduleName = None
-        self.__packageName = None
-        self.__properties = dict[str,Any]()
-        self.__startTime = None
-        self.__stderrCapture = None
-        self.__stdoutCapture = None
-        self.__stopTime = None
-        self.__testName = None
+        self.__file_name = None
+        self.__host_name = None
+        self.__is_success = None
+        self.__module_name = None
+        self.__package_name = None
+        self.__properties = dict[str, Any]()
+        self.__start_time = None
+        self.__stderr_capture = None
+        self.__stdout_capture = None
+        self.__stop_time = None
+        self.__test_name = None
 
     @property
-    def className(self) -> Optional[str]:
-        return self.__className if self.__className is not None and len(self.__className) > 0 else None
-    
-    @className.setter
-    def className(self, value:Optional[str]) -> None:
-        self.__className = value
+    def class_name(self) -> Optional[str]:
+        return self.__class_name if self.__class_name is not None and len(self.__class_name) > 0 else None
+
+    @class_name.setter
+    def class_name(self, value: Optional[str]) -> None:
+        self.__class_name = value
 
     @property
-    def exception(self) -> Exception|None:
+    def exception(self) -> Exception | None:
         return self.__exception
-    
+
     @exception.setter
-    def exception(self, value:Exception) -> None:
+    def exception(self, value: Exception) -> None:
         self.__exception = value
 
     @property
-    def fileName(self) -> str|None:
-        return self.__fileName
-    
-    @fileName.setter
-    def fileName(self, value:str) -> None:
-        self.__fileName = value
+    def file_name(self) -> str | None:
+        return self.__file_name
+
+    @file_name.setter
+    def file_name(self, value: str) -> None:
+        self.__file_name = value
 
     @property
-    def hostName(self) -> str|None:
-        return self.__hostName
-    
-    @hostName.setter
-    def hostName(self, value:str) -> None:
-        self.__hostName = value
+    def host_name(self) -> str | None:
+        return self.__host_name
+
+    @host_name.setter
+    def host_name(self, value: str) -> None:
+        self.__host_name = value
 
     @property
-    def isSuccess(self) -> bool:
-        return False if self.__isSuccess is None else self.__isSuccess
-    
-    @isSuccess.setter
-    def isSuccess(self, value:bool) -> None:
-        self.__isSuccess = value
+    def is_success(self) -> bool:
+        return False if self.__is_success is None else self.__is_success
+
+    @is_success.setter
+    def is_success(self, value: bool) -> None:
+        self.__is_success = value
 
     @property
-    def moduleName(self) -> str:
-        return cast(str,self.__moduleName)
-    
-    @moduleName.setter
-    def moduleName(self, value:str) -> None:
-        self.__moduleName = value
+    def module_name(self) -> str:
+        return cast(str, self.__module_name)
+
+    @module_name.setter
+    def module_name(self, value: str) -> None:
+        self.__module_name = value
 
     @property
-    def packageName(self) -> str|None:
-        return self.__packageName
-    
-    @packageName.setter
-    def packageName(self, value:str) -> None:
-        self.__packageName = value
+    def package_name(self) -> str | None:
+        return self.__package_name
+
+    @package_name.setter
+    def package_name(self, value: str) -> None:
+        self.__package_name = value
 
     @property
     def properties(self) -> dict[str, Any]:
         return self.__properties
-    
+
     @properties.setter
-    def properties(self, value:dict[str, str]) -> None:
+    def properties(self, value: dict[str, str]) -> None:
         self.__properties = value
 
     @property
-    def startTime(self) -> float|None:
-        return self.__startTime
-    
-    @startTime.setter
-    def startTime(self, value:float) -> None:
-        self.__startTime = value
+    def start_time(self) -> float | None:
+        return self.__start_time
+
+    @start_time.setter
+    def start_time(self, value: float) -> None:
+        self.__start_time = value
 
     @property
-    def stderr(self) -> str|None:
-        return None if self.__stderrCapture is None else self.__stderrCapture.output
+    def stderr(self) -> str | None:
+        return None if self.__stderr_capture is None else self.__stderr_capture.output
 
     @property
-    def stdout(self) -> str|None:
-        return None if self.__stdoutCapture is None else self.__stdoutCapture.output
+    def stdout(self) -> str | None:
+        return None if self.__stdout_capture is None else self.__stdout_capture.output
 
     @property
-    def stopTime(self) -> float|None:
-        return self.__stopTime
-    
-    @stopTime.setter
-    def stopTime(self, value:float) -> None:
-        self.__stopTime = value
+    def stop_time(self) -> float | None:
+        return self.__stop_time
+
+    @stop_time.setter
+    def stop_time(self, value: float) -> None:
+        self.__stop_time = value
 
     @property
-    def testName(self) -> str|None:
-        return self.__testName
-    
-    @testName.setter
-    def testName(self, value:str) -> None:
-        self.__testName = value
+    def test_name(self) -> str | None:
+        return self.__test_name
+
+    @test_name.setter
+    def test_name(self, value: str) -> None:
+        self.__test_name = value
 
     @property
-    def took(self) -> float|None:
-        return None if self.__stopTime is None or self.__startTime is None else self.__stopTime - self.__startTime
+    def took(self) -> float | None:
+        return None if self.__stop_time is None or self.__start_time is None else self.__stop_time - self.__start_time
 
     @property
     def tookPretty(self) -> str:
@@ -174,15 +173,14 @@ class TestResult:
         else:
             return f'{(took*1000):.3f}'.rstrip('0').rstrip('.') + 'ms'
 
-
-    def captureOutput(self, quiet:bool = False) -> None:
-        self.__stdoutCapture = TextIOCapture(sys.stdout, quiet)
-        self.__stderrCapture = TextIOCapture(sys.stderr, quiet)
-        sys.stdout = self.__stdoutCapture
-        sys.stderr = self.__stderrCapture
+    def captureOutput(self, quiet: bool = False) -> None:
+        self.__stdout_capture = TextIOCapture(sys.stdout, quiet)
+        self.__stderr_capture = TextIOCapture(sys.stderr, quiet)
+        sys.stdout = self.__stdout_capture
+        sys.stderr = self.__stderr_capture
 
     def releaseOutput(self) -> None:
-        if self.__stdoutCapture is not None and self.__stdoutCapture.target is not None:
-            sys.stdout = self.__stdoutCapture.target
-        if self.__stderrCapture is not None and self.__stderrCapture.target is not None:
-            sys.stderr = self.__stderrCapture.target
+        if self.__stdout_capture is not None and self.__stdout_capture.target is not None:
+            sys.stdout = self.__stdout_capture.target
+        if self.__stderr_capture is not None and self.__stderr_capture.target is not None:
+            sys.stderr = self.__stderr_capture.target

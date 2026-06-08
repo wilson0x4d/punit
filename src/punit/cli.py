@@ -24,7 +24,7 @@ class CommandLineInterface:
     __outputFilename: Optional[str]
     __quiet: bool
     __reportFormat: Optional[str]
-    __testPackageName: str | None
+    __test_package_name: str | None
     __verbose: bool
     __workdir: str | None
 
@@ -42,7 +42,7 @@ class CommandLineInterface:
         self.__outputFilename = None
         self.__quiet = False
         self.__reportFormat = None
-        self.__testPackageName = 'tests'
+        self.__test_package_name = 'tests'
         self.__workdir = os.path.curdir
         self.__verbose = False
 
@@ -92,8 +92,8 @@ class CommandLineInterface:
             elif self.__workdir is None:
                 self.__workdir = arg
                 continue
-            elif self.__testPackageName is None:
-                self.__testPackageName = arg
+            elif self.__test_package_name is None:
+                self.__test_package_name = arg
                 continue
             elif extractReportFormat:
                 extractReportFormat = False
@@ -122,7 +122,7 @@ class CommandLineInterface:
                 case '-z' | '--failfast':
                     self.__failfast = True
                 case '-p' | '--test-package':
-                    self.__testPackageName = None
+                    self.__test_package_name = None
                 case '-i' | '--include':
                     extractIncludePattern = True
                 case '-q' | '--quiet':
@@ -198,8 +198,8 @@ class CommandLineInterface:
         return self.__reportFormat
 
     @property
-    def testPackageName(self) -> str:
-        return 'tests' if self.__testPackageName is None else self.__testPackageName
+    def test_package_name(self) -> str:
+        return 'tests' if self.__test_package_name is None else self.__test_package_name
 
     @property
     def verbose(self) -> bool:
@@ -307,7 +307,7 @@ Options:
             os._exit(2)
         self.__workdir = os.path.abspath(self.__workdir)
         if not self.__no_default_patterns:
-            # if no other patterns specified, default to including all files found in the directory matching `testPackageName`
+            # if no other patterns specified, default to including all files found in the directory matching `test_package_name`
             if len(self.__includePatterns) == 0:
                 self.__includePatterns.append('*.py')
             # always exclude dunder files

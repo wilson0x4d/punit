@@ -12,15 +12,15 @@ from .Theory import Theory
 
 class TheoryManager:
 
-    __excludeTraits:list[Trait]
-    __includeTraits:list[Trait]
-    __instance:Optional['TheoryManager'] = None
-    __modules:dict[str, list[Theory]]
-    __datas:dict[Callable, list[tuple]]
-    
+    __excludeTraits: list[Trait]
+    __includeTraits: list[Trait]
+    __instance: Optional['TheoryManager'] = None
+    __modules: dict[str, list[Theory]]
+    __datas: dict[Callable, list[tuple]]
+
     def __init__(self) -> None:
         if TheoryManager.__instance is not None:
-            raise Exception('Cannot create more than one instance of TheoryManager') # pragma: no cover
+            raise Exception('Cannot create more than one instance of TheoryManager')  # pragma: no cover
         self.__modules = {}
         self.__datas = {}
 
@@ -29,24 +29,24 @@ class TheoryManager:
         if TheoryManager.__instance is None:
             TheoryManager.__instance = TheoryManager()
         return TheoryManager.__instance
-        
+
     @property
     def excludeTraits(self) -> list[Trait]:
         return [] if self.__excludeTraits is None else self.__excludeTraits
-    
+
     @excludeTraits.setter
-    def excludeTraits(self, value:list[Trait]) -> None:
+    def excludeTraits(self, value: list[Trait]) -> None:
         self.__excludeTraits = value
 
     @property
     def includeTraits(self) -> list[Trait]:
         return [] if self.__includeTraits is None else self.__includeTraits
-    
+
     @includeTraits.setter
-    def includeTraits(self, value:list[Trait]) -> None:
+    def includeTraits(self, value: list[Trait]) -> None:
         self.__includeTraits = value
 
-    def __excludeByTraits(self, theory:Theory) -> bool:
+    def __excludeByTraits(self, theory: Theory) -> bool:
         traits = TraitManager.instance().get(theory.target)
         if self.excludeTraits is not None and len(self.__excludeTraits) > 0:
             for trait in self.excludeTraits:
@@ -61,18 +61,18 @@ class TheoryManager:
             return True
         return False
 
-    def get(self, moduleName:str) -> list[Theory]:
-        l = self.__modules.get(moduleName)
+    def get(self, module_name: str) -> list[Theory]:
+        l = self.__modules.get(module_name)
         if l is None:
             l = []
-            self.__modules[moduleName] = l
+            self.__modules[module_name] = l
         return l
 
-    def put(self, theory:Theory) -> None:
+    def put(self, theory: Theory) -> None:
         filters = FilterManager.instance().filters
-        matches_filter:bool = False
+        matches_filter: bool = False
         for filter in filters:
-            if filter.re.fullmatch(theory.metadata.filterName) is not None:
+            if filter.re.fullmatch(theory.metadata.filter_name) is not None:
                 matches_filter = not filter.isExclude
                 break
         if matches_filter:
@@ -85,7 +85,7 @@ class TheoryManager:
             if not self.__excludeByTraits(theory):
                 l.append(theory)
 
-    def withData(self, target:Callable, data:tuple) -> None:
+    def withData(self, target: Callable, data: tuple) -> None:
         # TODO: data acquisition should be deferred until put() since that is where `Filter` logic
         # is applied, but for current implementation `@inlinedata()` is not affected. more advanced
         # data decorators may benefit from deferral (for example, data coming from an API or DB.)

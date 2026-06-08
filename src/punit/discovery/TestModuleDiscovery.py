@@ -12,15 +12,15 @@ from ..traits import Trait
 
 class TestModuleDiscovery:
 
-    __cli:CommandLineInterface
-    __excludePatterns:list[re.Pattern]
-    __excludeTraits:list[Trait]
-    __filenames:list[str]
-    __includePatterns:list[re.Pattern]
-    __includeTraits:list[Trait]
-    __workdir:str
+    __cli: CommandLineInterface
+    __excludePatterns: list[re.Pattern]
+    __excludeTraits: list[Trait]
+    __filenames: list[str]
+    __includePatterns: list[re.Pattern]
+    __includeTraits: list[Trait]
+    __workdir: str
 
-    def __init__(self, workdir:str, includePatterns:list[str], excludePatterns:list[str], cli:CommandLineInterface) -> None:
+    def __init__(self, workdir: str, includePatterns: list[str], excludePatterns: list[str], cli: CommandLineInterface) -> None:
         self.__cli = cli
         self.__excludePatterns = []
         if excludePatterns is not None:
@@ -41,27 +41,26 @@ class TestModuleDiscovery:
                         re.IGNORECASE))
         self.__workdir = workdir
 
-
-    def __convertPatternToRegex(self, pattern:str) -> str:
+    def __convertPatternToRegex(self, pattern: str) -> str:
         result = re.escape(pattern)\
             .replace('\\\\', '/')\
             .replace('\\*', r'.*')\
             .replace('?', '.')
         return result
 
-    def __testAnyInclude(self, input:str) -> bool:
+    def __testAnyInclude(self, input: str) -> bool:
         for pat in self.__includePatterns:
             if len(pat.findall(input)) > 0:
                 return True
         return False
 
-    def __testAnyExclude(self, input:str) -> bool:
+    def __testAnyExclude(self, input: str) -> bool:
         for pat in self.__excludePatterns:
             if len(pat.findall(input)) > 0:
                 return True
         return False
 
-    def __walkDirectory(self, path:str) -> list[str]:
+    def __walkDirectory(self, path: str) -> list[str]:
         filenames = []
         if os.path.isdir(path):
             for dname, dlist, flist in os.walk(path, topdown=True):
@@ -97,7 +96,7 @@ class TestModuleDiscovery:
     @property
     def filenames(self) -> list[str]:
         return self.__filenames
-        
+
     def discover(self) -> list[str]:
         FactManager.instance().excludeTraits = self.__excludeTraits
         FactManager.instance().includeTraits = self.__includeTraits

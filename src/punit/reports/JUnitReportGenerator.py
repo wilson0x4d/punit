@@ -9,59 +9,60 @@ from ..TestResult import TestResult
 
 
 class JUnitError:
-    message:Optional[str] = None
-    type:Optional[str] = None
+    message: Optional[str] = None
+    type: Optional[str] = None
 
 
 class JUnitTestCase:
     # attrs
-    classname:Optional[str] = None
-    disabled:Optional[bool] = None
-    name:Optional[str] = None
-    time:Optional[float] = None
+    classname: Optional[str] = None
+    disabled: Optional[bool] = None
+    name: Optional[str] = None
+    time: Optional[float] = None
     # eles
-    error:Optional[JUnitError] = None
-    failure:Optional[JUnitError] = None
-    stdout:Optional[str] = None
-    stderr:Optional[str] = None
-    skipped:Optional[bool] = None
-    def __init__(self, testResult:TestResult) -> None:
+    error: Optional[JUnitError] = None
+    failure: Optional[JUnitError] = None
+    stdout: Optional[str] = None
+    stderr: Optional[str] = None
+    skipped: Optional[bool] = None
+
+    def __init__(self, test_result: TestResult) -> None:
         self.disabled = False
-        self.classname = testResult.moduleName if testResult.className is None else f'{testResult.moduleName}.{testResult.className}'
-        self.time = testResult.took
-        data = testResult.properties.get('data')
+        self.classname = test_result.module_name if test_result.class_name is None else f'{test_result.module_name}.{test_result.class_name}'
+        self.time = test_result.took
+        data = test_result.properties.get('data')
         if data is not None and len(data) > 0:
             data = f'({",".join([str(e) for e in data])})'
         else:
             data = ''
-        self.name = f'{testResult.testName}{data}'
-        if not testResult.isSuccess:
-            exc_type = type(testResult.exception)
+        self.name = f'{test_result.test_name}{data}'
+        if not test_result.is_success:
+            exc_type = type(test_result.exception)
             error = JUnitError()
-            error.message = f'{testResult.exception}'
+            error.message = f'{test_result.exception}'
             error.type = getattr(exc_type, '__name__') if not hasattr(exc_type, '__qualname__') else getattr(exc_type, '__qualname__')
             if issubclass(exc_type, AssertionError):
                 self.failure = error
             else:
                 self.error = error
-        self.stdout = None if testResult.stdout is None else escape(testResult.stdout)
-        self.stderr = None if testResult.stderr is None else escape(testResult.stderr)
+        self.stdout = None if test_result.stdout is None else escape(test_result.stdout)
+        self.stderr = None if test_result.stderr is None else escape(test_result.stderr)
         self.skipped = False
 
 
 class JUnitTestSuite:
     # attrs
-    name:Optional[str] = None
-    hostname:Optional[str] = None
-    id:Optional[int] = None
-    package:Optional[str] = None
-    timestamp:Optional[datetime.datetime] = None
+    name: Optional[str] = None
+    hostname: Optional[str] = None
+    id: Optional[int] = None
+    package: Optional[str] = None
+    timestamp: Optional[datetime.datetime] = None
     # eles
-    testCases:Optional[list[JUnitTestCase]] = None
+    testCases: Optional[list[JUnitTestCase]] = None
 
     @property
     def disabled(self) -> int:
-        result:int = 0
+        result: int = 0
         if self.testCases is not None:
             for testCase in self.testCases:
                 if testCase.disabled == True:
@@ -70,7 +71,7 @@ class JUnitTestSuite:
 
     @property
     def errors(self) -> int:
-        result:int = 0
+        result: int = 0
         if self.testCases is not None:
             for testCase in self.testCases:
                 if testCase.error is not None:
@@ -79,7 +80,7 @@ class JUnitTestSuite:
 
     @property
     def failures(self) -> int:
-        result:int = 0
+        result: int = 0
         if self.testCases is not None:
             for testCase in self.testCases:
                 if testCase.failure is not None:
@@ -88,7 +89,7 @@ class JUnitTestSuite:
 
     @property
     def skipped(self) -> int:
-        result:int = 0
+        result: int = 0
         if self.testCases is not None:
             for testCase in self.testCases:
                 if testCase.skipped:
@@ -101,7 +102,7 @@ class JUnitTestSuite:
 
     @property
     def time(self) -> float:
-        result:float = 0.0
+        result: float = 0.0
         if self.testCases is not None:
             for testCase in self.testCases:
                 result += testCase.time if testCase.time is not None else 0
@@ -110,34 +111,34 @@ class JUnitTestSuite:
 
 class JUnitReportGenerator:
 
-    def generate(self, testResults:list[TestResult]) -> str:
+    def generate(self, test_results: list[TestResult]) -> str:
         # transform to intermediary model
-        testSuites:dict[str, JUnitTestSuite] = {}
-        testSuite:JUnitTestSuite|None
-        ts:float = 0
-        for testResult in testResults:
-            if testResult.stopTime is not None and ts < testResult.stopTime:
-                ts = testResult.stopTime
-            testSuite = testSuites.get(testResult.moduleName)
+        testSuites: dict[str, JUnitTestSuite] = {}
+        testSuite: JUnitTestSuite | None
+        ts: float = 0
+        for test_result in test_results:
+            if test_result.stop_time is not None and ts < test_result.stop_time:
+                ts = test_result.stop_time
+            testSuite = testSuites.get(test_result.module_name)
             if testSuite is None:
                 testSuite = JUnitTestSuite()
-                testSuite.name = testResult.moduleName
+                testSuite.name = test_result.module_name
                 testSuite.id = len(testSuites)
-                testSuite.hostname = testResult.hostName
-                testSuite.package = testResult.packageName
+                testSuite.hostname = test_result.host_name
+                testSuite.package = test_result.package_name
                 testSuite.testCases = []
-                testSuites[testResult.moduleName] = testSuite
+                testSuites[test_result.module_name] = testSuite
             if testSuite.testCases is None:
-                testSuite.testCases = []                
-            testSuite.testCases.append(JUnitTestCase(testResult))
+                testSuite.testCases = []
+            testSuite.testCases.append(JUnitTestCase(test_result))
             testSuite.timestamp = datetime.datetime.fromtimestamp(ts)
         # materialize as xml
         totalDisabledCount = 0
         totalErrorCount = 0
         totalFailureCount = 0
         totalTestCount = 0
-        totalTime:float = 0
-        testSuitesEle:et.Element = et.Element('testsuites')
+        totalTime: float = 0
+        testSuitesEle: et.Element = et.Element('testsuites')
         for testSuiteName in testSuites:
             testSuite = testSuites[testSuiteName]
             if testSuite is not None:

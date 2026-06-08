@@ -13,109 +13,112 @@ from .metadata.CallableMetadata import CallableMetadata
 from .theories.TheoryManager import TheoryManager
 from .TestResult import TestResult
 
+
 class TestRunner:
 
-    __cli:CommandLineInterface
-    __filenames:list[str]
-    __testPackageName:str
-    
-    def __init__(self, testPackageName:str, filenames:list[str], cli:CommandLineInterface):
+    __cli: CommandLineInterface
+    __filenames: list[str]
+    __test_package_name: str
+
+    def __init__(self, test_package_name: str, filenames: list[str], cli: CommandLineInterface):
         self.__cli = cli
         self.__filenames = filenames
-        self.__testPackageName = testPackageName
+        self.__test_package_name = test_package_name
 
-    def printTestResult(self, testResult:TestResult):
+    def print_test_result(self, test_result: TestResult):
         if self.__cli.quiet:
             return
-        glyph = '🟩' if testResult.isSuccess else '🟥'
-        data = testResult.properties.get('data')
+        glyph = '🟩' if test_result.is_success else '🟥'
+        data = test_result.properties.get('data')
         if data is None:
             data = ''
         else:
             try:
                 data = f'({",".join([str(e) for e in data])})'
-            except:
+            except Exception:
                 data = '(???)'
-        print(f'{glyph} {testResult.moduleName}/{"" if testResult.className is None or len(testResult.className) == 0 else f"{testResult.className}/"}{testResult.testName}{data} [{testResult.tookPretty}]')
-        if self.__cli.verbose and (not testResult.isSuccess) and testResult.exception is not None:
-            print(f'Test File:\n    {testResult.fileName}\nError:\n    {testResult.exception}\n    Traceback:\n{"".join(traceback.format_tb(testResult.exception.__traceback__))}')
+        print(f'{glyph} {test_result.module_name}/{"" if test_result.class_name is None or len(test_result.class_name) == 0 else f"{test_result.class_name}/"}{test_result.test_name}{data} [{test_result.tookPretty}]')
+        if self.__cli.verbose and (not test_result.is_success) and test_result.exception is not None:
+            print(f'Test File:\n    {test_result.file_name}\nError:\n    {test_result.exception}\n    Traceback:\n{"".join(traceback.format_tb(test_result.exception.__traceback__))}')
 
     async def run(self) -> list[TestResult]:
-        results:list[TestResult] = []
-        result:TestResult
+        results: list[TestResult] = []
+        result: TestResult
         # TODO: aliasing
-        hostName:str = socket.gethostname()
-        testPackagePath = os.path.join(os.path.abspath(os.curdir), self.__testPackageName).replace('\\', '/')
+        host_name: str = socket.gethostname()
+        test_package_path = os.path.join(os.path.abspath(os.curdir), self.__test_package_name).replace('\\', '/')
         for filename in self.__filenames:
             ts = time.time()
-            moduleImportName = filename.replace(testPackagePath, '').replace('/', '.').replace('.py', '')
-            moduleReportName = moduleImportName.lstrip('.')
+            moduleImportName = filename.replace(test_package_path, '').replace('/', '.')
+            if moduleImportName.endswith('.py'):
+                moduleImportName = moduleImportName[:-3]
+            module_report_name = moduleImportName.lstrip('.')
             try:
-                testModule = importlib.import_module(moduleImportName, self.__testPackageName)
+                testModule = importlib.import_module(moduleImportName, self.__test_package_name)
                 # execute all facts
                 facts = FactManager.instance().get(testModule.__name__)
                 for fact in facts:
                     result = TestResult()
-                    result.hostName = hostName
-                    result.packageName = self.__testPackageName
-                    result.fileName = filename
-                    result.moduleName = moduleReportName
-                    result.startTime = time.time()
+                    result.host_name = host_name
+                    result.package_name = self.__test_package_name
+                    result.file_name = filename
+                    result.module_name = module_report_name
+                    result.start_time = time.time()
                     result.captureOutput(not self.__cli.verbose)
                     try:
                         await fact.execute(testModule)
-                        result.isSuccess = True
+                        result.is_success = True
                     except Exception as ex:
-                        result.isSuccess = False
+                        result.is_success = False
                         result.exception = ex
                     result.releaseOutput()
-                    result.stopTime = time.time()
-                    result.className = fact.metadata.className
-                    result.testName = fact.metadata.name
+                    result.stop_time = time.time()
+                    result.class_name = fact.metadata.class_name
+                    result.test_name = fact.metadata.name
                     results.append(result)
-                    self.printTestResult(result)
-                    if self.__cli.failfast and not result.isSuccess:
+                    self.print_test_result(result)
+                    if self.__cli.failfast and not result.is_success:
                         return results
                 # execute all theories
                 theories = TheoryManager.instance().get(testModule.__name__)
                 for theory in theories:
                     for data in theory.datas:
                         result = TestResult()
-                        result.hostName = hostName
-                        result.packageName = self.__testPackageName
+                        result.host_name = host_name
+                        result.package_name = self.__test_package_name
                         result.properties['data'] = data
-                        result.fileName = filename
-                        result.moduleName = moduleReportName
-                        result.startTime = time.time()
+                        result.file_name = filename
+                        result.module_name = module_report_name
+                        result.start_time = time.time()
                         result.captureOutput(not self.__cli.verbose)
                         try:
                             await theory.execute(testModule, data)
-                            result.isSuccess = True
+                            result.is_success = True
                         except Exception as ex:
-                            result.isSuccess = False
+                            result.is_success = False
                             result.exception = ex
                         result.releaseOutput()
-                        result.stopTime = time.time()
-                        result.className = theory.metadata.className
-                        result.testName = theory.metadata.name
+                        result.stop_time = time.time()
+                        result.class_name = theory.metadata.class_name
+                        result.test_name = theory.metadata.name
                         results.append(result)
-                        self.printTestResult(result)
-                        if self.__cli.failfast and not result.isSuccess:
+                        self.print_test_result(result)
+                        if self.__cli.failfast and not result.is_success:
                             return results
             except Exception as ex:
                 # module-level failure, report test failure against the module
                 # this is a best-attempt to create output that report readers
                 # can consume to show there was a broad failure in a module.
                 result = TestResult()
-                result.className = '*'
-                result.moduleName = moduleReportName
-                result.testName = '*'
-                result.startTime = ts
-                result.stopTime = time.time()
-                result.isSuccess = False
+                result.class_name = '*'
+                result.module_name = module_report_name
+                result.test_name = '*'
+                result.start_time = ts
+                result.stop_time = time.time()
+                result.is_success = False
                 result.exception = ex
                 results.append(result)
-                self.printTestResult(result)
+                self.print_test_result(result)
                 if self.__cli.failfast:
                     return results
         return results

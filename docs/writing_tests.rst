@@ -56,7 +56,7 @@ This section provides a series of referential examples which attempt to illustra
     from punit import fact
 
     @fact
-    def factFunc():
+    def fact_func():
         assert 2 + 2 == 4, "It's a fact!"
 
 .. rubric:: A test method using ``@fact``:
@@ -65,7 +65,7 @@ This section provides a series of referential examples which attempt to illustra
 
     class MyTests:
         @fact
-        def factMethod(self):
+        def fact_method(self):
             assert 2 + 2 == 4, "It's a fact!"
 
 .. rubric:: A test function using ``@theory``:
@@ -77,7 +77,7 @@ This section provides a series of referential examples which attempt to illustra
     @theory
     @inlinedata(2, 2, 4, "It's a fact!")
     @inlinedata(1, 1, 2, "It's a fact!")
-    def theoryFunc(x, y, z, message):
+    def theory_func(x, y, z, message):
         assert x + y == z, message
 
 .. rubric:: A test method using ``@theory``:
@@ -88,7 +88,7 @@ This section provides a series of referential examples which attempt to illustra
         @theory
         @inlinedata(2, 2, 4, "It's a fact!")
         @inlinedata(1, 1, 2, "It's a fact!")
-        def theoryMethod(self, x, y, z, message):
+        def theory_method(self, x, y, z, message):
             assert x + y == z, message
 
 As you can see from these examples, writing tests with **pUnit** is easy.

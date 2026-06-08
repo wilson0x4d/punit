@@ -31,17 +31,17 @@ async def async_main() -> None:
         if pathbase not in sys.path:
             sys.path.append(pathbase)
     testModuleDiscovery = TestModuleDiscovery(
-        os.path.join(cli.workdir, cli.testPackageName),
+        os.path.join(cli.workdir, cli.test_package_name),
         cli.includePatterns,
         cli.excludePatterns,
         cli)
     testModuleDiscovery.discover()
-    testRunner = TestRunner(cli.testPackageName, testModuleDiscovery.filenames, cli)
+    testRunner = TestRunner(cli.test_package_name, testModuleDiscovery.filenames, cli)
     results = await testRunner.run()
     totalTime = time.time() - ts
     failureCount = 0
     for result in results:
-        if not result.isSuccess:
+        if not result.is_success:
             failureCount += 1  # pragma: no cover
     if not cli.quiet:
         print(f'Total: {len(results)}, Failures: {failureCount}, Took: {totalTime:.3f}s')
