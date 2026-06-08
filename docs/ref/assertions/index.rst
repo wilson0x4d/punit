@@ -1,17 +1,14 @@
 Assertions
 ==========
 
-With **pUnit**, assertions are performed using Python's ``assert`` statement.
-
-To assist with test definitions **pUnit** provides helpers for performing assertions.
+With **pUnit**, assertions are typically performed using Python's ``assert`` statement, and **pUnit** provides a set of assertion helpers
 
 .. toctree::
-    :titlesonly:
-    :maxdepth: 2
+    :maxdepth: 3
 
-    collections
-    exceptions
-    numeric
-    strings
+    collections <collections>
+    exceptions <exceptions>
+    numeric <numeric>
+    strings <strings>
 
 .. automodule:: punit.assertions

@@ -4,7 +4,7 @@ Overview
 **pUnit** is a modernized unit-testing framework for Python, inspired by **xUnit**.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    Overview <self>
    Quick Start <quickstart>

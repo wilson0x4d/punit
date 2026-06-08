@@ -3,10 +3,7 @@ Numeric Helpers
 
 .. py:currentmodule:: punit.assertions.numeric
 
-approx
-------
-
-.. py:class:: approx(expected: float | int | complex = 0, rel_tol: float = 1e-9, abs_tol: float = 0.0)
+.. py:function:: approx(expected: float | int | complex = 0, rel_tol: float = 1e-9, abs_tol: float = 0.0)
 
     Wrapper for approximate comparisons using ``==``, ``<``, ``>``, etc., all with
     **directional (one-sided) tolerance**.

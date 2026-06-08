@@ -31,8 +31,6 @@ Once a trait has been applied to a test it can be referenced during test executi
 
 Other test selection criteria such as ``--include``, ``--exclude``, and ``--filter`` can be used in conjunction with traits to provide more fine-grained control over test execution.
 
-Decorators
-----------
 .. py:currentmodule:: punit.traits
 
 .. py:decorator:: trait(name, value=None)

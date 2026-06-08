@@ -2,8 +2,6 @@ Quick Start
 ============
 .. _quickstart:
 
-.. contents::
-
 Installation
 ------------
 
@@ -14,7 +12,7 @@ You can install the library from `PyPI <https://pypi.org/project/punit/>`_ using
    python3 -m pip install punit
 
 Usage
-----------------------
+-----
 
 For the simplest usage you can run **pUnit** from the root of a repository, it will discover and run all tests.
 

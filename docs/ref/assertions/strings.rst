@@ -3,9 +3,9 @@ String Helpers
 
 .. py:currentmodule:: punit.strings
 
-.. py:function:: areSame(a:str|None, b:str|None) -> bool
+.. py:function:: are_same(a:str|None, b:str|None) -> bool
 
-    Use :py:func:`~punit.strings.areSame` to assert that two strings contain the same characters in the same order.
+    Use :py:func:`~punit.strings.are_same` to assert that two strings contain the same characters in the same order.
 
 .. rubric:: Example
 
@@ -18,16 +18,40 @@ String Helpers
     c = 'world'
     d = None
 
-    assert strings.areSame(a, b)
-    assert not strings.areSame(b, c)
-    assert strings.areSame(a, a)
-    assert strings.areSame(None, None)
-    assert not strings.areSame(a, None)
-    assert not strings.areSame(None, b)
+    assert strings.are_same(a, b)
+    assert not strings.are_same(b, c)
+    assert strings.are_same(a, a)
+    assert strings.are_same(None, None)
+    assert not strings.are_same(a, None)
+    assert not strings.are_same(None, b)
 
-.. py:function:: isNoneOrEmpty(string:str|None) -> bool
+.. py:function:: has_length(actual: str | None, min: Optional[int] = None, max: Optional[int] = None) -> bool
 
-    Use :py:func:`~punit.strings.isNoneOrEmpty` to assert that a string is ``None`` or empty.
+    Check if ``actual``'s length falls within the inclusive range ``[min, max]``.
+    At least one of ``min`` or ``max`` must be provided; passing both as ``None`` returns ``False``.
+
+    :param str|None actual: The string to check
+    :param int|None min: Inclusive lower bound on length (``len(actual) >= min``)
+    :param int|None max: Inclusive upper bound on length (``len(actual) <= max``)
+    :returns bool: True if the length satisfies the bounds, False otherwise
+
+.. rubric:: Example
+
+.. code:: python
+
+    from punit import strings
+
+    a = 'hello'
+
+    assert strings.has_length(a, min=5)
+    assert strings.has_length(a, max=5)
+    assert strings.has_length(a, min=3, max=7)
+    assert not strings.has_length(a, min=6)
+    assert not strings.has_length(a, max=4)
+
+.. py:function:: is_none_or_empty(string:str|None) -> bool
+
+    Use :py:func:`~punit.strings.is_none_or_empty` to assert that a string is ``None`` or empty.
 
 .. rubric:: Example
 
@@ -39,15 +63,13 @@ String Helpers
     b = ''
     c = None    
 
-    assert strings.isNoneOrEmpty(a)
-    assert strings.isNoneOrEmpty(b)
-    assert strings.isNoneOrEmpty(c)
-    assert not strings.isNoneOrEmpty(a)
-    assert not strings.isNoneOrEmpty(b)
+    assert not strings.is_none_or_empty(a)
+    assert strings.is_none_or_empty(b)
+    assert strings.is_none_or_empty(c)
 
-.. py:function:: isNoneOrWhitespace(string:str|None) -> bool
+.. py:function:: is_none_or_whitespace(string:str|None) -> bool
 
-    Use :py:func:`~punit.strings.isNoneOrWhitespace` to assert that a string is ``None`` or whitespace.
+    Use :py:func:`~punit.strings.is_none_or_whitespace` to assert that a string is ``None`` or whitespace.
 
 .. rubric:: Example
 
@@ -59,8 +81,6 @@ String Helpers
     b = ' \t'
     c = None
 
-    assert strings.isNoneOrWhitespace(a)
-    assert strings.isNoneOrWhitespace(b)
-    assert strings.isNoneOrWhitespace(c)
-    assert not strings.isNoneOrWhitespace(a)
-    assert not strings.isNoneOrWhitespace(b)
+    assert not strings.is_none_or_whitespace(a)
+    assert strings.is_none_or_whitespace(b)
+    assert strings.is_none_or_whitespace(c)
