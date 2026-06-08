@@ -11,25 +11,25 @@ from .traits import Trait
 
 class CommandLineInterface:
 
-    __aliases:dict[str,str]
-    __excludePatterns:list[str]
-    __excludeTraits:list[Trait]
-    __failfast:bool
-    __help:bool
-    __includePatterns:list[str]
-    __includeTraits:list[Trait]
-    __no_default_patterns:bool
-    __no_exitcode:bool
-    __no_pathfix:bool
-    __outputFilename:Optional[str]
-    __quiet:bool
-    __reportFormat:Optional[str]
-    __testPackageName:str|None
-    __verbose:bool
-    __workdir:str|None
+    __aliases: dict[str, str]
+    __excludePatterns: list[str]
+    __excludeTraits: list[Trait]
+    __failfast: bool
+    __help: bool
+    __includePatterns: list[str]
+    __includeTraits: list[Trait]
+    __no_default_patterns: bool
+    __no_exitcode: bool
+    __no_pathfix: bool
+    __outputFilename: Optional[str]
+    __quiet: bool
+    __reportFormat: Optional[str]
+    __testPackageName: str | None
+    __verbose: bool
+    __workdir: str | None
 
     def __init__(self) -> None:
-        self.__aliases = dict[str,str]()
+        self.__aliases = dict[str, str]()
         self.__excludePatterns = []
         self.__excludeTraits = []
         self.__failfast = False
@@ -46,16 +46,16 @@ class CommandLineInterface:
         self.__workdir = os.path.curdir
         self.__verbose = False
 
-    def __parse(self, argv:list[str]) -> 'CommandLineInterface':
-        aliasName:str|None = None
-        extractFilter:bool = False
-        extractExcludePattern:bool = False
-        extractTrait:bool = False
-        extractIncludePattern:bool = False
-        extractAliasName:bool = False
-        extractAliasPath:bool = False
-        extractReportFormat:bool = False
-        extractOutputFilename:bool = False
+    def __parse(self, argv: list[str]) -> 'CommandLineInterface':
+        aliasName: str | None = None
+        extractFilter: bool = False
+        extractExcludePattern: bool = False
+        extractTrait: bool = False
+        extractIncludePattern: bool = False
+        extractAliasName: bool = False
+        extractAliasPath: bool = False
+        extractReportFormat: bool = False
+        extractOutputFilename: bool = False
         for arg in argv:
             if extractFilter:
                 self.__processFilterArg(arg)
@@ -151,7 +151,7 @@ class CommandLineInterface:
 
         return self
 
-    def __processFilterArg(self, arg:str) -> None:
+    def __processFilterArg(self, arg: str) -> None:
         if arg.startswith('@'):
             FilterManager.instance().load(arg[1:])
         else:
@@ -168,7 +168,7 @@ class CommandLineInterface:
     @property
     def excludePatterns(self) -> list[str]:
         return self.__excludePatterns
-    
+
     @property
     def excludeTraits(self) -> list[Trait]:
         return self.__excludeTraits
@@ -180,13 +180,13 @@ class CommandLineInterface:
     @property
     def includePatterns(self) -> list[str]:
         return self.__includePatterns
-    
+
     @property
     def includeTraits(self) -> list[Trait]:
         return self.__includeTraits
 
     @property
-    def outputFilename(self) -> str|None:
+    def outputFilename(self) -> str | None:
         return self.__outputFilename
 
     @property
@@ -194,7 +194,7 @@ class CommandLineInterface:
         return self.__quiet or (self.__reportFormat is not None and self.__outputFilename is None)
 
     @property
-    def reportFormat(self) -> str|None:
+    def reportFormat(self) -> str | None:
         return self.__reportFormat
 
     @property
@@ -203,7 +203,7 @@ class CommandLineInterface:
 
     @property
     def verbose(self) -> bool:
-        return self.__verbose and self.__reportFormat is None 
+        return self.__verbose and self.__reportFormat is None
 
     @property
     def workdir(self) -> str:
@@ -250,7 +250,7 @@ Options:
         Default: '*.py'
     -e, --exclude PATTERN
         Exclude test files matching PATTERN, overriding --include
-        Default: '__*__' (dunder files), '/.*/' (dot-directories)
+        Default: '__*__' (dunder files)
     -f, --filter PATTERN|@FILEPATH
         Only execute tests matching PATTERN
         Default: '*'
@@ -309,14 +309,12 @@ Options:
         if not self.__no_default_patterns:
             # if no other patterns specified, default to including all files found in the directory matching `testPackageName`
             if len(self.__includePatterns) == 0:
-                self.__includePatterns.append(f'*.py')
-            # always exclude dot-folders (.git, .venv, etc)
-            self.__excludePatterns.append('/.*')
+                self.__includePatterns.append('*.py')
             # always exclude dunder files
             self.__excludePatterns.append('/__*__')
 
     @staticmethod
-    def parse(argv:list[str] = sys.argv) -> 'CommandLineInterface':
+    def parse(argv: list[str] = sys.argv) -> 'CommandLineInterface':
         result = CommandLineInterface().__parse(argv)
         result.validate()
         return result

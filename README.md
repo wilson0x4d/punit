@@ -70,7 +70,7 @@ Options:
         Default: '*.py'
     -e, --exclude PATTERN
         Exclude test files matching PATTERN, overriding --include
-        Default: '__*__' (dunder files), '/.*/' (dot-directories)
+        Default: '__*__' (dunders)
     -f, --filter PATTERN|@FILEPATH
         Only execute tests matching PATTERN
         Default: '*'

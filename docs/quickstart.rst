@@ -119,9 +119,9 @@ The default behavior is equivalent to the following:
 
 .. code:: bash
 
-    python3 -m punit --working-directory . --test-package tests --include '*.py' --exclude '/.*' --exclude '/__*__' --filter '*'
+    python3 -m punit --working-directory . --test-package tests --include '*.py' --exclude '/__*__' --filter '*'
 
-This ensures all Python files under the ``tests/`` subdirectory are executed as tests, except for Python files within "dot-directories" or having "dunder-names".
+This ensures all Python files under the ``tests/`` subdirectory are executed as tests, except for Python files and directories having "dunder" names.
 
 Diagnosing Problems
 -------------------
