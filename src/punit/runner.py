@@ -6,6 +6,7 @@ import os
 import socket
 import time
 import traceback
+from types import ModuleType
 from typing import Any, Optional
 
 from .cli import CommandLineInterface
@@ -128,11 +129,78 @@ class TestRunner:
         if self.__cli.verbose and (not test_result.is_success) and test_result.exception is not None:
             print(f'Test File:\n    {test_result.file_name}\nError:\n    {test_result.exception}\n    Traceback:\n{"".join(traceback.format_tb(test_result.exception.__traceback__))}')
 
+    async def __run_facts(self, host_name: str, test_module: ModuleType, filename: str, module_report_name: str, results: list[TestResult]) -> None:
+        """Run all facts for a test module and return their results."""
+        facts = FactManager.instance().get(test_module.__name__)
+        for fact in facts:
+            result = TestResult()
+            result.host_name = host_name
+            result.package_name = self.__test_package_name
+            result.file_name = filename
+            result.module_name = module_report_name
+            result.start_time = time.time()
+            result.capture_output(False)
+            # Run pre-test setup; if it fails, skip the fact.
+            class_instance: Any = None
+            if await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
+                try:
+                    class_instance = await fact.execute(test_module)
+                    result.is_success = True
+                except Exception as ex:
+                    result.is_success = False
+                    result.exception = ex
+            else:
+                # Setup failed — record a failure result.
+                result.is_success = False
+            result.stop_time = time.time()
+            result.class_name = fact.metadata.class_name
+            result.test_name = fact.metadata.name
+            results.append(result)
+            await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+            result.release_output()
+            self.print_test_result(result)
+            if self.__cli.failfast and not result.is_success:
+                return
+
+    async def __run_theories(self, host_name: str, test_module: ModuleType, filename: str, module_report_name: str, results: list[TestResult]) -> None:
+        """Run all theory data-points for a test module and return their results."""
+        theories = TheoryManager.instance().get(test_module.__name__)
+        for theory in theories:
+            for data in theory.datas:
+                result = TestResult()
+                result.host_name = host_name
+                result.package_name = self.__test_package_name
+                result.properties['data'] = data
+                result.file_name = filename
+                result.module_name = module_report_name
+                result.start_time = time.time()
+                result.capture_output(False)
+                # Run pre-test setup; if it fails, skip the theory.
+                class_instance: Any = None
+                if await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
+                    try:
+                        class_instance = await theory.execute(test_module, data)
+                        result.is_success = True
+                    except Exception as ex:
+                        result.is_success = False
+                        result.exception = ex
+                else:
+                    # Setup failed — record a failure result.
+                    result.is_success = False
+                result.stop_time = time.time()
+                result.class_name = theory.metadata.class_name
+                result.test_name = theory.metadata.name
+                results.append(result)
+                await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+                result.release_output()
+                self.print_test_result(result)
+                if self.__cli.failfast and not result.is_success:
+                    return
+
     async def run(self) -> list[TestResult]:
         results: list[TestResult] = []
         result: TestResult
         # TODO: aliasing
-        host_name: str = socket.gethostname()
         test_package_path = os.path.join(os.path.abspath(os.curdir), self.__test_package_name).replace('\\', '/')
         for filename in self.__filenames:
             ts = time.time()
@@ -141,72 +209,18 @@ class TestRunner:
                 moduleImportName = moduleImportName[:-3]
             module_report_name = moduleImportName.lstrip('.')
             try:
+                host_name: str = socket.gethostname()
                 test_module = importlib.import_module(moduleImportName, self.__test_package_name)
+
                 # execute all facts
-                facts = FactManager.instance().get(test_module.__name__)
-                for fact in facts:
-                    result = TestResult()
-                    result.host_name = host_name
-                    result.package_name = self.__test_package_name
-                    result.file_name = filename
-                    result.module_name = module_report_name
-                    result.start_time = time.time()
-                    result.capture_output(False)
-                    # Run pre-test setup; if it fails, skip the fact.
-                    class_instance: Any = None
-                    if await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
-                        try:
-                            class_instance = await fact.execute(test_module)
-                            result.is_success = True
-                        except Exception as ex:
-                            result.is_success = False
-                            result.exception = ex
-                    else:
-                        # Setup failed — record a failure result.
-                        result.is_success = False
-                    result.stop_time = time.time()
-                    result.class_name = fact.metadata.class_name
-                    result.test_name = fact.metadata.name
-                    results.append(result)
-                    await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
-                    result.release_output()
-                    self.print_test_result(result)
-                    if self.__cli.failfast and not result.is_success:
-                        return results
+                await self.__run_facts(host_name, test_module, filename, module_report_name, results)
+                if self.__cli.failfast and any(e.is_success is False for e in results):
+                    return results
 
                 # execute all theories
-                theories = TheoryManager.instance().get(test_module.__name__)
-                for theory in theories:
-                    for data in theory.datas:
-                        result = TestResult()
-                        result.host_name = host_name
-                        result.package_name = self.__test_package_name
-                        result.properties['data'] = data
-                        result.file_name = filename
-                        result.module_name = module_report_name
-                        result.start_time = time.time()
-                        result.capture_output(False)
-                        # Run pre-test setup; if it fails, skip the theory.
-                        class_instance: Any = None
-                        if await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
-                            try:
-                                class_instance = await theory.execute(test_module, data)
-                                result.is_success = True
-                            except Exception as ex:
-                                result.is_success = False
-                                result.exception = ex
-                        else:
-                            # Setup failed — record a failure result.
-                            result.is_success = False
-                        result.stop_time = time.time()
-                        result.class_name = theory.metadata.class_name
-                        result.test_name = theory.metadata.name
-                        results.append(result)
-                        await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
-                        result.release_output()
-                        self.print_test_result(result)
-                        if self.__cli.failfast and not result.is_success:
-                            return results
+                await self.__run_theories(host_name, test_module, filename, module_report_name, results)
+                if self.__cli.failfast and any(e.is_success is False for e in results):
+                    return results
 
             except Exception as ex:
                 # module-level failure, report test failure against the module
