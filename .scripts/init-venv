@@ -3,29 +3,19 @@
 # SPDX-License-Identifier: MIT
 ##
 #
-# init-venv.sh
+# this script exists for CI/CD
 #
-# creates or updates a venv for the entire repo to draw from:
+# this script can also be used to prep a local shell/environment:
 #
-# ```
-# .scripts/init-venv.sh
-# ```
-#
-# if you want a venv shell, `source` the script instead:
-#
-# ```
 # source .scripts/init-venv
-# ```
-#
-# to use a specific python version (other than your system default), set `PYTHON_VERSION` env var, first:
-#
-# ```
-# export PYTHON_VERSION=3.14
-# source .scripts/init-venv
-# ```
 #
 ##
-set -uo pipefail
+set -euo pipefail
+
+# resolve
+SCRIPT_DIR=$(dirname $(realpath "${BASH_SOURCE[0]}"))
+PYTHONPATH=$(realpath "$SCRIPT_DIR/../src")
+WORKSPACE_NAME=$(basename `dirname "$SRC_DIR"`)
 
 # initialize
 if [ ! -z "$(which deactivate)" ]; then
@@ -33,12 +23,12 @@ if [ ! -z "$(which deactivate)" ]; then
     deactivate
 fi
 if [ ! -d ".venv" ]; then
-    "python${PYTHON_VERSION:-3}" -m venv --prompt "pUnit" .venv
+    "python${PYTHON_VERSION:-3}" -m venv --prompt "$WORKSPACE_NAME" .venv
 fi
 
 # activate
-export PS1='\$ '
-echo -n -e "\033]0;pUnit\007"
+#export PS1='\$ '
+echo -n -e "\033]0;$WORKSPACE_NAME\007"
 source .venv/bin/activate
 
 # tools and deps
@@ -48,8 +38,8 @@ pip-compile -o requirements.txt --all-extras --strip-extras pyproject.toml
 if [ -f requirements.txt ]; then
     pip install -r requirements.txt
 fi
-export PYTHONPATH=src
-export SFPATH="$(realpath '.scripts')"
-if ! [[ ":PATH:" == *":$SFPATH:"* ]]; then
-    export PATH="$SFPATH:$PATH"
+export MYPYPATH="$PYTHONPATH"
+if ! [[ ":PATH:" == *":$SCRIPT_DIR:"* ]]; then
+    export PATH="$SCRIPT_DIR:$PATH"
 fi
+echo "✅ initialized \`.venv/\`" >&2
