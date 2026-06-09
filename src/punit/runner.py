@@ -6,10 +6,11 @@ import os
 import socket
 import time
 import traceback
+from typing import Any, Optional
 
 from .cli import CommandLineInterface
 from .facts.FactManager import FactManager
-from .metadata.CallableMetadata import CallableMetadata
+from .teardowns.TeardownManager import TeardownManager
 from .theories.TheoryManager import TheoryManager
 from .TestResult import TestResult
 
@@ -24,6 +25,47 @@ class TestRunner:
         self.__cli = cli
         self.__filenames = filenames
         self.__test_package_name = test_package_name
+
+    async def __teardown(self, module: object, module_name: str, class_name: Optional[str] = None, class_instance: Optional[Any] = None) -> None:
+        """Execute the teardown for a test.
+
+        A class-scoped ``@teardown`` handles all tests in that specific class.
+        A module-scoped ``@teardown`` handles all bare-function tests in that
+        module.  The two scopes are independent -- there is no fallback between
+        them; each scope fires only when it exists and the test belongs to it.
+        """
+        teardown_manager = TeardownManager.instance()
+
+        if class_name is not None:
+            # Class-scoped path -- this test lives inside a class
+            td = teardown_manager.get('class', module_name, class_name)
+            if td is not None:
+                try:
+                    await td.execute(module, class_instance)  # type: ignore[arg-type]
+                except Exception as ex:
+                    teardown_manager.record_error()
+                    if self.__cli.verbose:  # pragma: no cover
+                        target_desc = (
+                            f"{td.metadata.class_name}.{td.metadata.name}"
+                            if td.metadata.class_name
+                            else td.metadata.name
+                        )
+                        print(f'Teardown Error ({target_desc}): {ex}')
+        else:
+            # Module-scoped path -- this is a bare-function test
+            td = teardown_manager.get('module', module_name, '')
+            if td is not None:
+                try:
+                    await td.execute(module, class_instance)  # type: ignore[arg-type]
+                except Exception as ex:
+                    teardown_manager.record_error()
+                    if self.__cli.verbose:  # pragma: no cover
+                        target_desc = (
+                            f"{td.metadata.class_name}.{td.metadata.name}"
+                            if td.metadata.class_name
+                            else td.metadata.name
+                        )
+                        print(f'Teardown Error ({target_desc}): {ex}')
 
     def print_test_result(self, test_result: TestResult):
         if self.__cli.quiet:
@@ -54,9 +96,9 @@ class TestRunner:
                 moduleImportName = moduleImportName[:-3]
             module_report_name = moduleImportName.lstrip('.')
             try:
-                testModule = importlib.import_module(moduleImportName, self.__test_package_name)
+                test_module = importlib.import_module(moduleImportName, self.__test_package_name)
                 # execute all facts
-                facts = FactManager.instance().get(testModule.__name__)
+                facts = FactManager.instance().get(test_module.__name__)
                 for fact in facts:
                     result = TestResult()
                     result.host_name = host_name
@@ -64,23 +106,25 @@ class TestRunner:
                     result.file_name = filename
                     result.module_name = module_report_name
                     result.start_time = time.time()
-                    result.captureOutput(not self.__cli.verbose)
+                    result.capture_output(not self.__cli.verbose)
                     try:
-                        await fact.execute(testModule)
+                        class_instance = await fact.execute(test_module)
                         result.is_success = True
                     except Exception as ex:
                         result.is_success = False
                         result.exception = ex
-                    result.releaseOutput()
                     result.stop_time = time.time()
                     result.class_name = fact.metadata.class_name
                     result.test_name = fact.metadata.name
                     results.append(result)
+                    await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+                    result.release_output()
                     self.print_test_result(result)
                     if self.__cli.failfast and not result.is_success:
                         return results
+
                 # execute all theories
-                theories = TheoryManager.instance().get(testModule.__name__)
+                theories = TheoryManager.instance().get(test_module.__name__)
                 for theory in theories:
                     for data in theory.datas:
                         result = TestResult()
@@ -90,21 +134,23 @@ class TestRunner:
                         result.file_name = filename
                         result.module_name = module_report_name
                         result.start_time = time.time()
-                        result.captureOutput(not self.__cli.verbose)
+                        result.capture_output(not self.__cli.verbose)
                         try:
-                            await theory.execute(testModule, data)
+                            class_instance = await theory.execute(test_module, data)
                             result.is_success = True
                         except Exception as ex:
                             result.is_success = False
                             result.exception = ex
-                        result.releaseOutput()
                         result.stop_time = time.time()
                         result.class_name = theory.metadata.class_name
                         result.test_name = theory.metadata.name
                         results.append(result)
+                        await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+                        result.release_output()
                         self.print_test_result(result)
                         if self.__cli.failfast and not result.is_success:
                             return results
+
             except Exception as ex:
                 # module-level failure, report test failure against the module
                 # this is a best-attempt to create output that report readers

@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 ##
 
+from __future__ import annotations
+
 from typing import Callable, Optional
 
 from ..filters.FilterManager import FilterManager
@@ -25,7 +27,7 @@ class TheoryManager:
         self.__datas = {}
 
     @staticmethod
-    def instance() -> 'TheoryManager':
+    def instance() -> TheoryManager:
         if TheoryManager.__instance is None:
             TheoryManager.__instance = TheoryManager()
         return TheoryManager.__instance

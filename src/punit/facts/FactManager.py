@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 ##
 
+from __future__ import annotations
+
 from typing import Optional
 
 from ..filters.FilterManager import FilterManager
@@ -23,7 +25,7 @@ class FactManager:
         self.__modules = {}
 
     @staticmethod
-    def instance() -> 'FactManager':
+    def instance() -> FactManager:
         if FactManager.__instance is None:
             FactManager.__instance = FactManager()
         return FactManager.__instance

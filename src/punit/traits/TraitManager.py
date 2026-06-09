@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
-##
+
+from __future__ import annotations
 
 from types import FunctionType, MethodType
 from typing import Callable, Optional
@@ -19,7 +20,7 @@ class TraitManager:
         self.__traits = dict[Callable | FunctionType | MethodType, dict[str, Trait]]()
 
     @staticmethod
-    def instance() -> 'TraitManager':
+    def instance() -> TraitManager:
         if TraitManager.__instance is None:
             TraitManager.__instance = TraitManager()
         return TraitManager.__instance

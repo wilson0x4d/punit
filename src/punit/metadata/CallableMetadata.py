@@ -14,7 +14,8 @@ class CallableMetadata:
 
     def __init__(self, callable: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]) -> None:
         self.__callable = callable
-        self.__class_name = '.'.join(callable.__qualname__.replace(f'{callable.__module__}.', '').split('.')[0:-1])
+        parts = callable.__qualname__.replace(f'{callable.__module__}.', '').split('.')[0:-1]
+        self.__class_name = '.'.join(p for p in parts if p != '<locals>')
         self.__module_name = callable.__module__
         self.__name = callable.__name__
 

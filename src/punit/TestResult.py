@@ -59,7 +59,11 @@ class TestResult:
 
     @property
     def class_name(self) -> Optional[str]:
-        return self.__class_name if self.__class_name is not None and len(self.__class_name) > 0 else None
+        return (
+            self.__class_name
+            if self.__class_name is not None and len(self.__class_name) > 0
+            else None
+        )
 
     @class_name.setter
     def class_name(self, value: Optional[str]) -> None:
@@ -173,13 +177,13 @@ class TestResult:
         else:
             return f'{(took*1000):.3f}'.rstrip('0').rstrip('.') + 'ms'
 
-    def captureOutput(self, quiet: bool = False) -> None:
+    def capture_output(self, quiet: bool = False) -> None:
         self.__stdout_capture = TextIOCapture(sys.stdout, quiet)
         self.__stderr_capture = TextIOCapture(sys.stderr, quiet)
         sys.stdout = self.__stdout_capture
         sys.stderr = self.__stderr_capture
 
-    def releaseOutput(self) -> None:
+    def release_output(self) -> None:
         if self.__stdout_capture is not None and self.__stdout_capture.target is not None:
             sys.stdout = self.__stdout_capture.target
         if self.__stderr_capture is not None and self.__stderr_capture.target is not None:

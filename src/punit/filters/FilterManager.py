@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import os
 import select
 import sys
@@ -22,7 +24,7 @@ class FilterManager:
         return self.__filters
 
     @staticmethod
-    def instance() -> 'FilterManager':
+    def instance() -> FilterManager:
         instance = FilterManager.__instance
         if instance is None:
             instance = FilterManager()

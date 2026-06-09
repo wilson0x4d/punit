@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 from decimal import Decimal
 import math
 from typing import cast
@@ -397,7 +399,7 @@ class ApproxRangeComparator:
         self._abs_tol = abs_tol
         self._exclusive = False
 
-    def inclusive(self, flag: bool = True) -> 'ApproxRangeComparator':
+    def inclusive(self, flag: bool = True) -> ApproxRangeComparator:
         """
         Return a new ``ApproxRangeComparator`` with toggled inclusivity.
 
@@ -617,7 +619,7 @@ class approx:
         """Return a ``StrictLessThanComparator`` for strictly ``< expected`` (one-sided tolerance below)."""
         return StrictLessThanComparator(self._expected, self._rel_tol, self._abs_tol)
 
-    def in_range(self, min_val: float, max_val: float) -> 'ApproxRangeComparator':
+    def in_range(self, min_val: float, max_val: float) -> ApproxRangeComparator:
         """Return a comparator for ``[min_val, max_val]`` range checks with directional tolerance."""
         return ApproxRangeComparator(min_val, max_val, self._rel_tol, self._abs_tol)
 

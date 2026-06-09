@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+from __future__ import annotations
+
 import os
 import sys
 from typing import Optional
@@ -46,7 +48,7 @@ class CommandLineInterface:
         self.__workdir = os.path.curdir
         self.__verbose = False
 
-    def __parse(self, argv: list[str]) -> 'CommandLineInterface':
+    def __parse(self, argv: list[str]) -> CommandLineInterface:
         aliasName: str | None = None
         extractFilter: bool = False
         extractExcludePattern: bool = False
@@ -217,9 +219,9 @@ class CommandLineInterface:
     def no_pathfix(self) -> bool:
         return self.__no_pathfix is True
 
-    def printHelp(self) -> None:
+    def print_help(self) -> None:
         if True:  # pragma: no cover
-            self.printVersion()
+            self.print_version()
             print("""
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
@@ -281,8 +283,8 @@ Options:
 """)
             os._exit(0)
 
-    def printSummary(self) -> None:
-        self.printVersion()
+    def print_summary(self) -> None:
+        self.print_version()
         print(f'Working Directory:\n\t{self.__workdir}')
         print(f'Fail Fast: \n\t{"Yes" if self.__failfast else "No"}')
         if len(self.__includePatterns) > 0:
@@ -295,7 +297,7 @@ Options:
                 print(f'\t{pattern}')
         FilterManager.instance().print()
 
-    def printVersion(self) -> None:
+    def print_version(self) -> None:
         print(f'pUnit {__version__} ({__commit__})')
 
     def validate(self) -> None:
@@ -314,7 +316,7 @@ Options:
             self.__excludePatterns.append('/__*__')
 
     @staticmethod
-    def parse(argv: list[str] = sys.argv) -> 'CommandLineInterface':
+    def parse(argv: list[str] = sys.argv) -> CommandLineInterface:
         result = CommandLineInterface().__parse(argv)
         result.validate()
         return result

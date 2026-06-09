@@ -11,17 +11,18 @@ from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
 from .reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
 from .runner import TestRunner
+from .teardowns.TeardownManager import TeardownManager
 
 
 async def async_main() -> None:
     ts = time.time()
     cli = CommandLineInterface.parse()
     if cli.help:  # pragma: no cover
-        cli.printHelp()
+        cli.print_help()
     elif cli.verbose and not cli.quiet:  # pragma: no cover
-        cli.printSummary()
+        cli.print_summary()
     elif not cli.quiet:  # pragma: no cover
-        cli.printVersion()
+        cli.print_version()
     os.chdir(cli.workdir)
     if cli.no_pathfix is not True:
         pathbase = str(Path.cwd())
@@ -30,13 +31,13 @@ async def async_main() -> None:
             sys.path.append(srcbase)
         if pathbase not in sys.path:
             sys.path.append(pathbase)
-    testModuleDiscovery = TestModuleDiscovery(
+    test_module_discovery = TestModuleDiscovery(
         os.path.join(cli.workdir, cli.test_package_name),
         cli.includePatterns,
         cli.excludePatterns,
         cli)
-    testModuleDiscovery.discover()
-    testRunner = TestRunner(cli.test_package_name, testModuleDiscovery.filenames, cli)
+    test_module_discovery.discover()
+    testRunner = TestRunner(cli.test_package_name, test_module_discovery.filenames, cli)
     results = await testRunner.run()
     totalTime = time.time() - ts
     failureCount = 0
@@ -61,16 +62,22 @@ async def async_main() -> None:
                 with open(cli.outputFilename, 'wb') as file:
                     file.write(report.encode())
                 print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
-    if failureCount > 0:
-        sys.stdout.flush()
-        sys.stderr.flush()
-        try:
-            os.fsync(sys.stdout.fileno())
-            os.fsync(sys.stderr.fileno())
-        except (AttributeError, ValueError, OSError):
-            # Pass if the stream doesn't support fsync (e.g. some virtualized environments)
-            pass
-        if cli.no_exitcode is not True:  # pragma: no cover
+
+    # not everyone runs python unbuffered as they should, so force a flush
+    sys.stdout.flush()
+    sys.stderr.flush()
+    try:
+        os.fsync(sys.stdout.fileno())
+        os.fsync(sys.stderr.fileno())
+    except (AttributeError, ValueError, OSError):
+        pass
+
+    if cli.no_exitcode is not True:
+        if failureCount:
+            # test failures trigger exit code 119 (for automation gating)
+            sys.exit(119)
+        if TeardownManager.instance().teardown_error_count > 0:
+            # teardown errors also trigger exit code 119 (for automation gating)
             sys.exit(119)
 
 
