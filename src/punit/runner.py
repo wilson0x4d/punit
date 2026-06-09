@@ -10,6 +10,7 @@ from typing import Any, Optional
 
 from .cli import CommandLineInterface
 from .facts.FactManager import FactManager
+from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
 from .theories.TheoryManager import TheoryManager
 from .TestResult import TestResult
@@ -25,6 +26,50 @@ class TestRunner:
         self.__cli = cli
         self.__filenames = filenames
         self.__test_package_name = test_package_name
+
+    async def __setup(self, module: object, module_name: str, class_name: Optional[str] = None, class_instance: Optional[Any] = None) -> bool:
+        """Execute the setup for a test.
+
+        Returns ``False`` if an error occurred during setup (the test should not run).
+        A class-scoped ``@setup`` handles all tests in that specific class.
+        A module-scoped ``@setup`` handles all bare-function tests in that module.
+        The two scopes are independent -- there is no fallback between them; each scope fires only when it exists and the test belongs to it.
+        """
+        setup_manager = SetupManager.instance()
+
+        if class_name is not None and len(class_name) > 0:
+            # Class-scoped path -- this test lives inside a class
+            sd = setup_manager.get('class', module_name, class_name)
+            if sd is not None:
+                try:
+                    await sd.execute(module, class_instance)  # type: ignore[arg-type]
+                except Exception as ex:
+                    setup_manager.record_error()
+                    if self.__cli.verbose:  # pragma: no cover
+                        target_desc = (
+                            f"{sd.metadata.class_name}.{sd.metadata.name}"
+                            if sd.metadata.class_name
+                            else sd.metadata.name
+                        )
+                        print(f'Setup Error ({target_desc}): {ex}')
+                    return False
+        else:
+            # Module-scoped path -- this is a bare-function test
+            sd = setup_manager.get('module', module_name, '')
+            if sd is not None:
+                try:
+                    await sd.execute(module, class_instance)  # type: ignore[arg-type]
+                except Exception as ex:
+                    setup_manager.record_error()
+                    if self.__cli.verbose:  # pragma: no cover
+                        target_desc = (
+                            f"{sd.metadata.class_name}.{sd.metadata.name}"
+                            if sd.metadata.class_name
+                            else sd.metadata.name
+                        )
+                        print(f'Setup Error ({target_desc}): {ex}')
+                    return False
+        return True
 
     async def __teardown(self, module: object, module_name: str, class_name: Optional[str] = None, class_instance: Optional[Any] = None) -> None:
         """Execute the teardown for a test.
@@ -106,13 +151,19 @@ class TestRunner:
                     result.file_name = filename
                     result.module_name = module_report_name
                     result.start_time = time.time()
-                    result.capture_output(not self.__cli.verbose)
-                    try:
-                        class_instance = await fact.execute(test_module)
-                        result.is_success = True
-                    except Exception as ex:
+                    result.capture_output(False)
+                    # Run pre-test setup; if it fails, skip the fact.
+                    class_instance: Any = None
+                    if await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
+                        try:
+                            class_instance = await fact.execute(test_module)
+                            result.is_success = True
+                        except Exception as ex:
+                            result.is_success = False
+                            result.exception = ex
+                    else:
+                        # Setup failed — record a failure result.
                         result.is_success = False
-                        result.exception = ex
                     result.stop_time = time.time()
                     result.class_name = fact.metadata.class_name
                     result.test_name = fact.metadata.name
@@ -134,13 +185,19 @@ class TestRunner:
                         result.file_name = filename
                         result.module_name = module_report_name
                         result.start_time = time.time()
-                        result.capture_output(not self.__cli.verbose)
-                        try:
-                            class_instance = await theory.execute(test_module, data)
-                            result.is_success = True
-                        except Exception as ex:
+                        result.capture_output(False)
+                        # Run pre-test setup; if it fails, skip the theory.
+                        class_instance: Any = None
+                        if await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
+                            try:
+                                class_instance = await theory.execute(test_module, data)
+                                result.is_success = True
+                            except Exception as ex:
+                                result.is_success = False
+                                result.exception = ex
+                        else:
+                            # Setup failed — record a failure result.
                             result.is_success = False
-                            result.exception = ex
                         result.stop_time = time.time()
                         result.class_name = theory.metadata.class_name
                         result.test_name = theory.metadata.name

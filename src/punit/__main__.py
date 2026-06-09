@@ -11,6 +11,7 @@ from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
 from .reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
 from .runner import TestRunner
+from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
 
 
@@ -78,6 +79,9 @@ async def async_main() -> None:
             sys.exit(119)
         if TeardownManager.instance().teardown_error_count > 0:
             # teardown errors also trigger exit code 119 (for automation gating)
+            sys.exit(119)
+        if SetupManager.instance().setup_error_count > 0:
+            # setup errors also trigger exit code 119 (for automation gating)
             sys.exit(119)
 
 

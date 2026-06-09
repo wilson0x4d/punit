@@ -3,6 +3,7 @@
 
 from .assertions import collections, exceptions, numeric, strings
 from .facts import fact
+from .setups import Setup, setup
 from .teardowns import Teardown, teardown
 from .theories import theory, inlinedata
 from .traits import trait
@@ -22,6 +23,7 @@ __all__ = [
     'strings',
     'fact',
     'metadata',
+    'setup', 'Setup',
     'teardown', 'Teardown',
     'theory', 'inlinedata',
     'trait'
