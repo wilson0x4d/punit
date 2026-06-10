@@ -1,6 +1,12 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+"""
+A **Fact** is a test that validates an invariant arrangement of state.  State is usually hardcoded as part of the test definition.
+
+Facts validate invariant state -- the conditions and assertions are fully codified within the test definition itself. Unlike ``@theory``, facts do not require data providers; each decorated function runs exactly once.
+"""
+
 import inspect
 from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, ModuleType
 from typing import Any, Callable, Coroutine, Union, cast
@@ -9,6 +15,20 @@ from ..metadata import CallableMetadata
 
 
 class Fact:
+    """Wraps a test function or method decorated with ``@fact``.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact
+
+        @fact
+        def myFunction():
+            assert 1 == 1
+
+    """
 
     __target: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]
 
@@ -49,6 +69,35 @@ class Fact:
 
 
 def fact(target: Callable) -> Callable:
+    """Decorates a function or method as a 'Fact-based' test.
+
+    Args:
+        target: The function or method to decorate as a Fact test
+
+    Returns:
+        The original, undecorated target -- no wrapper is installed
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact
+
+        @fact
+        def myFunction():
+            assert 1 == 1
+
+        class MyClass:
+            @fact
+            def myMethod(self):
+                assert 1 == 1
+
+    Raises:
+        Exception: If target is not a function/method, or if it already carries
+            another pUnit decorator attribute.
+
+    """
     from .FactManager import FactManager
     unwrapped = inspect.unwrap(target)
     if not isinstance(unwrapped, (FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType)):

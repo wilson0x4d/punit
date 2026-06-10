@@ -14,24 +14,24 @@ class TeardownClassTests:
 
     @fact
     def fact_one(self) -> None:
-        """First fact — triggers the class-scoped teardown once."""
+        """First fact; triggers the class-scoped teardown once."""
         pass
 
     @fact
     async def async_fact_two(self) -> None:
-        """Async fact — also triggers the class-scoped teardown."""
+        """Async fact; also triggers the class-scoped teardown."""
         await asyncio.sleep(0.01)
         pass
 
     @fact
     @classmethod
     def fact_three(cls) -> None:
-        """Class method fact — also triggers the class-scoped teardown."""
+        """Class method fact; also triggers the class-scoped teardown."""
         pass
 
     @fact
     def check_teardown_count(self) -> None:
-        """Final fact — verify total class-scoped teardown count at this point.
+        """Final fact; verify total class-scoped teardown count at this point.
 
         Three facts have already run (fact_one, async_fact_two, fact_three),
         so three teardowns should have fired before this test runs.
@@ -42,6 +42,6 @@ class TeardownClassTests:
 
     @teardown
     def class_teardown(self) -> None:
-        """Class-scoped teardown — fires after every test in this class."""
+        """Class-scoped teardown; fires after every test in this class."""
         global _teardown_call_count
         _teardown_call_count += 1

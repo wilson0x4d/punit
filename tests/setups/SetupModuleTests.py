@@ -10,14 +10,14 @@ _setup_call_count = 0
 
 @setup
 def module_setup() -> None:
-    """Module-scoped setup — fires before every test in this module."""
+    """Module-scoped setup; fires before every test in this module."""
     global _setup_call_count
     _setup_call_count += 1
 
 
 @fact
 def aaa_fact_one() -> None:
-    """First fact — triggers the module-scoped setup once."""
+    """First fact; triggers the module-scoped setup once."""
     pass
 
 
@@ -35,7 +35,7 @@ def verify_setup_counter() -> None:
 
 @fact
 def fact_three() -> None:
-    """Third fact — another trigger of the module-scoped setup."""
+    """Third fact; another trigger of the module-scoped setup."""
     pass
 
 

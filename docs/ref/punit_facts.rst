@@ -1,7 +1,7 @@
-Collections
+punit.facts
 ===========
 
-.. automodule:: punit.assertions.collections
+.. automodule:: punit.facts
     :members:
     :undoc-members:
     :show-inheritance: false

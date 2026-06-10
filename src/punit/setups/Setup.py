@@ -9,6 +9,30 @@ from ..metadata import CallableMetadata
 
 
 class Setup:
+    """Wraps a ``@setup``-decorated initialization function or method.
+
+    Setups execute immediately before each test runs, allowing you to prepare
+    resources or reset state without cluttering test bodies with try/finally blocks.
+
+    Setups come in two scopes: module-scoped (bare function) and class-scoped
+    (method inside a test class). The two scopes are independent of each other.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact, setup
+
+        @setup
+        def my_setup():
+            prepare_database()
+
+        @fact
+        def test_something():
+            assert True
+
+    """
 
     __metadata: CallableMetadata
     __scope_type: str  # "module" or "class"
@@ -55,7 +79,7 @@ class Setup:
             if inspect.iscoroutine(coro):
                 await coro
         else:
-            # class-scoped setup method — execute on the provided instance
+            # class-scoped setup method;  execute on the provided instance
             # or create one if none was supplied (defensive fallback).
             obj_instance = obj
             if obj_instance is None:
@@ -73,7 +97,7 @@ class Setup:
                 args = (cls,)
                 coro = self.__wrapped_target.__func__(*args)
             else:
-                # regular instance method — bind to the instance
+                # regular instance method;  bind to the instance
                 bound = getattr(obj_instance, self.__target.__name__)
                 if inspect.iscoroutine(bound):
                     await bound
@@ -84,6 +108,46 @@ class Setup:
 
 
 def setup(target: Callable) -> Callable:
+    """Decorates a function or method as a Setup that runs before each test.
+
+    A setup may be synchronous or asynchronous. If it raises an exception, the
+    corresponding test is marked as failed but no further processing occurs for
+    that test.
+
+    Args:
+        target: The function or method to decorate as a Setup
+
+    Returns:
+        The original, undecorated target -- no wrapper is installed
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact, setup, teardown
+
+        @setup
+        def db_setup():
+            global _connection
+            _connection = connect_to_database()
+
+        @teardown
+        def db_teardown():
+            global _connection
+            if _connection:
+                _connection.close()
+                _connection = None
+
+        @fact
+        def test_query():
+            assert query(_connection) is not None
+
+    Raises:
+        Exception: If target is not a function/method, or if it already carries
+            another pUnit decorator attribute.
+
+    """
     from .SetupManager import SetupManager
     unwrapped = inspect.unwrap(target)
     if not isinstance(unwrapped, (FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType)):

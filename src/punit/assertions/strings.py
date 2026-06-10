@@ -1,6 +1,25 @@
 # SPDX-FileCopyrightText: © 2025 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+"""String assertion helpers for comparison and checks.
+
+Provides utilities for comparing string equality, checking length bounds,
+and testing for None/empty/whitespace values.
+
+Example
+-------
+
+.. code-block:: python
+
+    from punit import strings
+
+    assert strings.are_same('hello', 'hello')
+    assert not strings.are_same('hello', 'world')
+    assert strings.is_none_or_empty(None)
+    assert strings.has_length('hello', min=3, max=10)
+
+"""
+
 from typing import Optional
 
 
@@ -30,12 +49,30 @@ def are_same(a: str | None, b: str | None) -> bool:
 
 def has_length(actual: str | None, min: Optional[int] = None, max: Optional[int] = None) -> bool:
     """
-    Check if actual value has the expected number of elements.
+    Check if actual value's length falls within the inclusive range [min, max].
 
-    :param actual: The actual value to check.
-    :param int|None expected: The expected number of elements
+    Args:
+        actual: The string to check.
+        min: Inclusive lower bound on length (``len(actual) >= min``).
+        max: Inclusive upper bound on length (``len(actual) <= max``).
 
-    :returns bool: True if the sequence has exactly the expected number of elements, False otherwise
+    Returns:
+        True if the length satisfies the bounds, False otherwise.
+        When actual is None, returns True only when both bounds are effectively zero.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import strings
+
+        a = 'hello'
+
+        assert strings.has_length(a, min=5)
+        assert strings.has_length(a, max=5)
+        assert strings.has_length(a, min=3, max=7)
+        assert not strings.has_length(a, min=6)
     """
     if actual is None:
         if ((min is None or min == 0) and (max is None or max == 0)):
@@ -68,10 +105,21 @@ def is_none_or_whitespace(string: str | None) -> bool:
     Check if a string is None or whitespace.
 
     Args:
-        string: The string to check
+        string: The string to check.
 
     Returns:
-        True if the string is None or whitespace, False otherwise
+        True if the string is None or whitespace, False otherwise.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import strings
+
+        assert not strings.is_none_or_whitespace('hello')
+        assert strings.is_none_or_whitespace(' \t')
+        assert strings.is_none_or_whitespace(None)
     """
     if string is None:
         return True

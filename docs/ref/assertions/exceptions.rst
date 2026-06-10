@@ -1,54 +1,7 @@
-Exception Helpers
-=================
+Exceptions
+==========
 
-.. py:currentmodule:: punit.exceptions
-
-.. py:function:: raises[TError:Exception](action:Callable, *, exact:bool = False, expect:TError = None) -> bool
-
-    Use ``raises()`` to assert that a function, method, or lambda expression raises an expected ``Exception``.
-
-    :param action: The ``Callable`` being tested, usually a function or method reference.
-
-    :param exact: A ``boolean`` indicating that the raised Exception must be an exact type match (and not a subclass of the specified type.) Use this when you need to test for a specific exception type.
-
-    :param expect: A ``type`` parameter that can be used in lieu of ``TError``.
-    
-.. rubric:: Exact Match Example
-
-.. code-block:: python
-
-    class MyException(Exception):
-        pass
-
-    class NotMyException(Exception):
-        pass
-
-    def myFunctionOne:
-        raise NotMyException()
-
-    def myFunctionTwo:
-        raise MyException()
-
-    # assert we can inexact-match Exception superclass
-    assert raises[Exception](myFunctionOne)
-    assert raises[Exception](myFunctionTwo)
-    # assert we can exact-match Exception subclass
-    assert raises[NotMyException](myFunctionOne, exact=True)
-    assert raises[MyException](myFunctionTwo, exact=True)
-
-.. rubric:: Syntax Example
-
-.. admonition:: LTS
-    
-    This helper offers two syntaxes, one which relies on Python "Type Parameters" and the other which relies on an explicit ``expect:type`` argument; the latter syntax exists solely for LTS/backward-compatibility purposes.
-
-.. code-block:: python
-
-    def myFunction:
-        raise MyException()
-
-    # using Python >=3.11 syntax
-    assert raises[MyException](myFunction)
-    # using Python <=3.11 syntax
-    assert raises(myFunction, expect=MyException)
-
+.. automodule:: punit.assertions.exceptions
+    :members:
+    :undoc-members:
+    :show-inheritance: false

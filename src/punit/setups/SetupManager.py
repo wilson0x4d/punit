@@ -36,7 +36,7 @@ class SetupManager:
 
         For class-scoped lookups ``class_name`` must match the first segment of
         the decorated method's ``__qualname__``.  For module-scoped setups
-        pass ``class_name = None`` or empty string — the manager normalises this
+        pass ``class_name = None`` or empty string;  the manager normalises this
         to ``""``.
         """
         key: Tuple[str, str, str]
@@ -55,7 +55,7 @@ class SetupManager:
         else:
             key = (sd.scope_type, sd.metadata.module_name, '')
 
-        # Only one setup per scope — last decorator wins if accidentally
+        # Only one setup per scope;  last decorator wins if accidentally
         # applied twice.
         self.__setups[key] = sd
 

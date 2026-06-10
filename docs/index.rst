@@ -10,5 +10,6 @@ Overview
    Quick Start <quickstart>
    Writing Tests <writing_tests>
    Reference <ref/index>
+   SKILL <SKILL>
    MIT License <license>
    Contact <contact>

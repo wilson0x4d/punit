@@ -1,6 +1,13 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+"""Collection assertion helpers for comparing sequences and containers.
+
+Provides utilities to check sequence equality, length bounds, and emptiness
+beyond Python's built-in ``assert`` statement.
+
+"""
+
 from typing import Any, Callable, Optional, Sequence, cast
 
 
@@ -10,11 +17,30 @@ def are_same(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None, expected:
 
     Can optionally specify *sort* so that differences in order do not cause failure.
 
-    :param actual: The sequence to check.
-    :param expected: The sequence to compare against.
-    :param sort: Sort sequences before performing comparisons.
-    :param sort_function: Custom function to use when sorting.
-    :returns bool: True if the sequences contain the same elements in the same order, False otherwise.
+    Args:
+        actual: The sequence to check.
+        expected: The sequence to compare against.
+        sort: Sort sequences before performing comparisons.
+        sort_function: Custom function to use when sorting.
+
+    Returns:
+        True if the sequences contain the same elements in the same order, False otherwise
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import collections
+
+        a = [1, 2, 3]
+        b = [1, 2, 3]
+        c = [3, 2, 1]
+
+        assert collections.are_same(a, b)
+        assert not collections.are_same(b, c)
+        assert collections.are_same(None, None)
+        assert not collections.are_same(a, None)
     """
     if actual is expected:
         return True
@@ -52,12 +78,31 @@ def are_same(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None, expected:
 
 def has_length(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None, min: Optional[int] = None, max: Optional[int] = None) -> bool:
     """
-    Check if actual value has the expected number of elements.
+    Check if actual value's length falls within the inclusive range [min, max].
 
-    :param actual: The actual value to check.
-    :param int|None expected: The expected number of elements
+    Args:
+        actual: The sequence (or collection) to check.
+        min: Inclusive lower bound on length (``len(actual) >= min``).
+        max: Inclusive upper bound on length (``len(actual) <= max``).
 
-    :returns bool: True if the sequence has exactly the expected number of elements, False otherwise
+    Returns:
+        True if the length satisfies the bounds, False otherwise.
+        When actual is None, returns True only when both bounds are effectively zero.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import collections
+
+        a = [1]
+        b = [1, 2]
+
+        assert collections.has_length(a, min=1)
+        assert collections.has_length(b, min=2)
+        assert collections.has_length([1, 2, 3], max=3)
+        assert not collections.has_length(a, min=2)
     """
     if actual is None:
         if ((min is None or min == 0) and (max is None or max == 0)):
@@ -74,8 +119,22 @@ def is_none_or_empty(actual: Sequence[Any] | set[Any] | dict[Any, Any] | None) -
     """
     Check if actual value is None or empty.
 
-    :param actual: The actual to check.
-    :returns: True if the value is None or empty, False otherwise.
+    Args:
+        actual: The sequence to check.
+
+    Returns:
+        True if the value is None or empty, False otherwise
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import collections
+
+        assert not collections.is_none_or_empty([1, 2, 3])
+        assert collections.is_none_or_empty([])
+        assert collections.is_none_or_empty(None)
     """
     if actual is None:
         return True

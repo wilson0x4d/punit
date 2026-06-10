@@ -1,7 +1,5 @@
-Assertions
-==========
-
-With **pUnit**, assertions are typically performed using Python's ``assert`` statement, and **pUnit** provides a set of assertion helpers
+punit.assertions
+================
 
 .. toctree::
     :maxdepth: 3
@@ -12,3 +10,6 @@ With **pUnit**, assertions are typically performed using Python's ``assert`` sta
     strings <strings>
 
 .. automodule:: punit.assertions
+    :members:
+    :undoc-members:
+    :show-inheritance: false

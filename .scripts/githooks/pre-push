@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: © 2023 Shaun Wilson
 # SPDX-License-Identifier: LicenseRef-Proprietary
 ##
-# Git pre-push hook — runs .scripts/run-tests before allowing a push.
+# Git pre-push hook; runs .scripts/run-tests before allowing a push.
 # If the test script exits non-zero, the push is rejected.
 set -eo pipefail
 

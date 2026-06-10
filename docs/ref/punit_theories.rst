@@ -1,7 +1,7 @@
-Strings
-=======
+punit.theories
+==============
 
-.. automodule:: punit.assertions.strings
+.. automodule:: punit.theories
     :members:
     :undoc-members:
     :show-inheritance: false

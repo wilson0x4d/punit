@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+"""pUnit -- a modernized unit-testing framework for Python."""
+
 from .assertions import collections, exceptions, numeric, strings
 from .facts import fact
 from .results import fails

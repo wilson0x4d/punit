@@ -375,11 +375,11 @@ def check_runner_get_fails_reason_returns_none_when_missing():
 
 # --- Module-level decorated functions for stacking tests ---
 # These use simulators of @fact/@theory that set __punit_decorator but do NOT
-# register with FactManager/TheoryManager — avoiding pUnit's discovery loop.
+# register with FactManager/TheoryManager; avoiding pUnit's discovery loop.
 
 
 class _FactCapturer:  # type: ignore[no-redef]
-    """Simulates @fact — sets __punit_decorator, no singleton registration."""
+    """Simulates @fact; sets __punit_decorator, no singleton registration."""
 
     def __call__(self, func: Callable) -> Callable:  # type: ignore[misc]
         if not hasattr(func, '__punit_decorator'):
@@ -388,7 +388,7 @@ class _FactCapturer:  # type: ignore[no-redef]
 
 
 class _TheoryCapturer:  # type: ignore[no-redef]
-    """Simulates @theory — sets __punit_decorator, no singleton registration."""
+    """Simulates @theory; sets __punit_decorator, no singleton registration."""
 
     def __call__(self, func: Callable) -> Callable:  # type: ignore[misc]
         if not hasattr(func, '__punit_decorator'):
@@ -405,5 +405,5 @@ _test_func_stacked_under_fact: Callable[[], None] = (
 @_TheoryCapturer()
 @fails(reason='edge case')
 def _test_func_stacked_under_theory(x: int = 0) -> None:  # type: ignore[func-returns-value]
-    """Stacked under @theory — attribute set on this function by the decorators."""
+    """Stacked under @theory; attribute set on this function by the decorators."""
     pass

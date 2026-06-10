@@ -9,7 +9,7 @@ from typing import Callable
 def fails(*, reason: str) -> Callable:
     """Mark a test as expected to fail for the given *reason*.
 
-    This is a marker decorator — it does **not** wrap the target function.
+    This is a marker decorato, it does **not** wrap the target function.
 
     Semantics
     ---------

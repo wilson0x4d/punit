@@ -9,6 +9,30 @@ from ..metadata import CallableMetadata
 
 
 class Teardown:
+    """Wraps a ``@teardown``-decorated cleanup function or method.
+
+    Teardowns execute immediately after each test runs, allowing you to release
+    resources or reset state without cluttering test bodies with try/finally blocks.
+
+    Like setups, teardowns come in module-scoped and class-scoped variants. The
+    two scopes are independent of each other.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact, teardown
+
+        @teardown
+        def my_teardown():
+            cleanup_database()
+
+        @fact
+        def test_something():
+            assert True
+
+    """
 
     __metadata: CallableMetadata
     __scope_type: str  # "module" or "class"
@@ -55,7 +79,7 @@ class Teardown:
             if inspect.iscoroutine(coro):
                 await coro
         else:
-            # class-scoped teardown method — execute on the provided instance
+            # class-scoped teardown method; execute on the provided instance
             # or create one if none was supplied (defensive fallback).
             obj_instance = obj
             if obj_instance is None:
@@ -73,7 +97,7 @@ class Teardown:
                 args = (cls,)
                 coro = self.__wrapped_target.__func__(*args)
             else:
-                # regular instance method — bind to the instance
+                # regular instance method; bind to the instance
                 bound = getattr(obj_instance, self.__target.__name__)
                 if inspect.iscoroutine(bound):
                     await bound
@@ -84,6 +108,38 @@ class Teardown:
 
 
 def teardown(target: Callable) -> Callable:
+    """Decorates a function or method as a Teardown that runs after each test.
+
+    A teardown may be synchronous or asynchronous, just like Facts and Theories.
+    If a teardown raises an exception, the corresponding test is marked as failed.
+
+    Args:
+        target: The function or method to decorate as a Teardown
+
+    Returns:
+        The original, undecorated target -- no wrapper is installed
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact, teardown
+
+        class MyTestClass:
+            @fact
+            def test_a(self):
+                assert True
+
+            @teardown
+            def tearDownClass(self):
+                reset_temp_files()
+
+    Raises:
+        Exception: If target is not a function/method, or if it already carries
+            another pUnit decorator attribute.
+
+    """
     from .TeardownManager import TeardownManager
     unwrapped = inspect.unwrap(target)
     if not isinstance(unwrapped, (FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType)):

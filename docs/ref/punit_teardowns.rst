@@ -1,7 +1,7 @@
-Strings
-=======
+punit.teardowns
+===============
 
-.. automodule:: punit.assertions.strings
+.. automodule:: punit.teardowns
     :members:
     :undoc-members:
     :show-inheritance: false

@@ -2,15 +2,13 @@ Reference
 =========
 
 .. toctree::
-    :titlesonly:
-    :maxdepth: 1
+    :maxdepth: 2
 
-    Facts <facts>
-    Fails <fails>
-    Setups <setups>
-    Teardowns <teardowns>
-    Theories <theories>
-    Traits <traits>
-    Assertions <assertions/index>
+    punit.facts <punit_facts>
+    punit.results <punit_results>
+    punit.setups <punit_setups>
+    punit.teardowns <punit_teardowns>
+    punit.theories <punit_theories>
+    punit.traits <punit_traits>
+    punit.assertions <assertions/index>
 
-.. automodule:: punit

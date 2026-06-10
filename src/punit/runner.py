@@ -160,7 +160,7 @@ class TestRunner:
                     result.is_success = False
                     result.exception = ex
             else:
-                # Setup failed — record a failure result.
+                # Setup failed; record a failure result.
                 result.is_success = False
             fails_reason = _get_fails_reason(fact.target)
             if fails_reason is not None:
@@ -204,7 +204,7 @@ class TestRunner:
                         result.is_success = False
                         result.exception = ex
                 else:
-                    # Setup failed — record a failure result.
+                    # Setup failed; record a failure result.
                     result.is_success = False
                 fails_reason = _get_fails_reason(theory.target)
                 if fails_reason is not None:

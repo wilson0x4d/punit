@@ -36,7 +36,7 @@ class TeardownManager:
 
         For class-scoped lookups ``class_name`` must match the first segment of
         the decorated method's ``__qualname__``.  For module-scoped teardowns
-        pass ``class_name = None`` or empty string — the manager normalises this
+        pass ``class_name = None`` or empty string; the manager normalises this
         to ``""``.
         """
         key: Tuple[str, str, str]
@@ -55,7 +55,7 @@ class TeardownManager:
         else:
             key = (td.scope_type, td.metadata.module_name, '')
 
-        # Only one teardown per scope — last decorator wins if accidentally
+        # Only one teardown per scope; last decorator wins if accidentally
         # applied twice.
         self.__teardowns[key] = td
 

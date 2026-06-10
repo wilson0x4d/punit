@@ -1,6 +1,35 @@
 # SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+"""Numeric assertion helpers for approximate comparisons and checks.
+
+Provides the ``approx`` class (inspired by pytest.approx) for directional
+tolerance-based numeric comparisons, plus standalone helpers like
+``isclose``, ``isnan``, ``isinfinite``, and ``percentage``.
+
+The ``approx`` class supports natural Python comparison syntax with
+directional (one-sided) tolerance:
+
+    * ``x == approx(expected)``; approximately equal (bidirectional tolerance)
+    * ``x > approx(threshold)``; strictly greater than (tolerance extends below)
+    * ``x >= approx(threshold)``;  at least the threshold (tolerance extends below)
+    * ``x < approx(threshold)``;  strictly less than (tolerance extends above)
+    * ``x <= approx(threshold)``;  at most the threshold (tolerance extends above)
+
+Example
+-------
+
+.. code-block:: python
+
+    from punit.assertions.numeric import approx, isclose, isnan
+
+    assert 0.1 + 0.2 == approx(0.3)
+    assert isclose(1 + 2j, 1.0 + 2.0j)
+    assert not isclose(3, 3.000000001)
+    assert isnan(float('nan'))
+
+"""
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -38,7 +67,7 @@ def _real_expected(base: '_ApproxComparator') -> float:
     """
     Return *base._expected* as float for real-only operations.
 
-    Raises ``TypeError`` when the expected value is complex — those
+    Raises ``TypeError`` when the expected value is complex;  those
     comparisons belong to ``isclose`` / ``_approximately_equal``.
     """
     if isinstance(base._expected, complex):
@@ -61,21 +90,26 @@ def isclose(
     complex inputs the real and imaginary parts are compared independently using the
     same tolerances.
 
-    :param a: First numeric value.
-    :param b: Second numeric value.
-    :param rel_tol: Relative tolerance (default 1e-9).
-    :param abs_tol: Absolute tolerance (default 0.0).
-    :returns: True if ``|a - b| <= max(rel_tol * |b|, abs_tol)`` for real values, or
+    Args:
+        a: First numeric value.
+        b: Second numeric value.
+        rel_tol: Relative tolerance (default 1e-9).
+        abs_tol: Absolute tolerance (default 0.0).
+
+    Returns:
+        True if ``|a - b| <= max(rel_tol * |b|, abs_tol)`` for real values, or
         equivalent per-component comparison for complex.
 
-    **Example**::
+    Example
+    -------
 
-        >>> isclose(1 + 2j, 1.0 + 2.0j)
-        True
-        >>> isclose(3, 3.000000001)
-        False
-        >>> isclose(3, 3.000000001, rel_tol=1e-6)
-        True
+    .. code-block:: python
+
+        from punit.assertions.numeric import isclose
+
+        assert isclose(1 + 2j, 1.0 + 2.0j)
+        assert not isclose(3, 3.000000001)
+        assert isclose(3, 3.000000001, rel_tol=1e-6)
     """
     if isinstance(a, complex) or isinstance(b, complex):
         a_c = a if isinstance(a, complex) else complex(a, 0)
@@ -511,6 +545,22 @@ def isnan(value: Numeric) -> bool:
     Check if value is NaN (Not a Number).
 
     For complex inputs, returns True only if both the real and imaginary parts are NaN.
+
+    Args:
+        value: The numeric value to check.
+
+    Returns:
+        True if value is NaN, False otherwise.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit.assertions.numeric import isnan
+
+        assert isnan(float('nan'))
+        assert not isnan(0.0)
     """
     if isinstance(value, complex):
         return math.isnan(value.real) and math.isnan(value.imag)
@@ -522,6 +572,22 @@ def isinfinite(value: Numeric) -> bool:
     Check if value is infinite (positive or negative).
 
     For complex inputs, returns True only if either the real or imaginary part is infinite.
+
+    Args:
+        value: The numeric value to check.
+
+    Returns:
+        True if value is infinite, False otherwise.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit.assertions.numeric import isinfinite
+
+        assert isinfinite(float('inf'))
+        assert not isinfinite(0.0)
     """
     if isinstance(value, complex):
         return math.isinf(value.real) or math.isinf(value.imag)
@@ -536,16 +602,34 @@ def percentage(
     """
     Calculate the percentage difference between two numeric values.
 
-    When relative_to_expected=True, uses value_b as reference: abs(a - b) / |b| * 100.
-    When relative_to_expected=False, uses symmetric form: abs(a - b) / ((|a| + |b|) / 2) * 100.
+    When relative_to_expected=True, uses value_b as reference::
+
+        abs(a - b) / |b| * 100
+
+    When relative_to_expected=False, uses symmetric form::
+
+        abs(a - b) / ((|a| + |b|) / 2) * 100
 
     For complex inputs, magnitudes (``abs()``) are used consistently: the numerator is
     the magnitude of the difference, and the denominator is the magnitude of the reference.
 
-    :param value_a: The first numeric value.
-    :param value_b: The second numeric value (reference when relative_to_expected=True).
-    :param relative_to_expected: If True, use value_b as reference (default).
-    :returns float: The percentage difference as a float. Returns ``inf`` if both values are zero but differ, otherwise ``0.0``.
+    Args:
+        value_a: The first numeric value.
+        value_b: The second numeric value (reference when relative_to_expected=True).
+        relative_to_expected: If True, use value_b as reference (default).
+
+    Returns:
+        The percentage difference as a float. Returns ``inf`` if both values are zero but differ, otherwise ``0.0``.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit.assertions.numeric import percentage
+
+        assert percentage(10, 100) == 90.0
+        assert percentage(0, 0) == 0.0
     """
     diff_mag = abs(value_a - value_b)
     if relative_to_expected:

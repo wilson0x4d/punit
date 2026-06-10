@@ -126,7 +126,7 @@ class TestResult:
 
     @is_expected_failure.setter
     def is_expected_failure(self, value: bool) -> None:
-        # Deprecated no-op — consumers should set expected_failure_reason directly.
+        # Deprecated no-op; consumers should set expected_failure_reason directly.
         pass
 
     @property
