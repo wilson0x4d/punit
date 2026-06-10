@@ -12,7 +12,7 @@ A **Fact** is a `test` that makes `assertions` for an invariant arrangement of `
 
 .. rubric:: Example (functions):
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact
 
@@ -22,7 +22,7 @@ A **Fact** is a `test` that makes `assertions` for an invariant arrangement of `
 
 .. rubric:: Example (methods):
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact
 

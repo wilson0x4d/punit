@@ -42,7 +42,7 @@ Other test selection criteria such as ``--include``, ``--exclude``, and ``--filt
 
 .. rubric:: Example (functions):
 
-.. code:: python
+.. code-block:: python
 
     from punit import theory, inlinedata, trait
 
@@ -55,7 +55,7 @@ Other test selection criteria such as ``--include``, ``--exclude``, and ``--filt
 
 .. rubric:: Example (methods):
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact, trait
 

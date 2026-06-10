@@ -24,14 +24,14 @@ def aaa_fact_one() -> None:
 
 
 @fact
-async def bbb_async_fact_two() -> None:
+async def async_fact_two() -> None:
     """Async fact also triggers the module-scoped teardown."""
     await asyncio.sleep(0.01)
     # After this test runs, teardown fires — count becomes 1.
 
 
 @fact
-def ccc_fact_three() -> None:
+def fact_three() -> None:
     """Third fact — verify total teardown count after all tests run."""
     global _teardown_call_count
     assert _teardown_call_count == 2, \

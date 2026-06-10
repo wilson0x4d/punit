@@ -15,7 +15,7 @@ class HtmlReportGenerator:
             if not test_result.is_success:
                 failureCount += 1
         test_results = test_results.copy()
-        test_results.sort(key=lambda e: e.module_name)
+        test_results.sort(key=lambda e: e.module_name)  # type: ignore[arg-type, return-value]
         lines = []
         lines.append('<html>')
         lines.append('<head><title>Test Results</title></head>')
@@ -40,6 +40,7 @@ class HtmlReportGenerator:
                      .testresult-stderr { font-family: monospace; max-height: 10em; overflow: auto; padding: 0.8em }
                      .test-time-pass { background-color: #EFE }
                      .test-time-fail { background-color: #FEE }
+                     .expected-failure { color: orange; font-style: italic; font-size: 0.9em }
                      </style>
                      """)
         lines.append('<div class="testresults-summary">')
@@ -66,6 +67,12 @@ class HtmlReportGenerator:
             lines.append(f'<div class="testresult testresult{passfailstyle}">')
             lines.append('<div class="testresult-heading">')
             lines.append(f'<span class="glyph glyph{passfailstyle}">{passfailglyph}</span>')
+            if test_result.expected_failure_reason is not None:
+                lines.append(
+                    f'<span class="expected-failure">'
+                    f' (expected failure: {test_result.expected_failure_reason})'
+                    f'</span>'
+                )
             class_name = "" if test_result.class_name is None else f"{test_result.class_name}."
             data = test_result.properties.get('data')
             if data is not None and len(data) > 0:

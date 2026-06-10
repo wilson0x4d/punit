@@ -24,7 +24,7 @@ An `assertion` is a verification of `state`, typically performed using Python's 
 
 There is no requirement that assertions be performed using ``assert`` this is merely a conventional approach to testing that reads well.
 
-.. code:: python
+.. code-block:: python
 
     assert 1 == 1 # this assertion will pass
     assert 1 == 2 # this assertion will fail
@@ -51,7 +51,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. rubric:: A test function using ``@fact``:
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact
 
@@ -61,7 +61,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. rubric:: A test method using ``@fact``:
 
-.. code:: python
+.. code-block:: python
 
     class MyTests:
         @fact
@@ -70,7 +70,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. rubric:: A test function using ``@theory``:
 
-.. code:: python
+.. code-block:: python
 
     from punit import theory, inlinedata
 
@@ -82,7 +82,7 @@ This section provides a series of referential examples which attempt to illustra
 
 .. rubric:: A test method using ``@theory``:
 
-.. code:: python
+.. code-block:: python
 
     class MyOtherTests:
         @theory

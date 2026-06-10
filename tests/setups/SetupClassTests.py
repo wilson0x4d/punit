@@ -19,14 +19,14 @@ class SetupClassTests:
             f"Expected class-scoped setup to fire 1 time, got {_setup_call_count}"
 
     @fact
-    def bbb_check_second(self) -> None:
+    def check_second(self) -> None:
         """Second test — verifies setup fired twice total."""
         global _setup_call_count
         assert _setup_call_count == 2, \
             f"Expected class-scoped setup to fire 2 times, got {_setup_call_count}"
 
     @fact
-    def ccc_check_third(self) -> None:
+    def check_third(self) -> None:
         """Third test — verifies setup fired three times total."""
         global _setup_call_count
         assert _setup_call_count == 3, \

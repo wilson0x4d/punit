@@ -15,7 +15,7 @@ Exception Helpers
     
 .. rubric:: Exact Match Example
 
-.. code:: python
+.. code-block:: python
 
     class MyException(Exception):
         pass
@@ -42,7 +42,7 @@ Exception Helpers
     
     This helper offers two syntaxes, one which relies on Python "Type Parameters" and the other which relies on an explicit ``expect:type`` argument; the latter syntax exists solely for LTS/backward-compatibility purposes.
 
-.. code:: python
+.. code-block:: python
 
     def myFunction:
         raise MyException()

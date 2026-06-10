@@ -48,6 +48,7 @@ class TestResult:
     __exception: Exception | None
     __file_name: str | None
     __host_name: str | None
+    __expected_failure_reason: str | None
     __is_success: bool | None
     __module_name: str | None
     __package_name: str | None
@@ -63,6 +64,7 @@ class TestResult:
         self.__exception = None
         self.__file_name = None
         self.__host_name = None
+        self.__expected_failure_reason = None
         self.__is_success = None
         self.__module_name = None
         self.__package_name = None
@@ -84,6 +86,14 @@ class TestResult:
     @class_name.setter
     def class_name(self, value: Optional[str]) -> None:
         self.__class_name = value
+
+    @property
+    def expected_failure_reason(self) -> str | None:
+        return self.__expected_failure_reason
+
+    @expected_failure_reason.setter
+    def expected_failure_reason(self, value: str | None) -> None:
+        self.__expected_failure_reason = value
 
     @property
     def exception(self) -> Exception | None:
@@ -108,6 +118,16 @@ class TestResult:
     @host_name.setter
     def host_name(self, value: str) -> None:
         self.__host_name = value
+
+    @property
+    def is_expected_failure(self) -> bool:
+        """Deprecated: use ``expected_failure_reason is not None`` instead."""
+        return self.expected_failure_reason is not None
+
+    @is_expected_failure.setter
+    def is_expected_failure(self, value: bool) -> None:
+        # Deprecated no-op — consumers should set expected_failure_reason directly.
+        pass
 
     @property
     def is_success(self) -> bool:

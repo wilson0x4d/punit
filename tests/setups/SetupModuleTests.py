@@ -22,7 +22,7 @@ def aaa_fact_one() -> None:
 
 
 @fact
-def bbb_verify_setup_counter() -> None:
+def verify_setup_counter() -> None:
     """Verify the module-scoped setup has fired exactly twice so far.
 
     Both aaa_fact_one and bbb_verify_setup_counter have triggered their own
@@ -34,13 +34,13 @@ def bbb_verify_setup_counter() -> None:
 
 
 @fact
-def ccc_fact_three() -> None:
+def fact_three() -> None:
     """Third fact — another trigger of the module-scoped setup."""
     pass
 
 
 @fact
-def ddd_verify_final_count() -> None:
+def verify_final_count() -> None:
     """Verify the module-scoped setup has fired exactly 4 times total.
 
     All four facts (aaa_fact_one, bbb_verify_setup_counter, ccc_fact_three,

@@ -3,8 +3,10 @@
 
 import asyncio
 from punit import fact
+from punit import fails
 from punit import theory, inlinedata
 from punit import trait
+
 
 
 @theory
@@ -24,6 +26,7 @@ async def traited_fact_func() -> None:
 
 @fact
 @trait('integration')
+@fails(reason='this test only exists for verifying `--trait "!integration"` functionality.')
 async def traited_integration_test() -> None:  # pragma: no cover
     await asyncio.sleep(0.1)
     assert False, 'unit test run excludes "integration" tests.'

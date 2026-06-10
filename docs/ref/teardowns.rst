@@ -21,7 +21,7 @@ The two scopes are independent: a module-scoped ``@teardown`` applies only to ba
 
 .. rubric:: Module-scoped example:
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact, teardown
 
@@ -37,7 +37,7 @@ The two scopes are independent: a module-scoped ``@teardown`` applies only to ba
 
 .. rubric:: Class-scoped example:
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact, teardown
 

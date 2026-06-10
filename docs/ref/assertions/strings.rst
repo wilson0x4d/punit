@@ -9,7 +9,7 @@ String Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import strings
 
@@ -37,7 +37,7 @@ String Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import strings
 
@@ -55,7 +55,7 @@ String Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import strings
 
@@ -73,7 +73,7 @@ String Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import strings
 

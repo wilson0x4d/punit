@@ -17,7 +17,7 @@ Collection Helpers
     
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import collections
 
@@ -48,7 +48,7 @@ Collection Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import collections
 
@@ -76,7 +76,7 @@ Collection Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit import collections
 

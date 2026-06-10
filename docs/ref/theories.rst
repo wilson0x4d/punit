@@ -19,7 +19,7 @@ A **Theory** is a `test` that makes `assertions` for a variant arrangement of `s
 
 .. rubric:: Example (functions):
 
-.. code:: python
+.. code-block:: python
 
     from punit import theory, inlinedata
 
@@ -33,7 +33,7 @@ A **Theory** is a `test` that makes `assertions` for a variant arrangement of `s
 
 .. rubric:: Example (methods):
 
-.. code:: python
+.. code-block:: python
 
     from punit import theory, inlinedata
 

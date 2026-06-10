@@ -11,7 +11,7 @@ from ..TestResult import TestResult
 class JsonReportGenerator:
 
     def generate(self, test_results: list[TestResult]) -> str:
-        test_results.sort(key=lambda e: e.module_name)
+        test_results.sort(key=lambda e: e.module_name)  # type: ignore[arg-type, return-value]
         results = list[dict[str, Any]]()
         for test_result in test_results:
             filter_name: str = f'{test_result.module_name}'
@@ -25,6 +25,10 @@ class JsonReportGenerator:
                 'status': 'pass' if test_result.is_success else 'fail',
                 'name': filter_name,
             })
+            if test_result.expected_failure_reason is not None:
+                result['expected_failure'] = True
+                if test_result.expected_failure_reason is not None:
+                    result['expected_failure_reason'] = test_result.expected_failure_reason
             if test_result.took is not None:
                 result['took'] = round(test_result.took * 1000, 3)
             if not test_result.is_success:

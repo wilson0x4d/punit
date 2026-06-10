@@ -21,7 +21,7 @@ The two scopes are independent: a module-scoped ``@setup`` applies only to bare-
 
 .. rubric:: Module-scoped example:
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact, setup
 
@@ -37,7 +37,7 @@ The two scopes are independent: a module-scoped ``@setup`` applies only to bare-
 
 .. rubric:: Class-scoped example:
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact, setup
 
@@ -55,7 +55,7 @@ The two scopes are independent: a module-scoped ``@setup`` applies only to bare-
 
 .. rubric:: Combining setups and teardowns:
 
-.. code:: python
+.. code-block:: python
 
     from punit import fact, setup, teardown
 

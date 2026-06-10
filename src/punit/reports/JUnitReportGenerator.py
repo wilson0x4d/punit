@@ -25,6 +25,7 @@ class JUnitTestCase:
     stdout: Optional[str] = None
     stderr: Optional[str] = None
     skipped: Optional[bool] = None
+    expected_failure_reason: Optional[str] = None
 
     def __init__(self, test_result: TestResult) -> None:
         self.disabled = False
@@ -48,6 +49,7 @@ class JUnitTestCase:
         self.stdout = None if test_result.stdout is None else escape(test_result.stdout)
         self.stderr = None if test_result.stderr is None else escape(test_result.stderr)
         self.skipped = False
+        self.expected_failure_reason = test_result.expected_failure_reason if test_result.expected_failure_reason is not None else None
 
 
 class JUnitTestSuite:
@@ -119,7 +121,7 @@ class JUnitReportGenerator:
         for test_result in test_results:
             if test_result.stop_time is not None and ts < test_result.stop_time:
                 ts = test_result.stop_time
-            testSuite = testSuites.get(test_result.module_name)
+            testSuite = testSuites.get(test_result.module_name)  # type: ignore[arg-type]
             if testSuite is None:
                 testSuite = JUnitTestSuite()
                 testSuite.name = test_result.module_name
@@ -127,7 +129,7 @@ class JUnitReportGenerator:
                 testSuite.hostname = test_result.host_name
                 testSuite.package = test_result.package_name
                 testSuite.testCases = []
-                testSuites[test_result.module_name] = testSuite
+                testSuites[test_result.module_name] = testSuite  # type: ignore[index]
             if testSuite.testCases is None:
                 testSuite.testCases = []
             testSuite.testCases.append(JUnitTestCase(test_result))
@@ -185,6 +187,9 @@ class JUnitReportGenerator:
                         if testCase.stderr is not None:
                             ele = et.SubElement(testCaseEle, 'system-err')
                             ele.text = testCase.stderr
+                        if testCase.expected_failure_reason is not None:
+                            expectedEle = et.SubElement(testCaseEle, 'expected-failure')
+                            expectedEle.attrib['reason'] = testCase.expected_failure_reason
         testSuitesEle.attrib['disabled'] = str(totalDisabledCount)
         testSuitesEle.attrib['errors'] = str(totalErrorCount)
         testSuitesEle.attrib['failures'] = str(totalFailureCount)

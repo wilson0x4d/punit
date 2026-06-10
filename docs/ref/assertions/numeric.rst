@@ -22,7 +22,7 @@ Numeric Helpers
 
 .. rubric:: Operators
 
-.. code:: python
+.. code-block:: python
 
     from punit.assertions.numeric import approx
 
@@ -45,7 +45,7 @@ Numeric Helpers
 
 .. rubric:: Method Chains
 
-.. code:: python
+.. code-block:: python
 
     from punit.assertions.numeric import approx
 
@@ -76,7 +76,7 @@ Numeric Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit.assertions.numeric import isclose
 
@@ -95,7 +95,7 @@ Numeric Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit.assertions.numeric import isnan
 
@@ -115,7 +115,7 @@ Numeric Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit.assertions.numeric import isinfinite
 
@@ -140,7 +140,7 @@ Numeric Helpers
 
 .. rubric:: Example
 
-.. code:: python
+.. code-block:: python
 
     from punit.assertions.numeric import percentage
 

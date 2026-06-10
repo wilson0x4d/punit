@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import importlib
+import inspect
 import os
 import socket
 import time
@@ -15,6 +16,14 @@ from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
 from .theories.TheoryManager import TheoryManager
 from .TestResult import TestResult
+
+
+def _get_fails_reason(target: Any) -> str | None:
+    """Return the ``__punit_fails_reason`` attribute, unwrapping decorators."""
+    unwrapped = inspect.unwrap(target)
+    if hasattr(unwrapped, '__punit_fails_reason'):
+        return getattr(unwrapped, '__punit_fails_reason')
+    return None
 
 
 class TestRunner:
@@ -153,6 +162,15 @@ class TestRunner:
             else:
                 # Setup failed — record a failure result.
                 result.is_success = False
+            fails_reason = _get_fails_reason(fact.target)
+            if fails_reason is not None:
+                result.expected_failure_reason = fails_reason
+                # Invert the result: a failing test with @fails counts as success,
+                # and a passing test with @fails counts as failure (regression).
+                result.is_success = not result.is_success
+                # Set an exception so report generators can show the reason text.
+                if not result.exception:
+                    result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
             result.stop_time = time.time()
             result.class_name = fact.metadata.class_name
             result.test_name = fact.metadata.name
@@ -188,6 +206,16 @@ class TestRunner:
                 else:
                     # Setup failed — record a failure result.
                     result.is_success = False
+                fails_reason = _get_fails_reason(theory.target)
+                if fails_reason is not None:
+                    result.is_expected_failure = True
+                    result.expected_failure_reason = fails_reason
+                    # Invert the result: a failing test with @fails counts as success,
+                    # and a passing test with @fails counts as failure (regression).
+                    result.is_success = not result.is_success
+                    # Set an exception so report generators can show the reason text.
+                    if not result.exception:
+                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
                 result.stop_time = time.time()
                 result.class_name = theory.metadata.class_name
                 result.test_name = theory.metadata.name
