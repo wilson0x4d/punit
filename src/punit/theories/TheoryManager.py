@@ -73,9 +73,9 @@ class TheoryManager:
     def put(self, theory: Theory) -> None:
         filters = FilterManager.instance().filters
         matches_filter: bool = False
-        for filter in filters:
-            if filter.re.fullmatch(theory.metadata.filter_name) is not None:
-                matches_filter = not filter.isExclude
+        for filt in filters:
+            if filt.re.fullmatch(theory.metadata.filter_name) is not None:
+                matches_filter = not filt.isExclude
                 break
         if matches_filter:
             l = self.get(theory.target.__module__)

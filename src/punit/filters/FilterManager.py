@@ -13,7 +13,7 @@ from .Filter import Filter
 
 class FilterManager:
 
-    __instance: Optional['FilterManager'] | None = None
+    __instance: Optional['FilterManager'] = None
     __filters: list[Filter]
 
     def __init__(self) -> None:
@@ -35,9 +35,9 @@ class FilterManager:
         self.__filters.append(Filter(pattern))
 
     def remove(self, pattern: str) -> None:
-        for filter in [e for e in self.__filters]:
-            if filter.pattern == pattern:
-                self.__filters.remove(filter)
+        for filt in [e for e in self.__filters]:
+            if filt.pattern == pattern:
+                self.__filters.remove(filt)
                 break
 
     def load(self, filepath: str) -> None:
@@ -68,5 +68,5 @@ class FilterManager:
     def print(self) -> None:
         if len(FilterManager.instance().filters) > 0:
             print('Filters:')
-            for filter in self.filters:
-                print(f'\t{filter.pattern}')
+            for filt in self.filters:
+                print(f'\t{filt.pattern}')

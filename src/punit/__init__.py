@@ -22,7 +22,6 @@ __all__ = [
     'numeric', 'approx',
     'strings',
     'fact',
-    'metadata',
     'setup', 'Setup',
     'teardown', 'Teardown',
     'theory', 'inlinedata',

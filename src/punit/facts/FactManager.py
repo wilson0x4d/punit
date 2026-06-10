@@ -62,18 +62,18 @@ class FactManager:
         return False
 
     def get(self, module_name: str) -> list[Fact]:
-        l = self.__modules.get(module_name)
-        if l is None:
-            l = []
-            self.__modules[module_name] = l
-        return l
+        facts = self.__modules.get(module_name)
+        if facts is None:
+            facts = []
+            self.__modules[module_name] = facts
+        return facts
 
     def put(self, fact: Fact) -> None:
         filters = FilterManager.instance().filters
         matches_filter: bool = False
-        for filter in filters:
-            if filter.re.fullmatch(fact.metadata.filter_name) is not None:
-                matches_filter = not filter.isExclude
+        for filt in filters:
+            if filt.re.fullmatch(fact.metadata.filter_name) is not None:
+                matches_filter = not filt.isExclude
                 break
         if matches_filter:
             l = self.get(fact.target.__module__)

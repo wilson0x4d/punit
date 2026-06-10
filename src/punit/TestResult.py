@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import sys
-from typing import Any, TextIO, Optional, cast
+from typing import Any, Optional, TextIO
 
 
 class TextIOCapture:
@@ -118,8 +118,8 @@ class TestResult:
         self.__is_success = value
 
     @property
-    def module_name(self) -> str:
-        return cast(str, self.__module_name)
+    def module_name(self) -> str | None:
+        return self.__module_name
 
     @module_name.setter
     def module_name(self, value: str) -> None:
