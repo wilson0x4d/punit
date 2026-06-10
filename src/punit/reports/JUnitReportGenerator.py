@@ -65,7 +65,7 @@ class JUnitTestSuite:
         result: int = 0
         if self.testCases is not None:
             for testCase in self.testCases:
-                if testCase.disabled == True:
+                if testCase.disabled is True:
                     result += 1
         return result
 
@@ -187,7 +187,7 @@ class JUnitReportGenerator:
                             ele.text = testCase.stderr
         testSuitesEle.attrib['disabled'] = str(totalDisabledCount)
         testSuitesEle.attrib['errors'] = str(totalErrorCount)
-        testSuitesEle.attrib['failures'] = str(totalErrorCount)
+        testSuitesEle.attrib['failures'] = str(totalFailureCount)
         testSuitesEle.attrib['tests'] = str(totalTestCount)
         testSuitesEle.attrib['time'] = f'{totalTime:.6f}'.rstrip('0').rstrip('.')
         et.indent(testSuitesEle, space="    ")

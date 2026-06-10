@@ -16,7 +16,7 @@ from .teardowns.TeardownManager import TeardownManager
 
 
 async def async_main() -> None:
-    ts = time.time()
+    start_time = time.time()
     cli = CommandLineInterface.parse()
     if cli.help:  # pragma: no cover
         cli.print_help()
@@ -26,27 +26,27 @@ async def async_main() -> None:
         cli.print_version()
     os.chdir(cli.workdir)
     if cli.no_pathfix is not True:
-        pathbase = str(Path.cwd())
-        srcbase = os.path.join(pathbase, 'src')
-        if os.path.exists(srcbase) and srcbase not in sys.path:
-            sys.path.append(srcbase)
-        if pathbase not in sys.path:
-            sys.path.append(pathbase)
+        cwd_path = str(Path.cwd())
+        src_path = os.path.join(cwd_path, 'src')
+        if os.path.exists(src_path) and src_path not in sys.path:
+            sys.path.append(src_path)
+        if cwd_path not in sys.path:
+            sys.path.append(cwd_path)
     test_module_discovery = TestModuleDiscovery(
         os.path.join(cli.workdir, cli.test_package_name),
         cli.includePatterns,
         cli.excludePatterns,
         cli)
     test_module_discovery.discover()
-    testRunner = TestRunner(cli.test_package_name, test_module_discovery.filenames, cli)
-    results = await testRunner.run()
-    totalTime = time.time() - ts
-    failureCount = 0
+    test_runner = TestRunner(cli.test_package_name, test_module_discovery.filenames, cli)
+    results = await test_runner.run()
+    total_time = time.time() - start_time
+    failure_count = 0
     for result in results:
         if not result.is_success:
-            failureCount += 1  # pragma: no cover
+            failure_count += 1  # pragma: no cover
     if not cli.quiet:
-        print(f'Total: {len(results)}, Failures: {failureCount}, Took: {totalTime:.3f}s')
+        print(f'Total: {len(results)}, Failures: {failure_count}, Took: {total_time:.3f}s')
     if cli.reportFormat is not None:  # pragma: no cover
         report: str = ''
         match cli.reportFormat:
@@ -74,7 +74,7 @@ async def async_main() -> None:
         pass
 
     if cli.no_exitcode is not True:
-        if failureCount:
+        if failure_count:
             # test failures trigger exit code 119 (for automation gating)
             sys.exit(119)
         if TeardownManager.instance().teardown_error_count > 0:

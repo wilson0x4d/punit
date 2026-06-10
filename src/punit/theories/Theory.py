@@ -10,6 +10,23 @@ from ..metadata import CallableMetadata
 
 
 class Theory:
+    """
+    Wraps a parameterised test (``@theory``) and its collected data points.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        @theory
+        def add_correct(x, y): ...
+
+        @inlinedata((1, 2), (3, 4))
+        @theory
+        def add_correct(x, y):
+            assert x + y == x + y
+
+    """
 
     __datas: list[tuple]
     __target: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]
@@ -52,7 +69,6 @@ class Theory:
                     args = (class_instance,) + data
                     coro = self.__target(*args)
         else:
-            self.__test_name = self.__target.__name__
             coro = self.__target(*data)
         if inspect.iscoroutine(coro):
             await coro

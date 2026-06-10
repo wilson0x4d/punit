@@ -27,6 +27,22 @@ class TextIOCapture:
 
 
 class TestResult:
+    """
+    Accumulates the outcome of a single test execution.
+
+    Example
+    -------
+
+    Create and populate a result manually:
+
+    .. code-block:: python
+
+        result = TestResult()
+        result.module_name = 'tests.example'
+        result.test_name = 'test_something'
+        result.is_success = True
+
+    """
 
     __class_name: Optional[str]
     __exception: Exception | None
@@ -175,7 +191,7 @@ class TestResult:
         elif took >= 0.000000001:
             return f'{(took*1000000):.3f}'.rstrip('0').rstrip('.') + 'μs'
         else:
-            return f'{(took*1000):.3f}'.rstrip('0').rstrip('.') + 'ms'
+            return f'{(took*1000000):.3f}'.rstrip('0').rstrip('.') + 'ns'
 
     def capture_output(self, quiet: bool = False) -> None:
         self.__stdout_capture = TextIOCapture(sys.stdout, quiet)

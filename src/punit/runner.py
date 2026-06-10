@@ -113,7 +113,8 @@ class TestRunner:
                         )
                         print(f'Teardown Error ({target_desc}): {ex}')
 
-    def print_test_result(self, test_result: TestResult):
+    def print_test_result(self, test_result: TestResult) -> None:
+        """Print the test result using a coloured emoji and timing."""
         if self.__cli.quiet:
             return
         glyph = '🟩' if test_result.is_success else '🟥'
@@ -204,13 +205,13 @@ class TestRunner:
         test_package_path = os.path.join(os.path.abspath(os.curdir), self.__test_package_name).replace('\\', '/')
         for filename in self.__filenames:
             ts = time.time()
-            moduleImportName = filename.replace(test_package_path, '').replace('/', '.')
-            if moduleImportName.endswith('.py'):
-                moduleImportName = moduleImportName[:-3]
-            module_report_name = moduleImportName.lstrip('.')
+            module_import_name = filename.replace(test_package_path, '').replace('/', '.')
+            if module_import_name.endswith('.py'):
+                module_import_name = module_import_name[:-3]
+            module_report_name = module_import_name.lstrip('.')
             try:
                 host_name: str = socket.gethostname()
-                test_module = importlib.import_module(moduleImportName, self.__test_package_name)
+                test_module = importlib.import_module(module_import_name, self.__test_package_name)
 
                 # execute all facts
                 await self.__run_facts(host_name, test_module, filename, module_report_name, results)

@@ -12,6 +12,20 @@ from .traits import Trait
 
 
 class CommandLineInterface:
+    """
+    Command-line argument parser and display helper for pUnit.
+
+    Example
+    -------
+
+    Parse CLI arguments from ``sys.argv``:
+
+    .. code-block:: python
+
+        cli = CommandLineInterface.parse()
+        print(cli.test_package_name)
+
+    """
 
     __aliases: dict[str, str]
     __excludePatterns: list[str]
@@ -49,6 +63,12 @@ class CommandLineInterface:
         self.__verbose = False
 
     def __parse(self, argv: list[str]) -> CommandLineInterface:
+        """
+        Parse command-line arguments using a finite-state machine.
+
+        :param argv: List of argument strings (typically ``sys.argv``).
+        :returns: ``self`` for method chaining.
+        """
         aliasName: str | None = None
         extractFilter: bool = False
         extractExcludePattern: bool = False
@@ -160,7 +180,7 @@ class CommandLineInterface:
             FilterManager.instance().add(arg)
 
     @property
-    def aliases(self) -> dict:
+    def aliases(self) -> dict[str, str]:
         return self.__aliases
 
     @property
@@ -213,16 +233,15 @@ class CommandLineInterface:
 
     @property
     def no_exitcode(self) -> bool:
-        return self.__no_exitcode is True
+        return self.__no_exitcode
 
     @property
     def no_pathfix(self) -> bool:
-        return self.__no_pathfix is True
+        return self.__no_pathfix
 
     def print_help(self) -> None:
-        if True:  # pragma: no cover
-            self.print_version()
-            print("""
+        self.print_version()
+        print("""
 Usage: python3 -m punit [-h|--help]
                         [-q|--quiet] [-v|--verbose]
                         [-z|--failfast]
@@ -281,7 +300,7 @@ Options:
         write to FILENAME. In this case `--report` does not
         suppress any program output.
 """)
-            os._exit(0)
+        os._exit(0)
 
     def print_summary(self) -> None:
         self.print_version()
