@@ -14,8 +14,8 @@ set -euo pipefail
 
 # resolve
 SCRIPT_DIR=$(dirname $(realpath "${BASH_SOURCE[0]}"))
+WORKSPACE_NAME=$(basename `dirname "$SCRIPT_DIR"`)
 PYTHONPATH=$(realpath "$SCRIPT_DIR/../src")
-WORKSPACE_NAME=$(basename `dirname "$PYTHONPATH"`)
 
 # initialize
 if [ ! -z "$(which deactivate)" ]; then
