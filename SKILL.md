@@ -25,6 +25,23 @@ Multiple filters narrow results (logical AND):
 .venv/bin/python -m punit --filter '*Widget*' --filter '*Cache*'
 ```
 
+## File-Path Arguments
+
+Pass one or more `.py` file paths directly on the command-line to run only those files:
+
+```bash
+# Single file
+.venv/bin/python -m punit tests/FactTests.py
+
+# Multiple files
+.venv/bin/python -m punit tests/FactTests.py tests/assertions/StringTests.py
+
+# Interleaved with flags
+.venv/bin/python -m punit --quiet -z tests/FactTests.py tests/TheoryTests.py
+```
+
+When any file argument is provided, directory-based discovery (`-p/--test-package`, `--include`, `--exclude`) is bypassed — only the specified files are tested. Test filtering via `-f`/`-t` still applies to the contents of those files. Missing files cause an immediate error (exit code 1).
+
 ## CLI Flags Reference
 
 | Flag | Meaning | Example |

@@ -233,13 +233,19 @@ class TestRunner:
         test_package_path = os.path.join(os.path.abspath(os.curdir), self.__test_package_name).replace('\\', '/')
         for filename in self.__filenames:
             ts = time.time()
-            module_import_name = filename.replace(test_package_path, '').replace('/', '.')
-            if module_import_name.endswith('.py'):
-                module_import_name = module_import_name[:-3]
+            if not self.__test_package_name:
+                module_import_name = filename
+            else:
+                module_import_name = filename.replace(test_package_path, '').replace('/', '.')
+                if module_import_name.endswith('.py'):
+                    module_import_name = module_import_name[:-3]
             module_report_name = module_import_name.lstrip('.')
             try:
                 host_name: str = socket.gethostname()
-                test_module = importlib.import_module(module_import_name, self.__test_package_name)
+                if not self.__test_package_name:
+                    test_module = importlib.import_module(module_import_name)
+                else:
+                    test_module = importlib.import_module(module_import_name, self.__test_package_name)
 
                 # execute all facts
                 await self.__run_facts(host_name, test_module, filename, module_report_name, results)

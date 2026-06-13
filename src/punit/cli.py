@@ -43,6 +43,7 @@ class CommandLineInterface:
     __test_package_name: str | None
     __verbose: bool
     __workdir: str | None
+    __files: list[str]
 
     def __init__(self) -> None:
         self.__aliases = dict[str, str]()
@@ -61,6 +62,7 @@ class CommandLineInterface:
         self.__test_package_name = 'tests'
         self.__workdir = os.path.curdir
         self.__verbose = False
+        self.__files = []
 
     def __parse(self, argv: list[str]) -> CommandLineInterface:
         """
@@ -110,6 +112,9 @@ class CommandLineInterface:
             elif extractAliasPath and aliasName is not None:
                 extractAliasPath = False
                 self.__aliases[aliasName] = arg
+                continue
+            elif arg.endswith('.py') and not arg.startswith('-'):
+                self.__files.append(arg)
                 continue
             elif self.__workdir is None:
                 self.__workdir = arg
@@ -239,10 +244,14 @@ class CommandLineInterface:
     def no_pathfix(self) -> bool:
         return self.__no_pathfix
 
+    @property
+    def files(self) -> list[str]:
+        return self.__files
+
     def print_help(self) -> None:
         self.print_version()
         print("""
-Usage: python3 -m punit [-h|--help]
+Usage: python3 -m punit [-h|--help] [FILE ...]
                         [-q|--quiet] [-v|--verbose]
                         [-z|--failfast]
                         [-p|--test-package NAME]
@@ -299,6 +308,12 @@ Options:
         If `--report` is used, instead of writing to stdout
         write to FILENAME. In this case `--report` does not
         suppress any program output.
+    FILE
+        One or more .py files to run directly.
+        When any FILE is specified, only those files are tested;
+        -p/--test-package, --include, and --exclude patterns on
+        discovered files are ignored (test filtering via -f/-t
+        still applies).
 """)
         os._exit(0)
 
@@ -333,6 +348,11 @@ Options:
                 self.__includePatterns.append('*.py')
             # always exclude dunder files
             self.__excludePatterns.append('/__*__')
+        if self.__files:
+            for fpath in self.__files:
+                if not os.path.isfile(fpath):
+                    print(f'File not found: {fpath}')
+                    os._exit(1)
 
     @staticmethod
     def parse(argv: list[str] = sys.argv) -> CommandLineInterface:

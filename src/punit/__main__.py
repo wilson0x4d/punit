@@ -9,10 +9,12 @@ from pathlib import Path
 
 from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
+from .facts.FactManager import FactManager
 from .reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
 from .runner import TestRunner
 from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
+from .theories.TheoryManager import TheoryManager
 
 
 async def async_main() -> None:
@@ -32,13 +34,27 @@ async def async_main() -> None:
             sys.path.append(src_path)
         if cwd_path not in sys.path:
             sys.path.append(cwd_path)
-    test_module_discovery = TestModuleDiscovery(
-        os.path.join(cli.workdir, cli.test_package_name),
-        cli.includePatterns,
-        cli.excludePatterns,
-        cli)
-    test_module_discovery.discover()
-    test_runner = TestRunner(cli.test_package_name, test_module_discovery.filenames, cli)
+    test_runner: TestRunner
+    if cli.files:
+        dotnames = []
+        for filepath in cli.files:
+            rel = os.path.relpath(os.path.abspath(filepath), cli.workdir)
+            dotnames.append(
+                rel[:-3].replace('\\', '/').replace('/', '.')                
+            )
+        FactManager.instance().excludeTraits = cli.excludeTraits
+        FactManager.instance().includeTraits = cli.includeTraits
+        TheoryManager.instance().excludeTraits = cli.excludeTraits
+        TheoryManager.instance().includeTraits = cli.includeTraits
+        test_runner = TestRunner('', dotnames, cli)
+    else:
+        test_module_discovery = TestModuleDiscovery(
+            os.path.join(cli.workdir, cli.test_package_name),
+            cli.includePatterns,
+            cli.excludePatterns,
+            cli)
+        test_module_discovery.discover()
+        test_runner = TestRunner(cli.test_package_name, test_module_discovery.filenames, cli)
     results = await test_runner.run()
     total_time = time.time() - start_time
     failure_count = 0
