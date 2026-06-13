@@ -4,7 +4,7 @@
 """Tests for the Mock class and mock() factory (mock.py).
 
 Covers ABC registration, fluent API, call tracking, delegates, origin behavior,
-context manager, properties, signature validation, and identity semantics.
+context manager, properties, signature validation, identity semantics, and iteration support.
 """
 
 from __future__ import annotations
@@ -649,3 +649,197 @@ def reset_mock_new_false_keeps_children() -> None:
     assert not m._u.has_return_value
 
     assert stub_before._u.has_return_value is True
+
+
+# -- Iteration support tests --
+
+
+class _Row:
+    """Helper to simulate ORM-like row objects."""
+
+    migration: str
+    id: int
+
+    def __init__(self, migration: str, id_: int) -> None:
+        self.migration = migration
+        self.id = id_
+
+
+@fact
+def iteration_yields_from_returns_value() -> None:
+    """for e in mock yields from returns() configured list."""
+    child = Mock()
+    child.query.returns([1, 2, 3])
+    items = list(child.query)
+    assert items == [1, 2, 3]
+
+
+@fact
+def iteration_with_dict_comprehension_works() -> None:
+    """Dict comprehension over mocked row objects works as expected."""
+    rows = [_Row('alpha', 1), _Row('beta', 2)]
+    m = Mock()
+    m.query.returns(rows)
+    result = {e.migration: e.id for e in m.query}
+    assert result == {'alpha': 1, 'beta': 2}
+
+
+@fact
+def iteration_with_list_comprehension_works() -> None:
+    """List comprehension over mocked query results."""
+    rows = [_Row('alpha', 1), _Row('beta', 2)]
+    m = Mock()
+    m.query.returns(rows)
+    result = [e.id for e in m.query]
+    assert result == [1, 2]
+
+
+@fact
+def iteration_empty_sequence_produces_no_items() -> None:
+    """Iterating over an empty list produces nothing."""
+    m = Mock()
+    m.query.returns([])
+    assert list(m.query) == []
+
+
+@fact
+def iteration_over_non_iterable_raises_type_error() -> None:
+    """Setting returns() to a non-iterable raises TypeError during iteration."""
+    m = Mock()
+    m.query.returns(42)
+    try:
+        list(m.query)
+        assert False, 'Should have raised TypeError'  # pragma: no cover
+    except TypeError:
+        pass
+
+
+@fact
+def iteration_without_returns_raises_type_error() -> None:
+    """Iterating a mock with no returns() configured raises TypeError."""
+    m = Mock()
+    try:
+        list(m.query)
+        assert False, 'Should have raised TypeError'  # pragma: no cover
+    except TypeError as exc:
+        assert 'use .returns' in str(exc)
+
+
+@fact
+def len_works_on_iteration_configured_mock() -> None:
+    """len(mock) mirrors the length of the configured return value."""
+    m = Mock()
+    m.query.returns([1, 2, 3])
+    assert len(m.query) == 3
+
+
+@fact
+def len_on_empty_sequence_returns_zero() -> None:
+    """len(mock) is 0 for empty sequence."""
+    m = Mock()
+    m.query.returns([])
+    assert len(m.query) == 0
+
+
+@fact
+def iteration_preserved_across_reset() -> None:
+    """Iteration config survives reset(preserve_sideeffects=True)."""
+    m = Mock()
+    m.query.returns([1, 2])
+    m.query()  # call the stub once to establish return value usage
+    m.query.reset()
+    items = list(m.query)
+    assert items == [1, 2]
+
+
+@fact
+def iteration_cleared_after_reset_false() -> None:
+    """Iteration config is cleared by reset(preserve_sideeffects=False)."""
+    m = Mock()
+    m.query.returns([1, 2])
+    m.query.reset(preserve_sideeffects=False)
+    # After wipe, configured has no __return_value__
+    try:
+        list(m.query)
+        assert False, 'Should have raised TypeError'  # pragma: no cover
+    except TypeError:
+        pass
+
+
+@fact
+def iteration_independent_of_call_time_side_effect() -> None:
+    """Iteration from returns() works regardless of call-time side_effect."""
+    m = Mock()
+    m.query.returns([1, 2]).side_effect(lambda *a: 99)
+    # has_return_value flag is False (call-time semantics use side_effect)
+    assert not m.query._u.has_return_value  # type: ignore[attr-defined]
+    # But iteration still yields from returns() config (independent mechanism)
+    assert list(m.query) == [1, 2]
+
+
+@fact
+def fluent_chaining_returns_configured_child_for_iteration() -> None:
+    """Fluent .returns() returns the configured child for chaining."""
+    m = Mock()
+    result = m.query.returns([1, 2])
+    assert result is m.query  # fluent API returns self
+
+
+@fact
+def iteration_works_on_top_level_mock() -> None:
+    """Iteration works on the top-level mock, not just children."""
+    m = Mock()
+    m.returns([10, 20])
+    items = list(m)
+    assert items == [10, 20]
+
+
+@fact
+def child_mock_iteration_independent_of_parent() -> None:
+    """Children have independent iteration from parent."""
+    m = Mock()
+    m.returns([1, 2])
+    m.query.returns([3, 4])
+    assert list(m) == [1, 2]
+    assert list(m.query) == [3, 4]
+
+
+@fact
+def iteration_over_tuple_works() -> None:
+    """Tuples are iterable and work with mock iteration."""
+    m = Mock()
+    m.query.returns((1, 2, 3))
+    assert tuple(m.query) == (1, 2, 3)
+
+
+@fact
+def len_on_generator_raises_type_error() -> None:
+    """len(mock) raises TypeError for sequences without __len__."""
+    m = Mock()
+    m.query.returns(iter([1, 2]))  # iterator has no len
+    try:
+        len(m.query)
+        assert False, 'Should have raised TypeError'  # pragma: no cover
+    except TypeError:
+        pass
+
+
+@fact
+def origin_stubs_can_be_iteration_configured() -> None:
+    """Origin-prepopulated stubs work with iteration when returns() called."""
+    m = Mock(origin=MyProtocol)
+    # do_thing is pre-populated from origin; configure it for iteration
+    m.do_thing.returns([42])
+    assert list(m.do_thing) == [42]
+
+
+@fact
+def iteration_with_mock_rows_works() -> None:
+    """Comprehensions work when mocked rows are themselves Mock instances."""
+    r1 = Mock(migration='alpha', id=1)
+    r2 = Mock(migration='beta', id=2)
+    m = Mock()
+    m.query.returns([r1, r2])
+    result = {e.migration: e.id for e in m.query}
+    assert result == {'alpha': 1, 'beta': 2}
+

@@ -127,3 +127,29 @@ Diagnosing Problems
 -------------------
 
 If you're trying to understand why Python files are/are-not running as tests you can use the ``--verbose`` argument. This will exhaustively output Include/Exclude information during the discovery process (among other things) and can be a useful debugging aid if things are not working as expected.
+
+Mocking
+-------
+
+**pUnit** ships a lightweight mocking framework under ``punit.mocks``:
+
+.. code:: python
+
+    from punit.mocks import Mock
+
+    m = Mock()
+    m.method.returns(42)                  # fixed return value
+    m.method.side_effect([1, 2, 3])       # sequential iteration on call
+    assert m.method() == 1                 # returns successive items
+
+Mocks configured via ``.returns([...])`` are directly iterable — ideal for comprehension patterns:
+
+.. code:: python
+
+    m = Mock()
+    m.rows.returns([Mock(name='Alice'), Mock(name='Bob')])
+
+    {u.name for u in m.rows}              # → {'Alice', 'Bob'}
+    assert len(m.rows) == 2
+
+See the `full pUnit docs <https://punit.readthedocs.io>`_ for the complete mocking API.

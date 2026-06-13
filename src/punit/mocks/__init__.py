@@ -2,18 +2,17 @@
 # SPDX-License-Identifier: MIT
 
 """
-Provides :class:`Mock`, :class:`Matcher` argument matchers, a ``patch`` mechanism,
-and convenience functions.
+Provides mocking facilities via a m:class:`Mock` class and/or a m:class:`patch` class.
 
 Usage::
 
-    from punit.mocks import Mock, mock, is_any, contains, patch
+    from punit.mocks import Mock, is_any, contains, patch
 
     # Fluent syntax
     mock = (
         Mock()
-        .do_stuff.
-        returns(42)
+        .do_stuff.returns(42)
+        
     )
 
     # Constructor kwargs for fixture-style initialization

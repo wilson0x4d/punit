@@ -345,6 +345,42 @@ def test_something(m):
     assert m.called
 ```
 
+### Iteration
+
+Mocks configured via `.returns([...])` support iteration.
+
+```python
+m = Mock()
+m.query.returns([
+    Mock(name='Alice'),
+    Mock(name='Bob')]
+)
+
+# Iterate directly (no parentheses):
+for user in m.query:            # yields each Mock row
+    assert user.name in ('Alice', 'Bob')
+
+# Comprehensions work naturally:
+names = {u.name for u in m.query}   # → {'Alice', 'Bob'}
+assert len(m.query) == 2              # __len__ reports item count
+
+# Call-time return is the same list:
+rows = m.query()                       # → [Mock(name='Alice'), Mock(name='Bob')]
+```
+
+Typical ORM-style pattern:
+
+```python
+migration_table = Mock()
+migration_table.query.returns([
+    Mock(migration='alpha', id=1),
+    Mock(migration='beta',  id=2),
+])
+
+applied = {e.migration: e.id for e in migration_table.query}
+assert applied == {'alpha': 1, 'beta': 2}
+```
+
 ### Context Manager Mode (Mock)
 
 ``Mock`` itself supports context manager mode, yielding an independent child clone that auto-resets on exit:

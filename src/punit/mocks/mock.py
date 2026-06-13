@@ -8,6 +8,8 @@ Provides :class:`Mock` — a lightweight, single-class mocking framework that su
 - **``isinstance`` conformance** via virtual-subclass registration.
 - **Delegate forwarding** for partial doubles / spies
 - **Fluent configuration** with call tracking and matcher-based assertions
+- **Iteration support** via ``__iter__``/``__len__`` -- ``for x in mock.child`` yields
+  from ``mock.child.returns([...])`` data; ``len(mock.child)`` reports item count.
 - Context manager yielding independent child mocks (auto-reset on exit)
 
 Usage::
@@ -31,7 +33,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from typing import (
     Any,
@@ -371,6 +373,43 @@ class Mock:
     def __hash__(self) -> int:  # type: ignore[override]
         """Hash by object id so mocks can be used in sets/dicts as unique keys."""
         return id(self)
+
+    def __iter__(self) -> Iterator[Any]:
+        """Yield items from the configured return value (if it is a sequence).
+
+        This allows ``for e in mock`` and dict-set comprehension patterns like
+        ``{e.attr: e.id for e in mock.query}`` when ``mock.query.returns([...])``
+        has been used to configure child stubs.
+        """
+        rv = self._u.configured.get('__return_value__')
+        if rv is None:
+            raise TypeError(
+                f'{type(self).__name__!r} object is not iterable -- '
+                f'use .returns([...]) to configure iteration data'
+            )
+        try:
+            return iter(rv)  # type: ignore[return-value]
+        except TypeError as exc:
+            raise TypeError(
+                f'{type(rv).__name__!r} object is not iterable -- '
+                f'use .returns() with a sequence (list, tuple, etc.)'
+            ) from exc
+
+    def __len__(self) -> int:
+        """Return the number of items in the configured return value."""
+        rv = self._u.configured.get('__return_value__')
+        if rv is None:
+            raise TypeError(
+                f'{type(self).__name__!r} object has no len() -- '
+                f'use .returns([...]) to configure data'
+            )
+        try:
+            return len(rv)  # type: ignore[arg-type]
+        except TypeError as exc:
+            raise TypeError(
+                f'{type(rv).__name__!r} object has no len() -- '
+                f'use a sequence (list, tuple, etc.)'
+            ) from exc
 
     def __exit__(
         self,

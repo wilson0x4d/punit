@@ -152,6 +152,35 @@ Unlike other testing frameworks, the names you use for functions, classes, and m
 
 You will want to take particular note of the `--exclude` command-line parameter which allows you to restrict what `pUnit` will consider to be a valid test file. While the default behavior will fit 99% of use-cases, you _can_ exercise more control over the discovery process.
 
+## Mocking
+
+pUnit includes a lightweight mocking framework under `punit.mocks`:
+
+```python
+from punit.mocks import Mock
+
+m = Mock()
+m.method.returns(42)                  # fixed return
+assert m.method() == 42
+m.method.side_effect([1, 2, 3])       # sequential iteration on call
+assert m.method() == 1                 # returns successive items
+assert m.method() == 2                 # returns successive items
+assert m.method() == 3                 # returns successive items
+```
+
+Mock objects configured via `.returns([...])` are directly iterable:
+
+```python
+m = Mock()
+m.rows.returns([
+    Mock(name='Alice'),
+    Mock(name='Bob')
+])
+
+{u.name for u in m.rows}              # → {'Alice', 'Bob'}
+assert len(m.rows) == 2
+```
+
 ## Vision, Future, and LTS
 
 The long-term vision is to provide both imperative and declarative syntaxes for testing while keeping `pUnit` as simple as possible in its implementation.
