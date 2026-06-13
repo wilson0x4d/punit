@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-from punit.mocks import Call, CallList, CallRecord, Mock
+from punit.mocks import Call, CallList, Mock
 from punit import fact
 
 
@@ -76,7 +76,7 @@ def parent_parent_gets_aggregated_entries() -> None:
     # But child_calls[0] has the full-path entry propagated from leaf
     assert len(m.child_calls) == 1
     entry = m.child_calls[0]
-    assert isinstance(entry, CallRecord)
+    assert isinstance(entry, Call)
     assert entry.path == 'Mock.a.b.c.d'
     assert entry.args == (42,)
 

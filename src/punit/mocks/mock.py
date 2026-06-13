@@ -2,24 +2,24 @@
 # SPDX-License-Identifier: MIT
 
 """
-Core Mock class and CallDetail dataclass.
+Core Mock class and Call dataclass.
 
 Provides :class:`Mock` — a lightweight, single-class mocking framework that supports:
-- ``isinstance`` conformance via ABC virtual-subclass registration
-- Delegate forwarding for partial doubles / spies
-- Fluent configuration with call tracking and matcher-based assertions
+- **``isinstance`` conformance** via virtual-subclass registration.
+- **Delegate forwarding** for partial doubles / spies
+- **Fluent configuration** with call tracking and matcher-based assertions
 - Context manager yielding independent child mocks (auto-reset on exit)
 
 Usage::
 
-    from punit.mocks import Mock, mock, is_any, is_gt
+    from punit.mocks import Mock, is_any, is_gt
 
     # Create a mock with origin conformance
-    mock_userservice = Mock(origin=UserService)
-    mock_userservice.is_authenticated.returns(False)
-    mock_userservice.get_user.returns('Guest')
+    userservice = Mock(origin=UserService)
+    userservice.is_authenticated.returns(False)
+    userservice.get_user.returns('Guest')
 
-    assert mock_userservice.called_with(is_gt(0))
+    assert userservice.called_with(is_gt(0))
 
     # Constructor kwargs for fixture-style initialization
     row = Mock(migration='alpha', id=1)
@@ -132,20 +132,14 @@ class Call:
         return f'{self.path}({sep})' if self.path else f'({sep})'
 
     def __eq__(self, other: Any) -> bool:  # type: ignore[override]
-        if not isinstance(other, Call):
-            return NotImplemented
-        result = (self.path == other.path and
-                  self.args == other.args and
-                  self.kwargs == other.kwargs)
-        return result
+        return (
+            self.path == other.path
+            and self.args == other.args
+            and self.kwargs == other.kwargs
+        ) if isinstance(other, Call) else NotImplemented
 
     def __hash__(self) -> int:  # type: ignore[override]
         return hash((self.path, self.args, self.kwargs))
-
-    @property
-    def parameters(self) -> tuple[tuple[Any, ...], dict[str, Any]]:
-        """Return ``(args, kwargs)`` for backward compatibility with ``CallDetail.parameters``."""
-        return (self.args, self.kwargs)
 
 
 class CallList(tuple):  # type: ignore[type-arg]
@@ -208,19 +202,19 @@ class Mock:
             'delegate_method',
         )
 
-        origin: Optional[type]
-        delegate: Any
-        name: str
-        path: str
-        parent: Optional["Mock"]
-        children: dict[str, "Mock"]
+        children: dict[str, Mock]
         configured: dict[str, Any]
         call_records: list[Call]
         child_call_records: list[Call]
+        delegate: Any
+        delegate_method: Any
         has_return_value: bool
         has_side_effect: bool
+        name: str
+        origin: Optional[type]
+        path: str
+        parent: Optional[Mock]
         side_effect_iter: Any
-        delegate_method: Any
 
         def __init__(self) -> None:
             self.origin = None
@@ -638,8 +632,8 @@ class Mock:
             stubs (origin-prepopulated members) untouched.
         """
         for m in self.__traverse():
-            m._u.call_records = []
-            m._u.child_call_records = []
+            m._u.call_records = list[Call]()
+            m._u.child_call_records = list[Call]()
 
         self._u.call_records = []
         self._u.side_effect_iter = None
@@ -678,14 +672,8 @@ class Mock:
 
 
 __all__ = [
-    'CallDetail',
     'Call',
     'CallList',
-    'CallRecord',
     'Mock',
     'MockError',
 ]
-
-# Backward-compat aliases — deprecated, import the primary types directly.
-CallRecord = Call  # noqa: F811
-CallDetail = Call  # noqa: F811

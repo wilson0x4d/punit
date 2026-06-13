@@ -13,18 +13,18 @@ Usage::
     from punit.mocks import patch, Mock
 
     # Context manager
-    with patch('myapp.database.connect') as mock_connect:
-        mock_connect.returns('connected')
+    with patch('myapp.database.connect') as m:
+        m.returns('connected')
 
     # Decorator (sync)
     @patch('myapp.database.connect')
-    def test_something(mock_connect):
-        assert mock_connect.was_called()
+    def test_something(m):
+        assert m.called
 
     # Decorator (async)
     @patch('myapp.database.connect')
-    async def test_async(mock_connect):
-        assert mock_connect.origin is not None
+    async def test_async(m):
+        assert m.origin is not None
 
 The patch instance itself is the Mock -- ``with patch(...) as m:`` yields a :class:`Mock`.
 """
@@ -46,35 +46,6 @@ from .mock import Mock
 T = TypeVar('T', bound=Callable[..., Any])
 
 
-def _resolve_path(target_path: str) -> tuple[ModuleType, str]:
-    """
-    Resolve a dotted path (e.g. ``'myapp.database.connect'``) to ``(module, attr_name)``.
-
-    :param target_path: Dotted attribute path.
-    :returns: A tuple of the resolved module and the last segment as *attr_name*.
-    :raises AttributeError: If the module or attribute does not exist.
-    """
-    parts = target_path.split('.')
-    module_path_parts: list[str] = []
-
-    for i in range(len(parts)):
-        current_module_path = '.'.join(parts[:i + 1])
-        try:
-            __import__(current_module_path)
-        except (ModuleNotFoundError, ImportError):
-            break
-        module_path_parts = parts[:i + 1]
-
-    if not module_path_parts or len(parts) == len(module_path_parts):
-        raise AttributeError(
-            f'Cannot find module containing attribute "{target_path}"'
-        )
-
-    attr_name = parts[-1]
-    resolved_module = sys.modules['.'.join(module_path_parts)]
-    return (resolved_module, attr_name)
-
-
 class patch:
     """
     Patch a module-level attribute with a :class:`Mock`.
@@ -90,8 +61,8 @@ class patch:
 
         # As decorator:
         @patch('myapp.db.connect')
-        def test_something(mock_connect):
-            assert mock_connect.was_called()
+        def test_something(m):
+            assert m.called
     """
 
     def __init__(
@@ -107,7 +78,7 @@ class patch:
         :param origin: Optional type for Mock virtual-subclass registration.
         :param kwargs: Additional keyword arguments forwarded to the Mock constructor.
         """
-        self._module, self._attr_name = _resolve_path(target_path)
+        self._module, self._attr_name = self.__resolve_path(target_path)
         self._original = getattr(self._module, self._attr_name)
         self._kwargs = {**kwargs}
         if origin is not None:
@@ -162,6 +133,34 @@ class patch:
             sync_wrapper.__doc__ = func.__doc__
             sync_wrapper.__wrapped__ = func  # type: ignore[attr-defined]
             return sync_wrapper  # type: ignore[return-value]
+
+    def __resolve_path(self, target_path: str) -> tuple[ModuleType, str]:
+        """
+        Resolve a dotted path (e.g. ``'myapp.database.connect'``) to ``(module, attr_name)``.
+
+        :param target_path: Dotted attribute path.
+        :returns: A tuple of the resolved module and the last segment as *attr_name*.
+        :raises AttributeError: If the module or attribute does not exist.
+        """
+        parts = target_path.split('.')
+        module_path_parts: list[str] = []
+
+        for i in range(len(parts)):
+            current_module_path = '.'.join(parts[:i + 1])
+            try:
+                __import__(current_module_path)
+            except (ModuleNotFoundError, ImportError):
+                break
+            module_path_parts = parts[:i + 1]
+
+        if not module_path_parts or len(parts) == len(module_path_parts):
+            raise AttributeError(
+                f'Cannot find module containing attribute "{target_path}"'
+            )
+
+        attr_name = parts[-1]
+        resolved_module = sys.modules['.'.join(module_path_parts)]
+        return (resolved_module, attr_name)
 
 
 __all__ = ['patch']

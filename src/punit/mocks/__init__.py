@@ -45,20 +45,16 @@ from .matcher import (
     is_type,
 )
 from .mock import (
-    CallDetail,
     Call,
     CallList,
-    CallRecord,
     Mock,
     MockError
 )
 from .patch import patch
 
 __all__ = [
-    'CallDetail',
     'Call',
     'CallList',
-    'CallRecord',
     'Matcher',
     'Mock',
     'MockError',

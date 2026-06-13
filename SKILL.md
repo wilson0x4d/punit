@@ -55,8 +55,9 @@ When any file argument is provided, directory-based discovery (`-p/--test-packag
 | `-f, --filter PATTERN\|@FILE` | Restrict tests by qualified name/path | `--filter 'MyClass.fact'` |
 | `-t, --trait [!]NAME[=VALUE]` | Include/exclude by trait (`!` to exclude) | `--trait '!integration'` |
 | `--no-pathfix` | Rely on PYTHONPATH instead of adding `src/` | `--no-pathfix` |
-| `-r, --report {html\|json}` | Generate a report to stdout | `--report json` |
+| `-r, --report {html\|junit\|json}` | Generate a report to stdout | `--report json` |
 | `-o, --output FILENAME` | Write report to file (not stdout) | `--output result.json` |
+| `--no-exitcode` | Suppress error exit code on test failure | `--no-exitcode` |
 
 **Wildcard syntax** for include/exclude/filter:
 - `*` — match one or more characters
@@ -230,6 +231,129 @@ assert isclose(3.141, 3.14, rel_tol=0.01)              # drop-in math.isclose re
 assert isnan(float('nan'))                             # NaN check
 assert isinfinite(float('inf'))                        # infinity check
 assert percentage(10, 100) == 90.0                     # percentage difference
+```
+
+## Mocking with `punit.mocks`
+
+Both top-level re-exports (`from punit import mocks`) and submodule paths are supported:
+
+```python
+from punit.mocks import Mock, patch
+# or
+from punit import mocks
+m = mocks.Mock()
+```
+
+### The Mock Class
+
+A fluent, attribute-access mock supporting origin-based ABC/Protocol conformance, delegate forwarding (partial doubles/spies), and child stub caching.
+
+**Constructor:** `Mock(origin=None, *, delegate=None, name='Mock', _validate=False, **kwargs)`
+
+| Parameter | Meaning |
+| :--- | :--- |
+| `origin` | Register as virtual subclass so ``isinstance(mock, origin)`` passes; pre-populates public member stubs |
+| `delegate` | Forward unconfigured calls to a real object (spy behavior) |
+| `name` | Debug identifier; becomes path prefix for call records |
+| `_validate` | Reserved for future signature validation |
+| ``**kwargs`` | Set accessible attributes returning given values (``Mock(name='Alice')`` returns ``'Alice'`` on read) |
+
+### Fluent Configuration
+
+Every attribute access yields a cached child mock. Configure via fluent calls:
+
+```python
+m = Mock()
+m.method.returns(42)                     # fixed return value
+m.method.side_effect(lambda x: x * 2)    # dynamic side effect
+m.method.side_effect(ValueError)          # raise on call
+m.method.side_effect([1, 2, 3])           # sequential iterable yields
+
+# Configuration overwrites prior state:
+m.other.returns(99).side_effect(lambda v: v + 1)
+```
+
+### Verification Properties
+
+| Property | Type | Description |
+| :--- | :--- | :--- |
+| ``mock.called`` | ``bool`` | True if the mock was directly invoked |
+| ``mock.call_count`` | ``int`` | Number of direct self-invocations |
+| ``mock.calls`` | ``Sequence[Call]`` | Direct call records (immutable tuple) |
+| ``mock.mock_calls`` | ``CallList`` | All recorded self-invocations |
+| ``mock.child_calls`` | ``CallList`` | Calls reached through child attribute access (aggregated from descendants) |
+| ``mock.all_calls`` | ``CallList`` | Union of self + child invocations |
+
+**Matcher-based verification:**
+
+```python
+from punit.mocks import is_any, is_gt, contains, neg, is_in
+
+m.method(42, 'hello')
+assert m.called_with(is_gt(10), contains('ell'))
+assert m.called_with(is_any(), is_in('hello', 'hi'))
+```
+
+### Call Records
+
+``Call`` is a frozen dataclass: ``path``, ``timestamp``, ``took``, ``is_async``, ``args``, ``kwargs``, ``result``, ``error``. Access via ``.calls``, ``.mock_calls``, ``.child_calls``.
+
+``CallList`` is a tuple subclass supporting partial-sublist matching in ``__contains__``:
+
+```python
+subset = CallList((Call('Mock.a', (1,), {}), Call('Mock.b', (2,), {})))
+assert subset in mock.child_calls   # sliding-window match
+```
+
+### Argument Matchers
+
+| Matcher | Description |
+| :--- | :--- |
+| ``is_any()`` | Matches any single value (singleton) |
+| ``contains(value)`` | Checks if ``value`` is a substring or element |
+| ``is_gt(n)`` | Value strictly greater than ``n`` |
+| ``is_gte(n)`` | Value greater than or equal to ``n`` |
+| ``is_lt(n)`` | Value strictly less than ``n`` |
+| ``is_lte(n)`` | Value less than or equal to ``n`` |
+| ``is_in(*values)`` | Value equals one of the provided values |
+| ``is_type(*types)`` | Value is an instance of any given type(s) |
+| ``neg(inner)`` | Negates another matcher |
+
+Custom matchers: subclass :class:`Matcher` and implement ``__eq__``.
+
+### patch — Module Replacement
+
+Replaces a module-level attribute with a Mock, restores on exit. Supports both context manager and decorator modes (async).
+
+**Context manager:**
+
+```python
+from punit.mocks import patch
+
+with patch('myapp.database.connect') as m:
+    m.returns('connected')
+    result = myapp.database.connect()  # returns 'connected'
+# original restored automatically
+```
+
+**Decorator (sync) — mock injected as first argument:**
+
+```python
+@patch('myapp.database.connect')
+def test_something(m):
+    m.returns('ok')
+    assert m.called
+```
+
+### Context Manager Mode (Mock)
+
+``Mock`` itself supports context manager mode, yielding an independent child clone that auto-resets on exit:
+
+```python
+with Mock() as child:
+    child.method.returns(99)
+    child.method()  # call_count == 1
+# calls cleared; parent unaffected
 ```
 
 ## Default CLI Invocation

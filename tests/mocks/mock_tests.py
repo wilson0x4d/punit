@@ -14,7 +14,7 @@ from dataclasses import FrozenInstanceError
 from typing import Protocol, runtime_checkable  # noqa: PGH003
 
 from punit.mocks import Mock, mock
-from punit.mocks.mock import CallDetail
+from punit.mocks.mock import Call
 from punit import fact
 
 
@@ -261,7 +261,7 @@ def side_effect_assignment_overwrites_fluent_config() -> None:
 
 @fact
 def call_detail_is_frozen_dataclass() -> None:
-    d = CallDetail(
+    d = Call(
         timestamp=1.0,
         took=0.001,
         is_async=False,
@@ -285,7 +285,7 @@ def call_tracking_records_args_kwargs() -> None:
     details = m.calls
     assert len(details) == 1
     entry = details[0]
-    assert entry.parameters == ((1, 2), {'key': 'val'})
+    assert (entry.args, entry.kwargs) == ((1, 2), {'key': 'val'})
 
 
 @fact
