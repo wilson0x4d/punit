@@ -3,10 +3,11 @@
 
 import asyncio
 from punit import fact, teardown
+from hazrakah.mocks import Mock
 
 
-# Module-level counter to verify class-scoped teardown invocation count.
-_teardown_call_count = 0
+# Module-level mock to track class-scoped teardown invocation count.
+_class_teardown_calls = Mock()
 
 
 class TeardownClassTests:
@@ -36,12 +37,10 @@ class TeardownClassTests:
         Three facts have already run (fact_one, async_fact_two, fact_three),
         so three teardowns should have fired before this test runs.
         """
-        global _teardown_call_count
-        assert _teardown_call_count == 3, \
-            f"Expected class-scoped teardown to fire 3 times by now, got {_teardown_call_count}"
+        assert _class_teardown_calls.call_count == 3, \
+            f"Expected class-scoped teardown to fire 3 times by now, got {_class_teardown_calls.call_count}"
 
     @teardown
     def class_teardown(self) -> None:
         """Class-scoped teardown; fires after every test in this class."""
-        global _teardown_call_count
-        _teardown_call_count += 1
+        _class_teardown_calls()

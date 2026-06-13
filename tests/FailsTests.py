@@ -9,6 +9,7 @@ import xml.etree.ElementTree as et  # type: ignore[import-untyped]
 from typing import Any, Callable
 
 from punit import fact, fails
+from hazrakah.mocks import Mock
 from punit.runner import _get_fails_reason
 from punit.TestResult import TestResult
 
@@ -122,11 +123,7 @@ def check_inversion_of_failing_test():
     # 1. Test body raised → result.is_success = False
     # 2. @fails detected → result.is_expected_failure = True
     # 3. Inversion → result.is_success = not False = True
-    class FakeResult:
-        is_success: bool
-        expected_failure_reason: str | None = None
-
-    result = FakeResult()
+    result = Mock()
     result.is_success = False  # simulated: test body raised an exception
 
     # Simulate @fails being present on the target
@@ -147,11 +144,7 @@ def check_inversion_of_failing_test():
 def check_inversion_of_passing_test():
     """A passing test with @fails should report is_success=False (inverted as regression)."""
 
-    class FakeResult:
-        is_success: bool
-        expected_failure_reason: str | None = None
-
-    result = FakeResult()
+    result = Mock()
     result.is_success = True  # simulated: test body passed
 
     @fails(reason='unexpected fix')
@@ -171,11 +164,7 @@ def check_inversion_of_passing_test():
 def check_no_inversion_without_fails():
     """A normal test without @fails should keep its original is_success value."""
 
-    class FakeResult:
-        is_success: bool
-        expected_failure_reason: str | None = None
-
-    result = FakeResult()
+    result = Mock()
     result.is_success = False  # simulated failure
 
     def normal_target() -> None:  # type: ignore[func-returns-value]

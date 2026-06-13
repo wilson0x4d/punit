@@ -2,17 +2,17 @@
 # SPDX-License-Identifier: MIT
 
 from punit import fact, setup
+from hazrakah.mocks import Mock
 
 
-# Module-level counter to verify module-scoped setup invocation count.
-_setup_call_count = 0
+# Module-level mock to track module-scoped setup invocation count.
+_module_setup_calls = Mock()
 
 
 @setup
 def module_setup() -> None:
     """Module-scoped setup; fires before every test in this module."""
-    global _setup_call_count
-    _setup_call_count += 1
+    _module_setup_calls()
 
 
 @fact
@@ -28,9 +28,8 @@ def verify_setup_counter() -> None:
     Both aaa_fact_one and bbb_verify_setup_counter have triggered their own
     setups before this test runs, so count should be 2.
     """
-    global _setup_call_count
-    assert _setup_call_count == 2, \
-        f"Expected setup to fire 2 times, got {_setup_call_count}"
+    assert _module_setup_calls.call_count == 2, \
+        f"Expected setup to fire 2 times, got {_module_setup_calls.call_count}"
 
 
 @fact
@@ -46,6 +45,5 @@ def verify_final_count() -> None:
     All four facts (aaa_fact_one, bbb_verify_setup_counter, ccc_fact_three,
     and this fact) have triggered setups before this assertion runs.
     """
-    global _setup_call_count
-    assert _setup_call_count == 4, \
-        f"Expected setup to fire 4 times, got {_setup_call_count}"
+    assert _module_setup_calls.call_count == 4, \
+        f"Expected setup to fire 4 times, got {_module_setup_calls.call_count}"

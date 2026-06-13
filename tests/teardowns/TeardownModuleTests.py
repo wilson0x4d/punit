@@ -3,17 +3,17 @@
 
 import asyncio
 from punit import fact, teardown
+from hazrakah.mocks import Mock
 
 
-# Module-level counter to verify teardown invocation count.
-_teardown_call_count = 0
+# Module-level mock to track module-scoped teardown invocation count.
+_module_teardown_calls = Mock()
 
 
 @teardown
 def module_teardown() -> None:
     """Module-scoped teardown; fires after every test in this module."""
-    global _teardown_call_count
-    _teardown_call_count += 1
+    _module_teardown_calls()
 
 
 @fact
@@ -33,6 +33,5 @@ async def async_fact_two() -> None:
 @fact
 def fact_three() -> None:
     """Third fact; verify total teardown count after all tests run."""
-    global _teardown_call_count
-    assert _teardown_call_count == 2, \
-        f"Expected teardown to fire 2 times by now, got {_teardown_call_count}"
+    assert _module_teardown_calls.call_count == 2, \
+        f"Expected teardown to fire 2 times by now, got {_module_teardown_calls.call_count}"
