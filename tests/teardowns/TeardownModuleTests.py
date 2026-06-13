@@ -3,7 +3,7 @@
 
 import asyncio
 from punit import fact, teardown
-from hazrakah.mocks import Mock
+from punit.mocks import Mock
 
 
 # Module-level mock to track module-scoped teardown invocation count.

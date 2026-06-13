@@ -9,7 +9,7 @@ import xml.etree.ElementTree as et  # type: ignore[import-untyped]
 from typing import Any, Callable
 
 from punit import fact, fails
-from hazrakah.mocks import Mock
+from punit.mocks import Mock
 from punit.runner import _get_fails_reason
 from punit.TestResult import TestResult
 

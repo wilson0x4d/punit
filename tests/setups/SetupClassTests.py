@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 from punit import fact, setup
-from hazrakah.mocks import Mock
+from punit.mocks import Mock
 
 
 # Module-level mock to track class-scoped setup invocation count.
