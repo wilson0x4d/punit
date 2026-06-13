@@ -355,7 +355,7 @@ Options:
                     os._exit(1)
 
     @staticmethod
-    def parse(argv: list[str] = sys.argv) -> CommandLineInterface:
+    def parse(argv: list[str] = sys.argv[1:]) -> CommandLineInterface:
         result = CommandLineInterface().__parse(argv)
         result.validate()
         return result

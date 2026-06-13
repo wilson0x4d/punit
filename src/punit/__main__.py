@@ -40,7 +40,7 @@ async def async_main() -> None:
         for filepath in cli.files:
             rel = os.path.relpath(os.path.abspath(filepath), cli.workdir)
             dotnames.append(
-                rel[:-3].replace('\\', '/').replace('/', '.')                
+                rel[:-3].replace('\\', '/').replace('/', '.')
             )
         FactManager.instance().excludeTraits = cli.excludeTraits
         FactManager.instance().includeTraits = cli.includeTraits
