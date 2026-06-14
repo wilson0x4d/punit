@@ -256,7 +256,7 @@ class Mock:
         *,
         delegate: Any = None,
         name: str = 'Mock',
-        _validate: bool = False,
+        returns: Any = None,
         **kwargs: Any,
     ) -> None:
         """
@@ -266,6 +266,7 @@ class Mock:
         :param delegate: A real object whose methods are forwarded when not configured.
         :param name: Debug identifier for the mock. Defaults to ``'Mock'``.
         :param validate: If True, validate call arguments against inspectable signatures.
+        :param returns: A convenience kwarg that assigns a return value for the Mock, similar to calling `returns(...)`.
         :param kwargs: Arbitrary keyword arguments set as initial attribute values.
             Each key becomes an accessible attribute that returns the given value.
             The special key ``side_effect`` is applied to this mock's calling behavior.
@@ -284,6 +285,9 @@ class Mock:
         if delegate is not None:
             self._u.delegate = delegate
 
+        if returns is not None:
+            self.returns(returns)
+
         # additional kwargs get initialized as attrs
         for key, value in kwargs.items():
             if key.startswith('_'):
@@ -293,6 +297,8 @@ class Mock:
                 self._u.configured['__side_effect__'] = value
                 self._u.has_side_effect = True
                 self._u.has_return_value = False
+            elif key == 'returns':
+                self.returns(value)
             else:
                 self._u.configured[key] = value
 
@@ -310,7 +316,7 @@ class Mock:
         except RuntimeError:
             is_async = False
 
-        # Evaluate side_effect priority: iterable → exception → callable → return_value → self
+        # Evaluate side_effect priority: iterable → exception → callable → return value → self
         result: Any = self
         error: BaseException | None = None
 

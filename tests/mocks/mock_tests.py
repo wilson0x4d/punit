@@ -354,6 +354,13 @@ def same_attribute_access_returns_same_instance() -> None:
 
 
 @fact
+def mock_attribute_assignment_returns_assigned_value() -> None:
+    m = Mock()
+    m.foo = 'bar'
+    assert m.foo == 'bar'
+
+
+@fact
 def two_different_mocks_never_equal() -> None:
     m1 = Mock()
     m2 = Mock()
@@ -842,4 +849,3 @@ def iteration_with_mock_rows_works() -> None:
     m.query.returns([r1, r2])
     result = {e.migration: e.id for e in m.query}
     assert result == {'alpha': 1, 'beta': 2}
-
