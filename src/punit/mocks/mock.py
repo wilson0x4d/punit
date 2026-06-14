@@ -43,6 +43,8 @@ from typing import (
     Union,
 )
 
+from .matcher import Matcher
+
 
 class MockError(Exception):
     """Exception raised when mock configuration is violated."""
@@ -202,6 +204,7 @@ class Mock:
             'has_side_effect',
             'side_effect_iter',
             'delegate_method',
+            'when_conditions',
         )
 
         children: dict[str, Mock]
@@ -217,6 +220,7 @@ class Mock:
         path: str
         parent: Optional[Mock]
         side_effect_iter: Any
+        when_conditions: list[tuple[tuple[Matcher, ...], dict[str, Matcher], Mock]]
 
         def __init__(self) -> None:
             self.origin = None
@@ -232,6 +236,7 @@ class Mock:
             self.has_side_effect = False
             self.side_effect_iter = None
             self.delegate_method = None
+            self.when_conditions = []
 
     @classmethod
     def register_origin(cls, origin: type) -> None:
@@ -293,6 +298,11 @@ class Mock:
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Record the call and evaluate configured behavior."""
+        # Conditional dispatch (highest priority) — forward matching calls to subgraph.
+        subgraph = self.__resolve_conditional(args, kwargs)
+        if subgraph is not None:
+            return subgraph(*args, **kwargs)  # delegate call through matched subgraph
+
         # Track timing and async context
         start = time.monotonic_ns()
         try:
@@ -536,6 +546,15 @@ class Mock:
                 return False
         return True
 
+    def __resolve_conditional(
+        self, args: tuple[Any, ...], kwargs: dict[str, Any]
+    ) -> Mock | None:
+        """Return the subgraph for the first matching condition, or ``None``."""
+        for (exp_args, exp_kwargs, subgraph) in self._u.when_conditions:
+            if self.__matches_args(args, exp_args) and self.__matches_kwargs(kwargs, exp_kwargs):
+                return subgraph
+        return None
+
     def __populate_members(self, origin: type) -> None:
         """Pre-create child Mock stubs for all public members of the origin."""
         members: set[str] = set()
@@ -645,6 +664,30 @@ class Mock:
     @side_effect.setter
     def side_effect(self, value: Union[Callable[..., Any], BaseException, type, Iterable[Any]] | None) -> None:
         self.__side_effect(value)
+
+    def when(self, *args: Any, **kwargs: Any) -> Mock:
+        """Create a conditionally-dispatched subgraph mock keyed by matcher arguments.
+
+        Identical matcher tuples always return the same subgraph (dedup via canonical name).
+        The matched subgraph's ``__call__`` is forwarded matching call args for dispatch
+        to further nested conditions or flat config.
+
+        :raises MockError: if no matcher arguments are provided (ambiguous condition).
+        """
+        if not args and not kwargs:
+            raise MockError('when() requires at least one matcher argument')
+
+        for (exp_args, exp_kwargs, subgraph) in self._u.when_conditions:
+            if exp_args == tuple(args) and exp_kwargs == dict(kwargs):
+                return subgraph
+
+        canonical_name = '%s.when(%r,%r)' % (self._u.name, args, kwargs)
+
+        subgraph = Mock(name=canonical_name)
+        subgraph._u.parent = self
+        self._u.children[canonical_name] = subgraph
+        self._u.when_conditions.append((tuple(args), dict(kwargs), subgraph))
+        return subgraph
 
     def returns(self, value_or_callable: Any) -> Mock:
         """Set fixed return value or callable. Callable receives the mocked instance as its sole argument. Clears side_effect."""
