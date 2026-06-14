@@ -20,7 +20,8 @@ from punit.mocks.matcher import (
     is_lt,
     is_type,
 )
-from punit import fact
+from punit import fact, inlinedata, theory
+from punit.mocks import Mock
 
 
 @fact
@@ -146,8 +147,6 @@ def custom_matcher_subclass_works_via_eq_dispatch() -> None:
     assert m.__eq__(10) is False
 
 
-from punit.mocks import Mock
-
 @fact
 def matchers_work_in_positional_called_with() -> None:
     mock_obj = Mock()
@@ -167,3 +166,24 @@ def non_matching_matcher_returns_false() -> None:
     mock_obj = Mock()
     mock_obj(5)
     assert not mock_obj.called_with(is_gt(10))
+
+
+@theory
+@inlinedata(is_any(), is_any(), True)
+@inlinedata(contains('x'), contains('x'), True)
+@inlinedata(contains('x'), contains('y'), False)
+@inlinedata(is_gt(42), is_gt(42), True)
+@inlinedata(is_gt(42), is_gt(47), False)
+@inlinedata(is_gte(42), is_gte(42), True)
+@inlinedata(is_gte(42), is_gte(47), False)
+@inlinedata(is_lt(42), is_lt(42), True)
+@inlinedata(is_lt(47), is_lt(42), False)
+@inlinedata(is_lte(42), is_lte(42), True)
+@inlinedata(is_lte(42), is_lte(44), False)
+@inlinedata(is_in('a', 'b'), is_in('a', 'b'), True)
+@inlinedata(is_type(str), is_type(str), True)
+@inlinedata(is_type(str), is_type(int), False)
+@inlinedata(neg(is_gt(42)), neg(is_gt(42)), True)
+def matchers_support_self_equate(when_x: Matcher, when_y: Matcher, then: bool) -> None:
+    """Every public matcher factory returns instances that compare equal to themselves."""
+    assert then == (when_x == when_y), f'({repr(when_x)} == {repr(when_y)}) == {not then}, expected {then}'

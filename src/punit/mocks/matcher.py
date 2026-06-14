@@ -34,16 +34,24 @@ Custom matchers: subclass :class:`Matcher` and implement ``__eq__``::
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Any
 
 
-class Matcher:
+class Matcher(ABC):
     """Base class for argument matchers.
 
     Subclasses must implement ``__eq__(self, other: Any) -> bool`` and return
     ``True`` when *other* matches the expected pattern. This allows :meth:`Mock.called_with`
     to dispatch via Python's equality operator naturally.
     """
+
+    @abstractmethod
+    def __eq__(self, other: Any) -> bool:
+        # by default if the repr() result of self is the same as other they are considered equal
+        s_repr = repr(self)
+        o_repr = repr(other)
+        return s_repr == o_repr
 
 
 class _IsAny(Matcher):
@@ -85,6 +93,8 @@ class _Contains(Matcher):
         return object.__getattribute__(self, '_value')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         if isinstance(other, str):
             return self._value in other  # type: ignore[operator, attr-defined]
         try:
@@ -119,6 +129,8 @@ class _IsGt(Matcher):
         return object.__getattribute__(self, '_value')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return isinstance(other, (int, float)) and other > self._value  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
@@ -147,6 +159,8 @@ class _IsGte(Matcher):
         return object.__getattribute__(self, '_value')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return isinstance(other, (int, float)) and other >= self._value  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
@@ -175,6 +189,8 @@ class _IsLt(Matcher):
         return object.__getattribute__(self, '_value')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return isinstance(other, (int, float)) and other < self._value  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
@@ -203,6 +219,8 @@ class _IsLte(Matcher):
         return object.__getattribute__(self, '_value')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return isinstance(other, (int, float)) and other <= self._value  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
@@ -231,6 +249,8 @@ class _IsIn(Matcher):
         return object.__getattribute__(self, '_values')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return other in self._values  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
@@ -262,6 +282,8 @@ class _IsType(Matcher):
         return object.__getattribute__(self, '_types')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return isinstance(other, self._types)  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
@@ -298,6 +320,8 @@ class neg(Matcher):
         return object.__getattribute__(self, '_inner')
 
     def __eq__(self, other: Any) -> bool:
+        if super().__eq__(other):
+            return True
         return not self._inner.__eq__(other)  # type: ignore[attr-defined]
 
     def __repr__(self) -> str:
