@@ -46,8 +46,6 @@ def _cleanup_fake_module() -> None:
         _FAKE_MODULE_INSTANCE = None
 
 
-# ---- Context manager patch ----
-
 @fact
 def context_manager_replaces_attribute() -> None:
     _setup_fake_module()
@@ -215,3 +213,22 @@ def patch_kwargs_forwarded_to_mock() -> None:
             assert m.id == 42
     finally:
         _cleanup_fake_module()
+
+
+@fact
+def can_patch_class_members_and_capture_calls() -> None:
+    """Verify patching a class method replaces it and captures invocations."""
+
+    __import__('tests.mocks.fake.TestFake')  # ensure the module is loaded
+    TestFake = getattr(sys.modules['tests.mocks.fake.TestFake'], 'TestFake')
+
+    with patch('tests.mocks.fake.TestFake.apply') as m:
+        assert isinstance(m, Mock)
+        instance = TestFake()
+        instance.apply('hello')
+        assert m.called
+        assert m.call_count == 1
+
+    # After exit, original method should be restored on the class
+    instance2 = TestFake()
+    assert hasattr(instance2.apply, '__func__')  # back to real bound method

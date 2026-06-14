@@ -33,7 +33,6 @@ from __future__ import annotations
 
 import inspect
 import sys
-from types import ModuleType
 from typing import (
     Any,
     Callable,
@@ -134,17 +133,24 @@ class patch:
             sync_wrapper.__wrapped__ = func  # type: ignore[attr-defined]
             return sync_wrapper  # type: ignore[return-value]
 
-    def __resolve_path(self, target_path: str) -> tuple[ModuleType, str]:
+    def __resolve_path(self, target_path: str) -> tuple[Any, str]:
         """
-        Resolve a dotted path (e.g. ``'myapp.database.connect'``) to ``(module, attr_name)``.
+        Resolve a dotted path (e.g. ``'myapp.database.connect'``) to ``(parent, attr_name)``.
+
+        The parent can be a module, class, or any object -- it is the container that holds
+        the target attribute as an attribute name. For paths like
+        ``'tests.mocks.fake.TestFake.apply'``, the parent is the ``TestFake`` class and
+        ``attr_name`` is ``'apply'``.
 
         :param target_path: Dotted attribute path.
-        :returns: A tuple of the resolved module and the last segment as *attr_name*.
+        :returns: A tuple of the resolved parent object and the last segment as *attr_name*.
         :raises AttributeError: If the module or attribute does not exist.
         """
         parts = target_path.split('.')
         module_path_parts: list[str] = []
 
+        # Walk through parts, trying to import each as a submodule.
+        # Track the deepest successfully imported prefix and its sys.modules reference.
         for i in range(len(parts)):
             current_module_path = '.'.join(parts[:i + 1])
             try:
@@ -153,13 +159,57 @@ class patch:
                 break
             module_path_parts = parts[:i + 1]
 
-        if not module_path_parts or len(parts) == len(module_path_parts):
+        if not module_path_parts:
             raise AttributeError(
                 f'Cannot find module containing attribute "{target_path}"'
             )
 
         attr_name = parts[-1]
         resolved_module = sys.modules['.'.join(module_path_parts)]
+
+        # Walk through remaining parts (between the import boundary and the target)
+        # via getattr to reach the actual parent.
+        obj: Any = resolved_module
+        intermediates = parts[len(module_path_parts):-1]
+        if len(intermediates) > 0:
+            for remaining_part in intermediates:
+                obj = getattr(obj, remaining_part)
+            return (obj, attr_name)
+
+        # All prefix segments were importable as modules, but none remain to walk.
+        # When namespace packages are involved, an intermediate path segment (e.g. the
+        # class ``TestFake`` in ``'tests.mocks.fake.TestFake.apply'``) is itself both a
+        # submodule and a non-module object inside its parent package. Walk backwards
+        # from each consumed module, looking for a non-module item that has the target.
+        if len(parts) < 2:
+            raise AttributeError(
+                f'Cannot find module containing attribute "{target_path}"'
+            )
+
+        import types as _types
+
+        for i in range(len(module_path_parts) - 1, 0, -1):
+            parent_pkg = sys.modules['.'.join(module_path_parts[:i])]
+            candidate_name = module_path_parts[i]
+            # First check the part's own namespace (it may be a class/function name).
+            try:
+                candidate = getattr(parent_pkg, candidate_name)
+            except AttributeError:
+                continue  # only registered in sys.modules, not an attr on parent
+            if isinstance(candidate, _types.ModuleType):
+                # It is a real submodule -- also check the module's __dict__ for
+                # an item sharing the same name (namespace package edge case).
+                mod_dict = getattr(sys.modules['.'.join(module_path_parts[:i + 1])], '__dict__', {})
+                inner_candidate = mod_dict.get(candidate_name) if candidate_name else None
+                if inner_candidate is not None and isinstance(inner_candidate, type):
+                    if hasattr(inner_candidate, attr_name):
+                        return (inner_candidate, attr_name)
+                continue
+            if hasattr(candidate, attr_name):
+                return (candidate, attr_name)
+
+        # No non-module intermediary found -- use the deepest consumed module as parent.
+        # This handles cases where the target lives at module level (no class/function bridge).
         return (resolved_module, attr_name)
 
 
