@@ -5,25 +5,28 @@ import sys
 from punit import fact
 from punit.TestResult import TextIOCapture
 
+
 @fact
-def TextIOCapture_CapturesStdOut() -> None:
-    capture:TextIOCapture = TextIOCapture(sys.stdout, False)
+def captures_stdout() -> None:
+    capture = TextIOCapture(sys.stdout, False)
     sys.stdout = capture
     print('stdout-test')
     assert capture.output == 'stdout-test\n'
 
+
 @fact
-def TextIOCapture_CapturesStdErr() -> None:
-    capture:TextIOCapture = TextIOCapture(sys.stderr, False)
+def captures_stderr() -> None:
+    capture = TextIOCapture(sys.stderr, False)
     sys.stderr = capture
     print('stderr-test', file=sys.stderr)
     assert capture.output == 'stderr-test\n'
 
+
 @fact
-def TextIOCapture_CapturesStdOutAndStdErr() -> None:
-    capture1:TextIOCapture = TextIOCapture(sys.stdout, False)
+def captures_stdout_and_stderr() -> None:
+    capture1 = TextIOCapture(sys.stdout, False)
     sys.stdout = capture1
-    capture2:TextIOCapture = TextIOCapture(sys.stderr, False)
+    capture2 = TextIOCapture(sys.stderr, False)
     sys.stderr = capture2
     print('stdout-test', file=sys.stdout)
     print('stderr-test', file=sys.stderr)

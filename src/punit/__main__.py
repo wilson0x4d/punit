@@ -80,12 +80,14 @@ async def async_main() -> None:
                     file.write(report.encode())
                 print(f'\n("{cli.reportFormat}" report written to: {cli.outputFilename})')
 
-    # not everyone runs python unbuffered as they should, so force a flush
-    sys.stdout.flush()
-    sys.stderr.flush()
+    # not everyone runs python unbuffered in CI, so force a flush
     try:
-        os.fsync(sys.stdout.fileno())
-        os.fsync(sys.stderr.fileno())
+        if hasattr(sys.stdout, 'flush') and hasattr(sys.stderr, 'flush'):
+            sys.stdout.flush()
+            sys.stderr.flush()
+        if hasattr(sys.stdout, 'fileno') and hasattr(sys.stderr, 'fileno'):
+            os.fsync(sys.stdout.fileno())
+            os.fsync(sys.stderr.fileno())
     except (AttributeError, ValueError, OSError):
         pass
 

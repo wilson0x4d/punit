@@ -150,33 +150,35 @@ class TestRunner:
             result.module_name = module_report_name
             result.start_time = time.time()
             result.capture_output(False)
-            # Run pre-test setup; if it fails, skip the fact.
-            class_instance: Any = None
-            if await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
-                try:
-                    class_instance = await fact.execute(test_module)
-                    result.is_success = True
-                except Exception as ex:
+            try:
+                # Run pre-test setup; if it fails, skip the fact.
+                class_instance: Any = None
+                if await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
+                    try:
+                        class_instance = await fact.execute(test_module)
+                        result.is_success = True
+                    except Exception as ex:
+                        result.is_success = False
+                        result.exception = ex
+                else:
+                    # Setup failed; record a failure result.
                     result.is_success = False
-                    result.exception = ex
-            else:
-                # Setup failed; record a failure result.
-                result.is_success = False
-            fails_reason = _get_fails_reason(fact.target)
-            if fails_reason is not None:
-                result.expected_failure_reason = fails_reason
-                # Invert the result: a failing test with @fails counts as success,
-                # and a passing test with @fails counts as failure (regression).
-                result.is_success = not result.is_success
-                # Set an exception so report generators can show the reason text.
-                if not result.exception:
-                    result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
-            result.stop_time = time.time()
-            result.class_name = fact.metadata.class_name
-            result.test_name = fact.metadata.name
-            results.append(result)
-            await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
-            result.release_output()
+                fails_reason = _get_fails_reason(fact.target)
+                if fails_reason is not None:
+                    result.expected_failure_reason = fails_reason
+                    # Invert the result: a failing test with @fails counts as success,
+                    # and a passing test with @fails counts as failure (regression).
+                    result.is_success = not result.is_success
+                    # Set an exception so report generators can show the reason text.
+                    if not result.exception:
+                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+                result.stop_time = time.time()
+                result.class_name = fact.metadata.class_name
+                result.test_name = fact.metadata.name
+                results.append(result)
+                await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+            finally:
+                result.release_output()
             self.print_test_result(result)
             if self.__cli.failfast and not result.is_success:
                 return
@@ -194,34 +196,36 @@ class TestRunner:
                 result.module_name = module_report_name
                 result.start_time = time.time()
                 result.capture_output(False)
-                # Run pre-test setup; if it fails, skip the theory.
-                class_instance: Any = None
-                if await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
-                    try:
-                        class_instance = await theory.execute(test_module, data)
-                        result.is_success = True
-                    except Exception as ex:
+                try:
+                    # Run pre-test setup; if it fails, skip the theory.
+                    class_instance: Any = None
+                    if await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
+                        try:
+                            class_instance = await theory.execute(test_module, data)
+                            result.is_success = True
+                        except Exception as ex:
+                            result.is_success = False
+                            result.exception = ex
+                    else:
+                        # Setup failed; record a failure result.
                         result.is_success = False
-                        result.exception = ex
-                else:
-                    # Setup failed; record a failure result.
-                    result.is_success = False
-                fails_reason = _get_fails_reason(theory.target)
-                if fails_reason is not None:
-                    result.is_expected_failure = True
-                    result.expected_failure_reason = fails_reason
-                    # Invert the result: a failing test with @fails counts as success,
-                    # and a passing test with @fails counts as failure (regression).
-                    result.is_success = not result.is_success
-                    # Set an exception so report generators can show the reason text.
-                    if not result.exception:
-                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
-                result.stop_time = time.time()
-                result.class_name = theory.metadata.class_name
-                result.test_name = theory.metadata.name
-                results.append(result)
-                await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
-                result.release_output()
+                    fails_reason = _get_fails_reason(theory.target)
+                    if fails_reason is not None:
+                        result.is_expected_failure = True
+                        result.expected_failure_reason = fails_reason
+                        # Invert the result: a failing test with @fails counts as success,
+                        # and a passing test with @fails counts as failure (regression).
+                        result.is_success = not result.is_success
+                        # Set an exception so report generators can show the reason text.
+                        if not result.exception:
+                            result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+                    result.stop_time = time.time()
+                    result.class_name = theory.metadata.class_name
+                    result.test_name = theory.metadata.name
+                    results.append(result)
+                    await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+                finally:
+                    result.release_output()
                 self.print_test_result(result)
                 if self.__cli.failfast and not result.is_success:
                     return

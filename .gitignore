@@ -14,3 +14,4 @@ requirement*.txt
 .mypy_cache
 .coverage
 htmlcov/
+CHANGELOG.*
