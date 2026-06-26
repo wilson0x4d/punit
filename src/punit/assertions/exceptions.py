@@ -28,7 +28,7 @@ Example
 from typing import Any, Callable, Generic, Optional, TypeVar, cast, get_args
 
 
-TError = TypeVar('TError', bound=Exception)
+TError = TypeVar('TError', bound=BaseException)
 
 
 class raises(Generic[TError]):
