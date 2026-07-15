@@ -1,414 +1,603 @@
 ---
 name: punit
-description: Provides additional unit-testing guidance for the pUnit framework. MUST use when user mentions "punit" or discusses unit testing. MUST use when creating, refactoring, or reading files inside the `tests/` directory. MUST use when creating or modifying files matching `*test*.py`.
+description: pUnit xUnit-style unit testing framework for Python 3.11+ — @fact, @theory, @inlinedata, @setup, @teardown, @trait, @fails, Mock, patch, matchers, assertions, report generators, CLI flags, TestResult. Use as a reference document for pUnit API and concepts.
 user-invocable: true
 disable-model-invocation: false
+type: reference
 ---
 
-`punit` requires Python 3.11+. It exposes `@fact`, `@theory`, `@inlinedata`, `@trait`, and `@fails` decorators to organize code into unit tests. Tests are plain functions/methods — no inheritance required, no `__init__.py` needed. By default pUnit discovers tests under the `tests/` directory.
+# pUnit — AI-First Library Reference
 
-- **Documentation:** https://punit.readthedocs.io/
-- **Install:** `python3 -m pip install punit`
-- **Source:** https://github.com/wilson0x4d/punit
+A modernized xUnit-style unit-testing framework for Python 3.11+.
 
-## CLI Invocation
+**Minimum Python**: 3.11  |  **Zero dependencies**
 
-Always prefix with the project's virtual-environment interpreter and always supply a filter:
+---
 
-```bash
-.venv/bin/python -m punit --filter '*'
-```
-
-Multiple filters narrow results (logical AND):
+## Quick Start
 
 ```bash
-.venv/bin/python -m punit --filter '*Widget*' --filter '*Cache*'
+python3 -m punit                          # auto-discover & run tests in tests/
+python3 -m punit --test-package elsewhere  # custom test package
+python3 -m punit --report junit --output results.xml
 ```
 
-## File-Path Arguments
+---
 
-Pass one or more `.py` file paths directly on the command-line to run only those files:
+## Core Concepts
 
-```bash
-# Single file
-.venv/bin/python -m punit tests/FactTests.py
+pUnit tests are functions or methods decorated with `@fact` or `@theory`. There are **no base classes to inherit**, **no naming requirements** (test names don't affect discovery), and full async/await support out of the box.
 
-# Multiple files
-.venv/bin/python -m punit tests/FactTests.py tests/assertions/StringTests.py
+### Facts (invariant tests)
 
-# Interleaved with flags
-.venv/bin/python -m punit --quiet -z tests/FactTests.py tests/TheoryTests.py
-```
-
-When any file argument is provided, directory-based discovery (`-p/--test-package`, `--include`, `--exclude`) is bypassed — only the specified files are tested. Test filtering via `-f`/`-t` still applies to the contents of those files. Missing files cause an immediate error (exit code 1).
-
-## CLI Flags Reference
-
-| Flag | Meaning | Example |
-| :--- | :--- | :--- |
-| `-q, --quiet` | Suppress normal output | `--quiet` |
-| `-v, --verbose` | Exhaustive discovery & result detail | `--verbose` |
-| `-z, --failfast` | Stop on first failure or error | `--failfast` |
-| `-p, --test-package NAME` | Override test package (default `tests`) | `--test-package foo` |
-| `-i, --include PATTERN` | Include pattern for file discovery | `--include '*widget*'` |
-| `-e, --exclude PATTERN` | Exclude pattern (overrides include) | `--exclude '*hardcoded*'` |
-| `-f, --filter PATTERN\|@FILE` | Restrict tests by qualified name/path | `--filter 'MyClass.fact'` |
-| `-t, --trait [!]NAME[=VALUE]` | Include/exclude by trait (`!` to exclude) | `--trait '!integration'` |
-| `--no-pathfix` | Rely on PYTHONPATH instead of adding `src/` | `--no-pathfix` |
-| `-r, --report {html\|junit\|json}` | Generate a report to stdout | `--report json` |
-| `-o, --output FILENAME` | Write report to file (not stdout) | `--output result.json` |
-| `--no-exitcode` | Suppress error exit code on test failure | `--no-exitcode` |
-
-**Wildcard syntax** for include/exclude/filter:
-- `*` — match one or more characters
-- `?` — match any single character
-
-## Filters File
-
-Use `--filter '@path/to/file.txt'` to load patterns from a plaintext file (one per line; lines starting with `#` are comments). Prefix individual filter entries with `!` to exclude them. Order matters: the first matching rule wins.
-
-Piped input via stdin is also supported:
-
-```bash
-cat tests/filters-file.txt | .venv/bin/python -m punit --filter '@stdin'
-```
-
-## Writing Tests
-
-### Facts — single-case assertions
+Facts validate an invariant arrangement of state. Each decorated function runs exactly once.
 
 ```python
 from punit import fact
 
 @fact
-async def when_initialized_touch_must_return_true():
-    mylib = MyLibrary()
-    mylib.initialize()
-    await asyncio.sleep(1)
-    assert mylib.touch(), 'Expected touch() == True after initialize().'
+def my_test() -> None:
+    assert 1 + 1 == 2
+
+@fact
+async def async_fact() -> None:
+    await asyncio.sleep(0.1)
+    assert True
+
+class MyTests:
+    @fact
+    def class_method_test(self) -> None:
+        assert True
+
+    @fact
+    @staticmethod
+    def static_method_test() -> None:
+        assert True
+
+    @fact
+    @classmethod
+    def class_method_test(cls) -> None:
+        assert True
 ```
 
-### Theories — parametrized assertions
+### Theories (parameterized tests)
 
-Each `@inlinedata(...)` call produces one test instance; values are passed positionally:
+Theories validate behavior across variant state. A `@theory` requires at least one data decorator (e.g. `@inlinedata`). Each data point produces a separate test result.
 
 ```python
 from punit import theory, inlinedata
 
 @theory
-@inlinedata(2, 2, 4, 'two plus two equals four')
-@inlinedata(1, 1, 2, 'one plus one equals two')
-def add_theory(x: int, y: int, z: int, message: str):
-    assert x + y == z, message
+@inlinedata(0, 0)
+@inlinedata(1, 1)
+@inlinedata(2, 4)
+@inlinedata(3, 9)
+def verify_square(x: int, expected: int) -> None:
+    assert x * x == expected
 ```
 
-### Traits — categorize tests for CI filtering
+---
+
+## Setup & Teardown
+
+`@setup` runs before each test; `@teardown` runs after. Two independent scopes:
+
+* **Module-scoped** — bare function; fires per test across the entire module.
+* **Class-scoped** — method inside a test class; fires per test within that class.
 
 ```python
-from punit import theory, inlinedata, trait
+from punit import fact, setup, teardown
 
-@theory
-@inlinedata(0, 1, 1)
-@trait('integration')
-@trait('redis')
-def api_query_theory(a: int, b: int, c: int):
-    assert a + b == c
+# --- Module-scoped ---
+@setup
+def module_setup() -> None:
+    open_temp_file()
+
+@teardown
+def module_teardown() -> None:
+    close_temp_file()
+
+@fact
+def test_one() -> None:
+    pass  # setup runs, then this, then module_teardown
+
+# --- Class-scoped ---
+class MyTests:
+    setup_called = 0
+
+    @setup
+    def class_setup(self) -> None:
+        self.setup_called += 1
+
+    @teardown
+    def class_teardown(self) -> None:
+        flush_cache()
+
+    @fact
+    def test_a(self) -> None:
+        assert self.setup_called == 1  # fires per method
+
+    @fact
+    def test_b(self) -> None:
+        assert self.setup_called == 2
 ```
 
-### Expected Failures — regression detection for known bugs
+---
 
-The `@fails` decorator marks a test as expected to fail; the runner inverts its result (passing becomes failure). Useful for tracking known issues. Always stack **below** `@fact` or `@theory`:
+## Traits
+
+Traits categorize tests for selective execution. Stack multiple `@trait` decorators on a single test.
+
+```python
+from punit import fact, trait
+
+@fact
+@trait('integration')
+@trait('category', 'api')
+async def test_api_query() -> None:
+    ...
+```
+
+CLI filters:
+
+```bash
+python3 -m punit --trait '!integration'        # exclude integration tests
+python3 -m punit --trait integration=redis     # only integration=redis tests
+python3 -m punit --trait category=api --trait category=ui   # OR logic (api OR ui)
+```
+
+---
+
+## Expected Failures
+
+`@fails` marks a test as expected to fail. Results are inverted: a failing test counts as pass, a passing one counts as a regression.
 
 ```python
 from punit import fact, fails
 
 @fact
-@fails(reason='bug #123: pending fix')
-def broken_feature_should_pass():
-    assert False  # reported as passed; a fix that makes this pass = regression
+@fails(reason='bug #42: not yet implemented')
+def test_known_bug() -> None:
+    assert False  # this counts as success in the report
 ```
 
-Requires the `reason=` keyword argument (positional not allowed). Raises if stacked below another pUnit decorator or double-stacked.
+`@fails` must be stacked **below** `@fact` or `@theory` (closest to the function def). Two `@fails` on the same target raises an error.
 
-### Methods & Classes — same decorators, no inheritance required
+---
+
+## Assertions
+
+pUnit uses Python's `assert`, augmented by helper modules.
+
+### Exception assertions
 
 ```python
-class MyTestFixture:
+from punit import fact, raises
 
-    @fact
-    def verify_calc_error_condition(self):
-        from punit.assertions.exceptions import raises
-        def call_with_none(): self.calc(None)
-        assert raises[Exception](call_with_none)
-        assert not raises[Exception](lambda: self.calc(1))
+@fact
+def test_raises() -> None:
+    def failing_fn() -> None:
+        raise ValueError("boom")
+
+    assert raises[ValueError](failing_fn)           # Python 3.11+ generic syntax
+    assert raises(failing_fn, expect=ValueError)     # keyword syntax for compat
+    assert raises(failing_fn, exact=True, expect=ValueError)  # exact type match (no subclass)
 ```
 
-### Setup & Teardown
-
-```python
-from punit import setup, teardown
-
-@setup  # runs before each test (module-scoped if at module level; class-scoped if a method inside a test class)
-def prepare_data(): ...
-
-@teardown  # runs after each test (same scoping model as @setup)
-def cleanup(): ...
-```
-
-## Assertion Helpers
-
-pUnit uses Python's `assert` directly. Optional helper modules live under `punit.assertions`:
-
-### Collections
-
-Both `punit` top-level re-exports (`from punit import collections`) and submodule paths (`from punit.assertions import collections`) are supported.
-
-```python
-from punit.assertions import collections
-
-assert collections.are_same([1, 2], (1, 2))   # element-wise equality
-assert collections.has_length(lst, min=3)      # length check (keyword args only: min, max)
-assert collections.is_none_or_empty([])        # None or empty?
-```
-
-### Strings
-
-Both `punit` top-level re-exports (`from punit import strings`) and submodule paths (`from punit.assertions import strings`) are supported.
-
-```python
-from punit.assertions import strings
-
-assert strings.are_same('a', 'a')              # string equality
-assert strings.has_length(s, min=3)            # length check (keyword args only: min, max)
-assert strings.is_none_or_empty(None)          # None or empty?
-assert strings.is_none_or_whitespace('  ')     # whitespace-only?
-```
-
-### Exceptions
-
-Both `punit` top-level re-exports (`from punit import raises`) and submodule paths (`from punit.assertions.exceptions import raises`) are supported.
-
-```python
-# Preferred: generic syntax (Python 3.11+)
-assert raises[TypeError](lambda: int("bad"))
-
-# Fallback: function-arg syntax
-assert raises(lambda: int("bad"), expect=TypeError, exact=True)
-```
-
-### Numeric
-
-Both `punit` top-level re-exports (`from punit import approx`) and submodule paths (`from punit.assertions.numeric import approx, isclose, isnan, isinfinite, percentage`) are supported.
-
-The `approx` class supports natural Python comparison syntax with directional (one-sided) tolerance:
-
-    * ``x == approx(expected)``; approximately equal (bidirectional tolerance)
-    * ``x > approx(threshold)``; strictly greater than (tolerance extends above)
-    * ``x >= approx(threshold)``; at least the threshold (tolerance extends below)
-    * ``x < approx(threshold)``; strictly less than (tolerance extends above)
-    * ``x <= approx(threshold)``; at most the threshold (tolerance extends below)
+### Numeric assertions
 
 ```python
 from punit.assertions.numeric import approx, isclose, isnan, isinfinite, percentage
 
-# Primary: operator overloads (preferred by user)
-assert 0.1 + 0.2 == approx(0.3)                        # approximately equal
-assert value >  approx(5)                              # strictly greater than
-assert value >= approx(5)                              # at least the threshold
-assert value <  approx(10)                             # strictly less than
-assert value <= approx(10)                             # at most the threshold
+# Approximate equality (pytest.approx-style)
+assert 0.1 + 0.2 == approx(0.3)
+assert 0.1 + 0.2 == approx(0.3, rel_tol=1e-5)
 
-# Secondary: fluent methods for advanced scenarios
-assert some_value == approx(3.14).greater_than()       # >= 3.14 with one-sided tolerance below
-assert some_value == approx(10.0).less_than()          # <= 10.0 with one-sided tolerance above
-assert some_value == approx(5).at_least()              # same as greater_than()
-assert some_value == approx(10).at_most()              # same as less_than()
-assert some_value == approx(5).in_range(3, 7)          # within [3, 7] with directional tolerance
-assert some_value == approx().zero()                   # approximately zero
+# Chained comparators (one-sided tolerance)
+assert 5.0 == approx(3).greater_than()   # >= 3 (tolerance extends below)
+assert 0.5 == approx(1.0).less_than()    # <= 1 (tolerance extends above)
+assert 5.0 == approx(3).at_least()       # >= 3 (one-sided tol below)
+assert 0.5 == approx(1.0).at_most()      # <= 1 (one-sided tol above)
+assert 0.1 == approx().zero()            # approximately zero
+
+# Range checks
+assert 5.0 == approx().in_range(1.0, 10.0)              # inclusive [1, 10]
+assert 5.0 == approx().in_range(1.0, 10.0).inclusive()  # explicit inclusive
 
 # Standalone helpers
-assert isclose(3.141, 3.14, rel_tol=0.01)              # drop-in math.isclose replacement
-assert isnan(float('nan'))                             # NaN check
-assert isinfinite(float('inf'))                        # infinity check
-assert percentage(10, 100) == 90.0                     # percentage difference
+assert isclose(1 + 2j, 1.0 + 2.0j)        # complex-aware
+assert not isclose(3, 3.000000001)
+assert isnan(float('nan'))
+assert isinfinite(float('inf'))
+assert percentage(10, 100) == 90.0
 ```
 
-## Mocking with `punit.mocks`
-
-Both top-level re-exports (`from punit import mocks`) and submodule paths are supported:
+### Collection assertions
 
 ```python
-from punit.mocks import Mock, patch
-# or
-from punit import mocks
-m = mocks.Mock()
+from punit import collections
+
+assert collections.are_same([1, 2, 3], [1, 2, 3])         # element-by-element
+assert collections.are_same([2, 1, 3], [1, 3, 2])         # False (order matters)
+assert collections.are_same([2, 1, 3], [1, 3, 2], sort=True)  # True
+
+assert collections.has_length([1, 2, 3], min=2, max=5)    # length in range
+assert collections.has_length([1, 2, 3], min=3)            # min constraint only
+assert collections.is_none_or_empty([])                    # True
+assert collections.is_none_or_empty(None)                   # True
 ```
 
-### The Mock Class
+### String assertions
 
-A fluent, attribute-access mock supporting origin-based ABC/Protocol conformance, delegate forwarding (partial doubles/spies), and child stub caching.
+```python
+from punit import strings
 
-**Constructor:** `Mock(origin=None, *, delegate=None, name='Mock', _validate=False, **kwargs)`
+assert strings.are_same('hello', 'hello')     # True
+assert strings.are_same('Hello', 'hello')     # False (case-sensitive)
+assert strings.has_length('abc', min=1, max=5)
+assert strings.is_none_or_empty('')            # True
+assert strings.is_none_or_whitespace(' \t')    # True
+```
 
-| Parameter | Meaning |
-| :--- | :--- |
-| `origin` | Register as virtual subclass so ``isinstance(mock, origin)`` passes; pre-populates public member stubs |
-| `delegate` | Forward unconfigured calls to a real object (spy behavior) |
-| `name` | Debug identifier; becomes path prefix for call records |
-| `_validate` | Reserved for future signature validation |
-| ``**kwargs`` | Set accessible attributes returning given values (``Mock(name='Alice')`` returns ``'Alice'`` on read) |
+---
 
-### Fluent Configuration
+## Mocking
 
-Every attribute access yields a cached child mock. Configure via fluent calls:
+Lightweight mocking via `punit.mocks`. No base classes, full fluent API.
+
+### Basic stubbing
+
+```python
+from punit.mocks import Mock
+
+m = Mock()
+m.method.returns(42)
+assert m.method() == 42                          # call the stub to get the return value
+m.method.returns('hello').side_effect([1, 2])    # fluent chaining
+assert m.method() == 1
+assert m.method() == 2
+```
+
+### Side effects
 
 ```python
 m = Mock()
-m.method.returns(42)                     # fixed return value
-m.method.side_effect(lambda x: x * 2)    # dynamic side effect
-m.method.side_effect(ValueError)          # raise on call
-m.method.side_effect([1, 2, 3])           # sequential iterable yields
 
-# Configuration overwrites prior state:
-m.other.returns(99).side_effect(lambda v: v + 1)
+# Exception on call
+m.method.side_effect(ValueError("boom"))
+try:
+    m.method()
+except ValueError:
+    pass
+
+# Callable (receives mock instance as sole arg)
+m.method.side_effect(lambda self: self.parent.value)
+
+# Iterable (sequential consumption, caches iterator)
+m.method.side_effect([1, 2, 3])
+assert m.method() == 1
+assert m.method() == 2
+assert m.method() == 3
 ```
 
-### Verification Properties
-
-| Property | Type | Description |
-| :--- | :--- | :--- |
-| ``mock.called`` | ``bool`` | True if the mock was directly invoked |
-| ``mock.call_count`` | ``int`` | Number of direct self-invocations |
-| ``mock.calls`` | ``Sequence[Call]`` | Direct call records (immutable tuple) |
-| ``mock.mock_calls`` | ``CallList`` | All recorded self-invocations |
-| ``mock.child_calls`` | ``CallList`` | Calls reached through child attribute access (aggregated from descendants) |
-| ``mock.all_calls`` | ``CallList`` | Union of self + child invocations |
-
-**Matcher-based verification:**
+### Constructor fixture style
 
 ```python
-from punit.mocks import is_any, is_gt, contains, neg, is_in
-
-m.method(42, 'hello')
-assert m.called_with(is_gt(10), contains('ell'))
-assert m.called_with(is_any(), is_in('hello', 'hi'))
+row = Mock(migration='alpha', id=1)
+assert row.migration == 'alpha'
+assert row.id == 1
 ```
 
-### Call Records
-
-``Call`` is a frozen dataclass: ``path``, ``timestamp``, ``took``, ``is_async``, ``args``, ``kwargs``, ``result``, ``error``. Access via ``.calls``, ``.mock_calls``, ``.child_calls``.
-
-``CallList`` is a tuple subclass supporting partial-sublist matching in ``__contains__``:
+### Origin conformance (isinstance checks)
 
 ```python
-subset = CallList((Call('Mock.a', (1,), {}), Call('Mock.b', (2,), {})))
-assert subset in mock.child_calls   # sliding-window match
+class UserService:
+    def get_user(self, user_id: int) -> str: ...
+
+m = Mock(origin=UserService)
+assert isinstance(m, UserService)                # virtual subclass registration
+m.get_user.returns('Guest')
+assert m.get_user() == 'Guest'
 ```
 
-### Argument Matchers
+### Delegate forwarding (partial doubles / spies)
 
-| Matcher | Description |
-| :--- | :--- |
-| ``is_any()`` | Matches any single value (singleton) |
-| ``contains(value)`` | Checks if ``value`` is a substring or element |
-| ``is_gt(n)`` | Value strictly greater than ``n`` |
-| ``is_gte(n)`` | Value greater than or equal to ``n`` |
-| ``is_lt(n)`` | Value strictly less than ``n`` |
-| ``is_lte(n)`` | Value less than or equal to ``n`` |
-| ``is_in(*values)`` | Value equals one of the provided values |
-| ``is_type(*types)`` | Value is an instance of any given type(s) |
-| ``neg(inner)`` | Negates another matcher |
+```python
+class RealService:
+    def __init__(self): self.counter = 0
+    def increment(self) -> int:
+        self.counter += 1
+        return self.counter
 
-Custom matchers: subclass :class:`Matcher` and implement ``__eq__``.
+m = Mock(delegate=RealService())
+assert m.increment() == 1                        # unconfigured calls forward to real object
+```
 
-### patch — Module Replacement
+### Call tracking
 
-Replaces a module-level attribute with a Mock, restores on exit. Supports both context manager and decorator modes (async).
+```python
+m = Mock()
+m.method(1, 2, key='val')
 
-**Context manager:**
+assert m.called                              # True
+assert m.call_count == 1
+assert m.calls[0].args == (1, 2)
+assert m.calls[0].kwargs == {'key': 'val'}
+assert m.called_with(1, key='val')           # matches any recorded call
+```
+
+### Iteration support
+
+```python
+m = Mock()
+m.rows.returns([Mock(name='Alice'), Mock(name='Bob')])
+
+assert len(m.rows) == 2
+
+# Comprehensions work directly on the mock
+names = {u.name for u in m.rows}
+assert names == {'Alice', 'Bob'}
+```
+
+### Context manager
+
+```python
+with Mock(origin=UserService) as child:
+    child.get_user.returns('Guest')
+    assert child.get_user() == 'Guest'
+# child is auto-reset on exit; parent unaffected
+```
+
+### Conditional dispatch (`when` subgraphs)
+
+Create conditionally-dispatched subgraphs keyed by matcher arguments. Identical matcher tuples return the same subgraph (deduped).
+
+```python
+from punit.mocks import Mock, is_gt, is_lte
+
+m = Mock()
+
+# Configure: when arg is <= 42, return 'low'; when > 42, return 'high'
+m.num.when(is_lte(42)).returns('low')
+m.num.when(is_gt(42)).returns('high')
+
+assert m.num(42) == 'low'
+assert m.num(50) == 'high'
+
+# Non-matching calls fall through to flat .returns()
+m.other.returns('default')
+assert m.other('any_value') == 'default'
+
+# Nested conditions on subgraphs
+outer = m.num.when(is_gt(0))
+outer.val.when(is_gt(10)).returns('high')
+outer.val.when(is_lte(10)).returns('low')
+assert m.num(5).val(5) == 'low'           # 5 > 0 matches outer, 5 <= 10 matches inner
+assert m.num(1).val(20) == 'high'         # 1 > 0 matches outer, 20 > 10 matches inner
+```
+
+### Reset
+
+```python
+m = Mock()
+m.method.returns(42)
+m.method()                                  # call_count == 1
+
+m.reset()                                   # clears history, keeps config
+assert m.call_count == 0
+assert m.method() == 42                     # config survives
+assert m.call_count == 1
+
+m.reset(preserve_stubs=False)               # clears children and config too
+```
+
+### Matching (`called_with` with matchers)
+
+```python
+from punit.mocks import Mock, is_any, is_gt, is_lt, is_lte, is_gte, is_in, is_type, contains, neg
+
+m = Mock()
+m(42, 'hello world', [1, 2, 3])
+
+assert m.called_with(
+    is_gt(10),                     # first arg > 10
+    is_in('hello world', 'foo'),   # second arg in set
+    contains(2),                   # third arg contains 2
+)
+
+assert m.called_with(
+    is_type(str, int),             # type check: str or int
+    neg(is_any()),                 # negated: always False here
+)
+```
+
+#### Available matchers
+
+| Matcher | Description | Example |
+|---|---|---|
+| `is_any()` | Matches any single value (singleton) | `is_any()` |
+| `contains(x)` | Checks if arg is a superstring or container | `contains('foo')` |
+| `is_gt(n)` | Value strictly greater than `n` | `is_gt(10)` |
+| `is_gte(n)` | Value >= `n` | `is_gte(10)` |
+| `is_lt(n)` | Value strictly less than `n` | `is_lt(10)` |
+| `is_lte(n)` | Value <= `n` | `is_lte(10)` |
+| `is_in(*values)` | Value equals one of the candidates | `is_in('a', 'b')` |
+| `is_type(*types)` | `isinstance` check against given types | `is_type(str, int)` |
+| `neg(inner)` | Negates inner matcher | `neg(is_in(1, 2))` |
+
+### Patch
+
+Replace a module-level attribute with a `Mock` via context manager or decorator. Supports async.
 
 ```python
 from punit.mocks import patch
 
+# Context manager
 with patch('myapp.database.connect') as m:
     m.returns('connected')
-    result = myapp.database.connect()  # returns 'connected'
-# original restored automatically
-```
 
-**Decorator (sync) — mock injected as first argument:**
-
-```python
+# Decorator (sync)
 @patch('myapp.database.connect')
-def test_something(m):
-    m.returns('ok')
+def test_connect(m):
     assert m.called
+
+# Decorator (async)
+@patch('myapp.database.connect')
+async def test_async_connect(m):
+    assert m.called
+
+# With origin constraint
+@patch('myapp.db.Pool', origin=Pool)
+def test_pool(m):
+    m.acquire.returns(True)
 ```
 
-### Iteration
+---
 
-Mocks configured via `.returns([...])` support iteration.
+## Test Results & Reporting
+
+### TestResult properties
 
 ```python
-m = Mock()
-m.query.returns([
-    Mock(name='Alice'),
-    Mock(name='Bob')]
-)
+from punit.TestResult import TestResult
 
-# Iterate directly (no parentheses):
-for user in m.query:            # yields each Mock row
-    assert user.name in ('Alice', 'Bob')
-
-# Comprehensions work naturally:
-names = {u.name for u in m.query}   # → {'Alice', 'Bob'}
-assert len(m.query) == 2              # __len__ reports item count
-
-# Call-time return is the same list:
-rows = m.query()                       # → [Mock(name='Alice'), Mock(name='Bob')]
+result = TestResult()
+result.class_name      # e.g. 'MyTests' (None for bare-function tests)
+result.test_name       # function/method name
+result.module_name     # module/namespace name
+result.package_name    # top-level test package name
+result.file_name       # source file path
+result.host_name       # execution hostname
+result.is_success      # pass/fail status
+result.exception       # exception raised (if any)
+result.start_time      # wall clock start (float)
+result.stop_time       # wall clock stop (float)
+result.took            # elapsed seconds
+result.tookPretty      # human-friendly: '1.5s', '50ms', '250.0ns'
+result.stdout          # captured stdout
+result.stderr          # captured stderr
+result.properties      # arbitrary dict (e.g., theory 'data' for theory params)
+result.expected_failure_reason  # @fails reason string
 ```
 
-Typical ORM-style pattern:
+### Report generators
 
 ```python
-migration_table = Mock()
-migration_table.query.returns([
-    Mock(migration='alpha', id=1),
-    Mock(migration='beta',  id=2),
-])
+from punit.reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
 
-applied = {e.migration: e.id for e in migration_table.query}
-assert applied == {'alpha': 1, 'beta': 2}
+results = [...]  # list of TestResult
+
+html = HtmlReportGenerator().generate(results)
+junit_xml = JUnitReportGenerator().generate(results)
+json_str = JsonReportGenerator().generate(results)
 ```
 
-### Context Manager Mode (Mock)
+Reports include status indicators, error/traceback display, stdout/stderr, and timing info with automatic expected-failure annotation.
 
-``Mock`` itself supports context manager mode, yielding an independent child clone that auto-resets on exit:
+---
 
-```python
-with Mock() as child:
-    child.method.returns(99)
-    child.method()  # call_count == 1
-# calls cleared; parent unaffected
-```
-
-## Default CLI Invocation
-
-The default behavior is equivalent to:
+## CLI Reference
 
 ```bash
-python3 -m punit \
-    --test-package tests \
-    --include '*.py' \
-    --exclude '/__*__' \
-    --filter '*'
+python3 -m punit [-h] [-q] [-v] [-z] [-p NAME] [-i PATTERN] [-e PATTERN]
+                 [-f PATTERN|@FILE] [-t [!]NAME[=VALUE]] [-w PATH]
+                 [-n] [--no-exitcode] [--no-pathfix] [-r {html|junit|json}]
+                 [-o FILE] [FILE ...]
 ```
 
-This includes all Python files under `tests/`, excludes dunder names, and runs every test.
+| Flag | Description | Default |
+|---|---|---|
+| `-h, --help` | Show help and exit | |
+| `-q, --quiet` | Quiet output | |
+| `-v, --verbose` | Verbose output (show tracebacks on failure) | |
+| `-z, --failfast` | Stop on first failure | |
+| `-p, --test-package NAME` | Test package directory | `tests` |
+| `-i, --include PATTERN` | Include test file glob | `*.py` |
+| `-e, --exclude PATTERN` | Exclude test file glob | `/__*__` |
+| `-f, --filter PATTERN` | Only run tests matching pattern | `*` |
+| `-f, --filter @FILE` | Load filter patterns from file | |
+| `-t, --trait [!]NAME[=VALUE]` | Include/exclude by trait category | |
+| `-w, --working-directory PATH` | Working directory | current |
+| `-n, --no-default-patterns` | Skip default include/exclude rules | |
+| `--no-exitcode` | Don't exit with error code on failure | |
+| `--no-pathfix` | Rely on PYTHONPATH, don't tweak sys.path | |
+| `-r, --report FORMAT` | Generate report: `html`, `junit`, `json` | |
+| `-o, --output FILE` | Write report to file instead of stdout | |
+| `FILE` | Run specific .py files directly | auto-discover |
 
-## Troubleshooting
+---
 
-- If pUnit fails to execute, prefix with the venv path: `.venv/bin/python -m punit`.
-- Use `--verbose` to debug discovery / filtering issues.
-- Test files do **not** need `__init__.py`.
-- Exit code `119` indicates one or more tests failed.
+## Discovery
+
+Test modules are auto-discovered under the test package directory. Default include `*.py`, exclude `/__*__` (dunder files). Directories matching exclude patterns are pruned entirely.
+
+```bash
+python3 -m punit --include 'test_*.py' --exclude '*internal*'
+```
+
+Direct file execution skips discovery:
+
+```bash
+python3 -m punit tests/specific_test.py tests/another_test.py
+```
+
+Filters (via `-f`) still apply when files are specified directly.
+
+---
+
+## Exit Codes
+
+| Code | Meaning |
+|---|---|
+| 0 | All tests passed |
+| 1 | General error / CLI validation failure |
+| 119 | Test failure, setup error, or teardown error (or `--no-exitcode` unset) |
+
+---
+
+## Package Structure
+
+```
+punit/
+  __init__.py          # Top-level exports: fact, theory, inlinedata, setup, teardown,
+                       # trait, fails, Mock, raises, approx, mocks
+  TestResult.py        # TestResult data class
+  runner.py            # TestRunner: discovery, execution, result aggregation
+  cli.py               # CommandLineInterface: argument parsing
+  facts/               # @fact decorator, FactManager (singleton)
+  theories/            # @theory, @inlinedata, TheoryManager
+  traits/              # @trait decorator, TraitManager
+  setups/              # @setup decorator, SetupManager
+  teardowns/           # @teardown decorator, TeardownManager
+  mocks/               # Mock class, Call, CallList, patch, matchers
+  results/             # @fails decorator
+  assertions/          # Helper sub-modules
+    exceptions.py      # raises[...]
+    numeric.py         # approx, isclose, isnan, isinfinite, percentage
+    collections.py     # are_same, has_length, is_none_or_empty
+    strings.py         # are_same, has_length, is_none_or_empty, is_none_or_whitespace
+  reports/             # Report generators
+    HtmlReportGenerator.py
+    JUnitReportGenerator.py
+    JsonReportGenerator.py
+```
+
+---
+
+## Import Map
+
+```python
+# Everything you need, one import
+from punit import fact, theory, inlinedata, setup, teardown, trait, fails
+from punit import Mock, raises, approx
+from punit import mocks
+
+# Sub-modules
+from punit.assertions import collections, strings, exceptions, numeric
+from punit.mocks import (
+    Mock, Call, CallList, MockError, patch,
+    neg, contains, is_any, is_gt, is_gte, is_lt, is_lte, is_in, is_type,
+)
+from punit.reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
+from punit.TestResult import TestResult
+```
