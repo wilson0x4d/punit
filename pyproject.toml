@@ -46,4 +46,4 @@ exclude = [
 punit = "punit.__main__:main"
 
 [tool.setuptools.package-data]
-"punit" = ["py.typed"]
+"punit" = ["py.typed", "SKILL.md"]
