@@ -32,3 +32,17 @@ def captures_stdout_and_stderr() -> None:
     print('stderr-test', file=sys.stderr)
     assert capture1.output == 'stdout-test\n'
     assert capture2.output == 'stderr-test\n'
+
+
+@fact
+def isatty_delegates_to_target() -> None:
+    capture = TextIOCapture(sys.stdout, False)
+    assert capture.isatty() == sys.stdout.isatty()
+
+
+@fact
+def flush_is_noop_on_quiet() -> None:
+    capture = TextIOCapture(sys.stdout, True)
+    # Should not raise even though quiet mode
+    capture.flush()
+    assert capture.output is None

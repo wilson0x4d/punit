@@ -1,11 +1,12 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+import io
 import sys
 from typing import Any, Optional, TextIO
 
 
-class TextIOCapture:
+class TextIOCapture(io.TextIOBase):
 
     __quiet: bool
     output: str | None = None
@@ -15,6 +16,37 @@ class TextIOCapture:
         self.__quiet = quiet
         self.output = None
         self.target = target
+
+    @property
+    def closed(self) -> bool:
+        return False
+
+    def close(self) -> None:
+        pass
+
+    def fileno(self) -> int:
+        return self.target.fileno()
+
+    def flush(self) -> None:
+        if not self.__quiet:
+            self.target.flush()
+
+    def isatty(self) -> bool:
+        return self.target.isatty()
+
+    def readable(self) -> bool:
+        return self.target.readable()
+
+    def read(self, n: int | None = -1, /) -> str:
+        return self.target.read(n)  # type: ignore[arg-type]
+
+    def reconfigure(
+        self, *, encoding: str | None = None, errors: str | None = None, newline: str | None = None, **kwargs: Any
+    ) -> io.TextIOBase:
+        return self
+
+    def writable(self) -> bool:
+        return self.target.writable()
 
     def write(self, text: str) -> int:
         if self.output is None:
