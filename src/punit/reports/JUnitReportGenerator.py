@@ -41,6 +41,8 @@ class JUnitTestCase:
             exc_type = type(test_result.exception)
             error = JUnitError()
             error.message = f'{test_result.exception}'
+            if test_result.expected_failure_reason:
+                error.message = f'{error.message} - @fails: {test_result.expected_failure_reason}'
             error.type = getattr(exc_type, '__name__') if not hasattr(exc_type, '__qualname__') else getattr(exc_type, '__qualname__')
             if issubclass(exc_type, AssertionError):
                 self.failure = error

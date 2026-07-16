@@ -217,6 +217,48 @@ def check_report_junit_has_expected_failure_element():
 
 
 @fact
+def check_report_junit_message_contains_fails_reason():
+    """JUnit failure/error message attribute includes @fails reason."""
+    from punit.reports.JUnitReportGenerator import JUnitReportGenerator
+
+    result = TestResult()
+    result.is_success = False
+    result.exception = AssertionError('intended fail')
+    result.expected_failure_reason = 'bug #99'
+    result.module_name = 'mod'
+    result.test_name = 'test_fails_reason_in_message'
+    result.start_time = 100.0
+    result.stop_time = 101.0
+
+    xml_str = JUnitReportGenerator().generate([result])
+    root = et.fromstring(xml_str.encode())
+    tc = root.find('.//testcase')
+    assert tc is not None, 'JUnit test case element not found'
+    # AssertionError → <failure>
+    fail = tc.find('failure')
+    assert fail is not None, 'JUnit missing failure element for AssertionError'
+    assert 'bug #99' in fail.get('message', ''), f'Message missing @fails reason: {fail.get("message")}'
+
+    # Regression case (non-AssertionError) → <error>
+    result2 = TestResult()
+    result2.is_success = False
+    result2.exception = RuntimeError('unexpected pass')
+    result2.expected_failure_reason = 'bug #100'
+    result2.module_name = 'mod'
+    result2.test_name = 'test_fails_reason_in_error_message'
+    result2.start_time = 100.0
+    result2.stop_time = 101.0
+
+    xml_str2 = JUnitReportGenerator().generate([result2])
+    root2 = et.fromstring(xml_str2.encode())
+    tc2 = root2.find('.//testcase')
+    assert tc2 is not None, 'JUnit test case element not found for error case'
+    err = tc2.find('error')
+    assert err is not None, 'JUnit missing error element for regression case'
+    assert 'bug #100' in err.get('message', ''), f'Error message missing @fails reason: {err.get("message")}'
+
+
+@fact
 def check_report_json_includes_flag():
     """JSON report includes expected_failure boolean and reason string."""
     from punit.reports.JsonReportGenerator import JsonReportGenerator
