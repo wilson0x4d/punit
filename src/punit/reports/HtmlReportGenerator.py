@@ -73,6 +73,10 @@ class HtmlReportGenerator:
                     f' (expected failure: {test_result.expected_failure_reason})'
                     f'</span>'
                 )
+            if test_result.is_skip:
+                lines.append(
+                    f'<span style="color: grey; font-style: italic;"> (skipped)</span>'
+                )
             class_name = "" if test_result.class_name is None else f"{test_result.class_name}."
             data = test_result.properties.get('data')
             if data is not None and len(data) > 0:

@@ -24,7 +24,7 @@ class JUnitTestCase:
     failure: Optional[JUnitError] = None
     stdout: Optional[str] = None
     stderr: Optional[str] = None
-    skipped: Optional[bool] = None
+    skipped: bool = False
     expected_failure_reason: Optional[str] = None
 
     def __init__(self, test_result: TestResult) -> None:
@@ -48,7 +48,7 @@ class JUnitTestCase:
                 self.error = error
         self.stdout = None if test_result.stdout is None else escape(test_result.stdout)
         self.stderr = None if test_result.stderr is None else escape(test_result.stderr)
-        self.skipped = False
+        self.skipped = bool(test_result.is_skip)
         self.expected_failure_reason = test_result.expected_failure_reason if test_result.expected_failure_reason is not None else None
 
 
@@ -167,7 +167,7 @@ class JUnitReportGenerator:
                         if testCase.classname is not None:
                             testCaseEle.attrib['classname'] = testCase.classname
                         testCaseEle.attrib['time'] = f'{testCase.time:.6f}'.rstrip('0').rstrip('.')
-                        if testCase.skipped:
+                        if testCase.skipped is True:
                             et.SubElement(testCaseEle, 'skipped')
                         if testCase.error is not None:
                             ele = et.SubElement(testCaseEle, 'error')

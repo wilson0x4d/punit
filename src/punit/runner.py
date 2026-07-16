@@ -8,7 +8,7 @@ import socket
 import time
 import traceback
 from types import ModuleType
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from .cli import CommandLineInterface
 from .facts.FactManager import FactManager
@@ -23,6 +23,14 @@ def _get_fails_reason(target: Any) -> str | None:
     unwrapped = inspect.unwrap(target)
     if hasattr(unwrapped, '__punit_fails_reason'):
         return getattr(unwrapped, '__punit_fails_reason')
+    return None
+
+
+def _get_skip_condition(target: Any) -> bool | Callable[..., bool] | None:
+    """Return the ``__punit_skip_condition`` attribute, unwrapping decorators."""
+    unwrapped = inspect.unwrap(target)
+    if hasattr(unwrapped, '__punit_skip_condition'):
+        return getattr(unwrapped, '__punit_skip_condition')
     return None
 
 
@@ -126,7 +134,7 @@ class TestRunner:
         """Print the test result using a coloured emoji and timing."""
         if self.__cli.quiet:
             return
-        glyph = '🟩' if test_result.is_success else '🟥'
+        glyph = '🟨' if test_result.is_skip else '🟩' if test_result.is_success else '🟥'
         data = test_result.properties.get('data')
         if data is None:
             data = ''
@@ -151,9 +159,20 @@ class TestRunner:
             result.start_time = time.time()
             result.capture_output(False)
             try:
-                # Run pre-test setup; if it fails, skip the fact.
                 class_instance: Any = None
-                if await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
+                skip_condition = _get_skip_condition(fact.target)
+                skipped: bool = False
+                if skip_condition is not None:
+                    if callable(skip_condition):
+                        if skip_condition():
+                            skipped = True
+                    else:
+                        skipped = skip_condition is True
+
+                if skipped:
+                    result.is_skip = True
+                    result.is_success = True
+                elif await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
                     try:
                         class_instance = await fact.execute(test_module)
                         result.is_success = True
@@ -197,9 +216,20 @@ class TestRunner:
                 result.start_time = time.time()
                 result.capture_output(False)
                 try:
-                    # Run pre-test setup; if it fails, skip the theory.
                     class_instance: Any = None
-                    if await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
+                    skip_condition = _get_skip_condition(theory.target)
+                    skipped: bool = False
+                    if skip_condition is not None:
+                        if callable(skip_condition):
+                            if skip_condition():
+                                skipped = True
+                        else:
+                            skipped = skip_condition is True
+
+                    if skipped:
+                        result.is_skip = True
+                        result.is_success = True
+                    elif await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
                         try:
                             class_instance = await theory.execute(test_module, data)
                             result.is_success = True

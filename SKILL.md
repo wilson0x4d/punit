@@ -1,6 +1,6 @@
 ---
 name: punit
-description: pUnit xUnit-style unit testing framework for Python 3.11+ — @fact, @theory, @inlinedata, @setup, @teardown, @trait, @fails, Mock, patch, matchers, assertions, report generators, CLI flags, TestResult. Use as a reference document for pUnit API and concepts.
+description: pUnit xUnit-style unit testing framework for Python 3.11+ — @fact, @theory, @inlinedata, @setup, @teardown, @trait, @fails, @skip, Mock, patch, matchers, assertions, report generators, CLI flags, TestResult. Use as a reference document for pUnit API and concepts.
 user-invocable: true
 disable-model-invocation: false
 type: reference
@@ -162,6 +162,65 @@ def test_known_bug() -> None:
 ```
 
 `@fails` must be stacked **below** `@fact` or `@theory` (closest to the function def). Two `@fails` on the same target raises an error.
+
+---
+
+## Skipping Tests
+
+`@skip` marks a test to be skipped entirely. The test body is never executed. Results show as skipped (pass with a skip indicator).
+
+`@skip` can be stacked **above or below** any other decorator — no conflict checks are performed.
+
+### Boolean mode
+
+```python
+from punit import fact, skip
+
+@fact
+@skip()          # bare @skip() — unconditional skip
+def test_always_skipped() -> None:
+    assert False  # never runs
+
+@fact
+@skip(True)      # explicit skip
+def test_explicit_skip() -> None:
+    assert False
+
+@fact
+@skip(False)     # skip=False — test runs (no-op; equivalent to no @skip)
+def test_runs() -> None:
+    assert True
+```
+
+### Callable mode
+
+```python
+import os
+
+@fact
+@skip(lambda: os.name == 'posix')   # skip on POSIX systems
+def test_windows_only() -> None:
+    assert True                     # runs only on non-POSIX
+```
+
+The callable is invoked at test execution time; the test is skipped if it returns `True`.
+
+### Runner / report integration
+
+* Console output: skipped tests show a `🟨` emoji instead of `🟩`.
+* HTML report: annotated with `(skipped)`.
+* JUnit report: includes a `<skipped />` element.
+* JSON report: `status: "skip"`.
+
+### TestResult.is_skip
+
+```python
+from punit.TestResult import TestResult
+
+result = TestResult()
+result.is_skip is False                    # default
+result.is_skip = True                      # mark as skipped
+```
 
 ---
 
@@ -478,6 +537,7 @@ result.stdout          # captured stdout
 result.stderr          # captured stderr
 result.properties      # arbitrary dict (e.g., theory 'data' for theory params)
 result.expected_failure_reason  # @fails reason string
+result.is_skip                  # skip status (True if test was skipped via @skip)
 ```
 
 ### Report generators
@@ -560,7 +620,7 @@ Filters (via `-f`) still apply when files are specified directly.
 ```
 punit/
   __init__.py          # Top-level exports: fact, theory, inlinedata, setup, teardown,
-                       # trait, fails, Mock, raises, approx, mocks
+                       # trait, fails, skip, Mock, raises, approx, mocks
   TestResult.py        # TestResult data class
   runner.py            # TestRunner: discovery, execution, result aggregation
   cli.py               # CommandLineInterface: argument parsing
@@ -571,6 +631,7 @@ punit/
   teardowns/           # @teardown decorator, TeardownManager
   mocks/               # Mock class, Call, CallList, patch, matchers
   results/             # @fails decorator
+  conditions/          # @skip decorator
   assertions/          # Helper sub-modules
     exceptions.py      # raises[...]
     numeric.py         # approx, isclose, isnan, isinfinite, percentage
@@ -588,7 +649,7 @@ punit/
 
 ```python
 # Everything you need, one import
-from punit import fact, theory, inlinedata, setup, teardown, trait, fails
+from punit import fact, theory, inlinedata, setup, teardown, trait, fails, skip
 from punit import Mock, raises, approx
 from punit import mocks
 

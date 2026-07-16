@@ -10,6 +10,7 @@ from .facts import fact
 from .mocks.mock import Mock
 from .results import fails
 from .setups import Setup, setup
+from .conditions import skip
 from .teardowns import Teardown, teardown
 from .theories import theory, inlinedata
 from .traits import trait
@@ -32,4 +33,5 @@ __all__ = [
     'theory', 'inlinedata',
     'trait',
     'fails',
+    'skip',
 ]

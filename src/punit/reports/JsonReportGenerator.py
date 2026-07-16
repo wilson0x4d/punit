@@ -22,7 +22,7 @@ class JsonReportGenerator:
             if data is not None and len(data) > 0:
                 filter_name = f'{filter_name}{data}'
             result = dict[str, Any]({
-                'status': 'pass' if test_result.is_success else 'fail',
+                'status': 'skip' if test_result.is_skip else 'pass' if test_result.is_success else 'fail',
                 'name': filter_name,
             })
             if test_result.expected_failure_reason is not None:

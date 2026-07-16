@@ -82,6 +82,7 @@ class TestResult:
     __host_name: str | None
     __expected_failure_reason: str | None
     __is_success: bool | None
+    __is_skip: bool
     __module_name: str | None
     __package_name: str | None
     __properties: dict[str, Any]
@@ -98,6 +99,7 @@ class TestResult:
         self.__host_name = None
         self.__expected_failure_reason = None
         self.__is_success = None
+        self.__is_skip = False
         self.__module_name = None
         self.__package_name = None
         self.__properties = dict[str, Any]()
@@ -168,6 +170,14 @@ class TestResult:
     @is_success.setter
     def is_success(self, value: bool) -> None:
         self.__is_success = value
+
+    @property
+    def is_skip(self) -> bool:
+        return self.__is_skip
+
+    @is_skip.setter
+    def is_skip(self, value: bool) -> None:
+        self.__is_skip = value
 
     @property
     def module_name(self) -> str | None:

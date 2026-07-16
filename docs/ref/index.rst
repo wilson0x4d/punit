@@ -10,5 +10,6 @@ Reference
     punit.assertions <assertions/index>
     punit.setups <punit_setups>
     punit.teardowns <punit_teardowns>
+    punit.conditions <punit_conditions>
     punit.results <punit_results>
     punit.mocks <punit_mocks>

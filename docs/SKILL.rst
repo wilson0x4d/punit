@@ -9,7 +9,7 @@ Consider adding this to your AGENTS.md / CLAUDE.md or equivalent, this helps avo
 
     # Library Exploration
 
-    When exploring any library or reference (local, online, or Git), ALWAYS read the `SKILL.md` at the repository root first. It contains the canonical usage patterns and is the source of truth — do not browse `src/` to reverse-engineer API conventions when there is a `SKILL.md` available.
+    When exploring a library or repository (local, online, or Git), ALWAYS read the `SKILL.md` at the library/repository root first. It contains the canonical usage patterns and is the source of truth — do not browse `src/` to reverse-engineer API conventions when there is a `SKILL.md` available.
 
 
 Alternatively you can manually install this to the ``skills/`` directory like you would any other skill, but the prompt snippet above has the value of applying when:
