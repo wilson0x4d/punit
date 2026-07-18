@@ -13,7 +13,7 @@ from typing import Any, Callable, Optional
 
 from .TextIOCapture import setup_global_text_io, _PERSISTENT_STDOUT, _PERSISTENT_STDERR
 from .cli import CommandLineInterface
-from .parallel import ThreadPool, _execute_fact, _execute_theory
+from .parallelism import ThreadPool, _execute_fact, _execute_theory
 from .facts.FactManager import FactManager
 from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
@@ -43,19 +43,25 @@ def _is_sequential(target: Any) -> bool:
     return getattr(unwrapped, '__punit_sequential', None) is True
 
 
+def _is_parallel(target: Any) -> bool:
+    """Return True if *target* is marked with ``@parallel``."""
+    unwrapped = inspect.unwrap(target)
+    return getattr(unwrapped, '__punit_parallel', None) is True
+
+
 def _get_parallelism(cli: 'CommandLineInterface') -> int:
     """Resolve the parallelism level from CLI.
 
-    Returns ``-1`` when parallel mode is disabled (use sequential flow).
+    Returns ``-1`` when parallelism is disabled (use sequential flow).
     Returns the worker count when enabled; ``0`` maps to ``cpu_count // 2``.
     """
-    mode = cli.parallel
-    if mode is None:
+    parallelism = cli.parallelism
+    if parallelism is None:
         return -1
-    if mode <= 0:
+    if parallelism <= 0:
         cores = os.cpu_count() or 1
         return max(1, cores // 2)
-    return mode
+    return parallelism
 
 
 class TestRunner:
@@ -166,6 +172,22 @@ class TestRunner:
         print(f'{glyph} {test_result.module_name}/{"" if test_result.class_name is None or len(test_result.class_name) == 0 else f"{test_result.class_name}/"}{test_result.test_name}{data} [{test_result.tookPretty}]')
         if self.__cli.verbose and (not test_result.is_success) and test_result.exception is not None:
             print(f'Test File:\n    {test_result.file_name}\nError:\n    {test_result.exception}\n    Traceback:\n{"".join(traceback.format_tb(test_result.exception.__traceback__))}')
+
+    def __detect_parallel_tests(self) -> bool:
+        """Return True if any registered fact or theory is marked with ``@parallel``."""
+        fm = FactManager.instance()
+        modules = getattr(fm, '_FactManager__modules', {})
+        for facts in modules.values():
+            for fact in facts:
+                if _is_parallel(fact.target):
+                    return True
+        tm = TheoryManager.instance()
+        modules = getattr(tm, '_TheoryManager__modules', {})
+        for theories in modules.values():
+            for theory in theories:
+                if _is_parallel(theory.target):
+                    return True
+        return False
 
     async def __run_facts(self, host_name: str, test_module: ModuleType, filename: str, module_report_name: str, results: list[TestResult]) -> None:
         """Run all facts for a test module and return their results."""
@@ -288,6 +310,14 @@ class TestRunner:
         if parallelism > 0:
             return await self._run_parallel(results, test_package_path)
 
+        # Auto-enable parallel mode when @parallel-decorated tests are detected
+        has_parallel_tests = self.__detect_parallel_tests()
+        if has_parallel_tests:
+            cores = os.cpu_count() or 1
+            parallelism = max(1, cores // 2)
+            await self._run_parallel_parallel_only(results, test_package_path, parallelism)
+            return results
+
         for filename in self.__filenames:
             ts = time.time()
             if not self.__test_package_name:
@@ -332,6 +362,82 @@ class TestRunner:
     # ------------------------------------------------------------------
     # Parallel execution
     # ------------------------------------------------------------------
+
+    async def _run_parallel_parallel_only(
+        self,
+        results: list[TestResult],
+        test_package_path: str,
+        parallelism: int,
+    ) -> None:
+        """Execute ``@parallel``-decorated tests in a worker pool, rest sequentially.
+
+        This is used when ``@parallel`` decorators are detected at runtime and
+        no ``--parallel`` CLI flag was provided: only tests marked with
+        ``@parallel`` go into the parallel batch, everything else runs one-by-one.
+        """
+        try:
+            pool = ThreadPool(parallelism)
+            with pool:
+                module_report_name = ''
+                for filename in self.__filenames:
+                    try:
+                        if not self.__test_package_name:
+                            module_import_name = filename
+                        else:
+                            module_import_name = filename.replace(test_package_path, '').replace('/', '.')
+                            if module_import_name.endswith('.py'):
+                                module_import_name = module_import_name[:-3]
+                        module_report_name = module_import_name.lstrip('.')
+                        if not self.__test_package_name:
+                            test_module = importlib.import_module(module_import_name)
+                        else:
+                            test_module = importlib.import_module(module_import_name, self.__test_package_name)
+                        host_name = socket.gethostname()
+
+                        await self._run_parallel_facts_parallel_only(host_name, test_module, filename, module_report_name, results, pool)
+                        if self.__cli.failfast and any(e.is_success is False for e in results):
+                            break
+
+                        await self._run_parallel_theories_parallel_only(host_name, test_module, filename, module_report_name, results, pool)
+                        if self.__cli.failfast and any(e.is_success is False for e in results):
+                            break
+
+                        facts = FactManager.instance().get(test_module.__name__)
+                        for fact in facts:
+                            if _is_parallel(fact.target):
+                                continue
+                            test_result = await _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                            results.append(test_result)
+                            self.print_test_result(test_result)
+                            if self.__cli.failfast and not test_result.is_success:
+                                return
+
+                        theories = TheoryManager.instance().get(test_module.__name__)
+                        for theory in theories:
+                            if _is_parallel(theory.target):
+                                continue
+                            for data in theory.datas:
+                                test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                                results.append(test_result)
+                                self.print_test_result(test_result)
+                                if self.__cli.failfast and not test_result.is_success:
+                                    return
+
+                    except Exception as ex:
+                        result = TestResult()
+                        result.class_name = '*'
+                        result.module_name = module_report_name
+                        result.test_name = '*'
+                        result.start_time = time.time()
+                        result.stop_time = time.time()
+                        result.is_success = False
+                        result.exception = ex
+                        results.append(result)
+                        self.print_test_result(result)
+                        if self.__cli.failfast:
+                            break
+        except Exception:
+            pass
 
     async def _run_parallel(self, results: list[TestResult], test_package_path: str) -> list[TestResult]:
         """Execute all tests with a worker pool (each worker has its own event loop)."""
@@ -470,6 +576,57 @@ class TestRunner:
                 continue
             for data in theory.datas:
                 test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                results.append(test_result)
+                self.print_test_result(test_result)
+                if self.__cli.failfast and not test_result.is_success:
+                    return
+
+    async def _run_parallel_facts_parallel_only(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        filename: str,
+        module_report_name: str,
+        results: list[TestResult],
+        pool: ThreadPool
+    ) -> None:
+        """Run @parallel facts in parallel (auto-enable mode)."""
+        facts = FactManager.instance().get(test_module.__name__)
+        coros: list[Any] = []
+        for fact in facts:
+            if not _is_parallel(fact.target):
+                continue
+            coro = _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
+            coros.append(coro)
+        if coros:
+            test_results = await asyncio.gather(*coros)
+            for test_result in test_results:
+                results.append(test_result)
+                self.print_test_result(test_result)
+                if self.__cli.failfast and not test_result.is_success:
+                    return
+
+    async def _run_parallel_theories_parallel_only(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        filename: str,
+        module_report_name: str,
+        results: list[TestResult],
+        pool: ThreadPool
+    ) -> None:
+        """Run @parallel theory data-points in parallel (auto-enable mode)."""
+        theories = TheoryManager.instance().get(test_module.__name__)
+        coros: list[Any] = []
+        for theory in theories:
+            if not _is_parallel(theory.target):
+                continue
+            for data in theory.datas:
+                coro = _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                coros.append(coro)
+        if coros:
+            test_results = await asyncio.gather(*coros)
+            for test_result in test_results:
                 results.append(test_result)
                 self.print_test_result(test_result)
                 if self.__cli.failfast and not test_result.is_success:

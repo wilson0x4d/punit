@@ -13,3 +13,4 @@ Reference
     punit.conditions <punit_conditions>
     punit.results <punit_results>
     punit.mocks <punit_mocks>
+    punit.parallelism <punit_parallelism>

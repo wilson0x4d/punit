@@ -2,14 +2,90 @@
 # SPDX-License-Identifier: MIT
 
 """
-Parallel test execution infrastructure for pUnit.
+Parallelism for pUnit.
 
-Provides a pool of worker threads, each with its own asyncio event loop,
-for executing tests in parallel.
+pUnit provides three mechanisms for controlling test execution parallelism:
+the **``--parallel [THREADS]``** CLI flag, the **``@parallel``** decorator,
+and the **``@sequential``** decorator.
 
-Each test is wrapped in a coroutine that creates a ``TestResult``, runs
-setup -> test -> teardown, and yields the populated result.  The main thread
-dispatches these coroutines to worker threads and collects the results.
+CLI flag
+--------
+The ``--parallel [THREADS]`` option enables multi-threaded parallel execution.
+Each worker thread runs its own asyncio event loop for isolation.
+
+* ``--parallel`` (bare flag, no number) runs tests using
+  ``cpu_count // 2`` workers.
+* ``--parallel N`` runs tests using *N* workers.
+* No flag means tests run sequentially, one after another.
+
+When parallel mode is active the runner processes each test file in four
+batches: parallel facts, parallel theories, sequential facts, then
+sequential theories.
+
+@parallel decorator
+-------------------
+Marking a fact or theory with ``@parallel`` triggers **auto-enable** mode.
+When pUnit scans the test package and finds at least one ``@parallel``
+decorated test (and no ``--parallel`` flag was given on the CLI):
+
+* Parallel execution is enabled automatically with
+  ``cpu_count // 2`` workers.
+* **Only** ``@parallel``-marked tests run in the concurrent batch.
+* All other tests are treated as sequential (as if they carried ``@sequential``).
+
+Applying ``@parallel`` to a **class** marks every method of that class.
+
+``@parallel`` is a no-op when ``--parallel`` is specified on the CLI; the
+CLI flag takes full priority.
+
+@sequential decorator
+---------------------
+Marking a fact or theory with ``@sequential`` forces it to run as a
+sequential test **after** all parralel tests for that file have
+completed.  This lets you co-run certain tests one-at-a-time inside
+an otherwise parallel test suite (for example, tests that share mutable
+state).
+
+When no ``@parallel`` decorator is present and ``--parallel`` is not used
+on the CLI, all tests run sequentially (the default).
+
+Examples
+--------
+
+Enable parallel mode for the entire test package via CLI::
+
+    punit tests/ --parallel 4
+
+Run only selected tests in parallel -- no CLI flag needed::
+
+    from punit import fact, parallel
+
+    @fact
+    @parallel
+    def test_network_io():
+        ...
+
+    @fact
+    def test_database_setup():
+        # Runs sequentially alongside the parallel tests
+        ...
+
+Mix parallel and sequential tests inside a parallel suite::
+
+    from punit import fact, parallel, sequential
+
+    @parallel
+    class SlowTests:
+        @fact
+        def test_heavy_computation(self):
+            ...
+
+        @fact
+        @sequential
+        def test_shared_file_handle(self):
+            # Runs one-at-a-time after all other SlowTests finish
+            ...
+
 """
 
 from __future__ import annotations
@@ -20,7 +96,7 @@ import queue
 import threading
 import time
 from types import ModuleType
-from typing import Any
+from typing import Any, Callable
 
 from .TestResult import TestResult
 
@@ -239,7 +315,7 @@ async def _execute_fact(
 
 async def _execute_theory(
     theory: Any,
-    data: tuple,
+    data: tuple[Any, ...],
     module: ModuleType,
     module_report_name: str,
     filename: str,
@@ -330,6 +406,151 @@ async def _execute_theory(
     return result
 
 
+def sequential(target: Callable[..., Any] | type) -> Callable[..., Any]:
+    """Mark a test function, method, or class for **sequential** execution.
+
+    When pUnit is started with ``--parallel THREADS`` (where *THREADS* > 1),
+    tests decorated without ``@sequential`` run in parallel up to *N* at
+    any given point.  ``@sequential`` tests are **not** added to the
+    concurrent dispatch queue -- after all peers at the same scope finish
+    concurrently, the sequential tests run one after another in their
+    definition order.
+
+    When applied to a **class**, all methods of the class are automatically
+    marked as sequential.
+
+    The decorator returns the original ``target`` unchanged; it installs the
+    ``__punit_sequential`` marker attribute on the unwrapped function (or the
+    class object itself for class targets).
+
+    Parameters
+    ----------
+    target : Callable | type
+        The test function, method, or class to mark.
+
+    Returns
+    -------
+    Callable
+        The original, undecorated target.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact, sequential
+
+        @fact
+        @sequential
+        def my_test():
+            assert True
+
+        class MyTestCase:
+            @fact
+            @sequential
+            def test_one(self):
+                assert True
+
+        # Apply @sequential to an entire class -- all methods run sequentially
+        @sequential
+        class SequentialTestCase:
+            @fact
+            def test_one(self):
+                assert True
+
+            @fact
+            def test_two(self):
+                assert True
+
+    """
+    import inspect
+
+    if isinstance(target, type):
+        setattr(target, "__punit_sequential", True)
+        for name, method in inspect.getmembers(target, predicate=inspect.isfunction):
+            setattr(method, "__punit_sequential", True)
+        return target
+
+    unwrapped = inspect.unwrap(target)
+    setattr(unwrapped, "__punit_sequential", True)
+    return target
+
+
+def parallel(target: Callable[..., Any]) -> Callable[..., Any]:
+    """Mark a test function, method, or class for **parallel** execution.
+
+    When pUnit detects any ``@parallel``-decorated tests in a test package at
+    runtime, it automatically triggers (multi-threaded) parallel execution for
+    the entire test run -- no ``--parallel`` CLI flag is required.
+
+    When ``@parallel`` triggers auto-enable:
+
+    * Only tests marked with ``@parallel`` run in the parallel batch
+    * Tests not marked with ``@parallel`` are treated as sequential
+      (as if decorated with ``@sequential``)
+    * The thread pool is initialized with ``cpu_count // 2`` workers
+    * This auto-enable is superseded by ``--parallel`` on the CLI
+
+    When ``--parallel`` is specified on the CLI, this decorator has no effect;
+    the existing ``--parallel`` behavior takes priority and all
+    non-``@sequential`` tests run in parallel as before.
+
+    When applied to a class, all methods of the class are automatically marked
+    as parallel.
+
+    The decorator returns the original ``target`` unchanged; it installs the
+    ``__punit_parallel`` marker attribute on the unwrapped function (or the
+    class object itself for class targets).
+
+    Parameters
+    ----------
+    target : Callable | type
+        The test function, method, or class to mark.
+
+    Returns
+    -------
+    Callable
+        The original, undecorated target.
+
+    Example
+    -------
+
+    .. code-block:: python
+
+        from punit import fact, parallel
+
+        @fact
+        @parallel
+        def my_parallel_test():
+            assert True
+
+        class ParallelTestCase:
+            @fact
+            @parallel
+            def test_one(self):
+                assert True
+
+            @fact
+            def test_sequential(self):
+                # Runs sequentially (not in parallel batch)
+                assert True
+
+    """
+    import inspect
+
+    if isinstance(target, type):
+        setattr(target, "__punit_parallel", True)
+        for name, method in inspect.getmembers(target, predicate=inspect.isfunction):
+            setattr(method, "__punit_parallel", True)
+        return target
+
+    unwrapped = inspect.unwrap(target)
+    setattr(unwrapped, "__punit_parallel", True)
+    return target
+
+
 __all__ = [
-    'ThreadPool'
+    'ThreadPool',
+    'parallel',
+    'sequential'
 ]

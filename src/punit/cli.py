@@ -205,7 +205,7 @@ class CommandLineInterface:
         return self.__aliases
 
     @property
-    def parallel(self) -> int | None:
+    def parallelism(self) -> int | None:
         return self.__parallelism
 
     @property
