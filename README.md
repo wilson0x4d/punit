@@ -41,8 +41,9 @@ python3 -m punit --help
 ```
 Outputs:
 ```plaintext
-Usage: python3 -m punit [-h|--help]
-                        [-q|--quiet] [-v|--verbose]
+Usage: python3 -m punit [-h|--help] [FILE ...]
+                        [-q|--quiet]
+                        [-v|--verbose]
                         [-z|--failfast]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
@@ -53,11 +54,16 @@ Usage: python3 -m punit [-h|--help]
                         [-n|--no-default-patterns]
                         [--no-exitcode]
                         [--no-pathfix]
+                        [--parallel [THREADS]]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
 
 Options:
     -h, --help           Show this help text and exit
+    --parallel [THREADS]
+        Run tests using specified number of worker threads,
+        each with its own asyncio event loop.  If omitted
+        the default is half the number of CPU cores.
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output
     -z, --failfast       Stop on first failure or error

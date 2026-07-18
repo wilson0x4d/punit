@@ -2,24 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Module-level TextIO output capture for concurrent test execution.
-
-When tests run concurrently on a single thread, multiple coroutines write to
-``sys.stdout`` / ``sys.stderr`` simultaneously and interleave or clobber each
-other's captures.  This module fixes that by:
-
-1. Creating two persistent ``_TextIOCapture`` instances that replace
-   ``sys.stdout`` / ``sys.stderr`` via ``setup_global_text_io()``.
-
-2. Using a ``contextvars.ContextVar`` to track the active
-   ``TextIOReceiver`` pair for the current task.
-
-3. Dispatching every ``write()`` on the persistent capture to the correct
-   receiver based on the contextvar so that each test's output is isolated
-   to its own ``TestResult``.
-
-The ``quiet`` passthrough to the original stream is a process-wide concern
-controlled by the ``_TextIOCapture``.  The receiver only accumulates text.
+TextIO output capture, so stdout/stderr are collected for each test.
 """
 
 from __future__ import annotations
@@ -30,7 +13,7 @@ import sys
 from typing import Any, Optional
 
 # ---------------------------------------------------------------------------
-# Context variable – stores the active receivers for the current task
+# Context variable - stores the active receivers for the current task
 # ---------------------------------------------------------------------------
 
 _text_io_receivers_ctx: Any = contextvars.ContextVar(
@@ -45,9 +28,9 @@ class TextIOReceiver:
     The persistent ``_TextIOCapture`` dispatches all writes to whichever
     receiver is active in the current task's context (resolved via the
     contextvars.ContextVar).  Each test gets its own receiver so output
-    is never mixed between concurrent tests.
+    is never mixed between parallelism tests.
 
-    The receiver knows nothing about ``quiet`` – it simply accumulates text
+    The receiver knows nothing about ``quiet`` - it simply accumulates text
     into its ``output`` attribute.  Passthrough to the original stream is
     the responsibility of the persistent ``_TextIOCapture``.
     """
@@ -150,7 +133,7 @@ class _TextIOCapture(io.TextIOBase):
 
 
 # ---------------------------------------------------------------------------
-# Persistent instances – created once at module import time
+# Persistent instances - created once at module import time
 # ---------------------------------------------------------------------------
 
 _PERSISTENT_STDOUT = _TextIOCapture(quiet=False, is_stdout=True)
@@ -160,7 +143,7 @@ _PERSISTENT_STDERR = _TextIOCapture(quiet=False, is_stdout=False)
 def setup_global_text_io() -> None:
     """Replace ``sys.stdout`` and ``sys.stderr`` with persistent captures.
 
-    Called once by ``TestRunner.run()`` so both serial and concurrent paths
+    Called once by ``TestRunner.run()`` so both serial and parallel paths
     dispatch through the persistent capture.  After this, all writes to
     stdout/stderr go through the capture which routes to the correct
     task-local ``TextIOReceiver`` via the contextvars.ContextVar.

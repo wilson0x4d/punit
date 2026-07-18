@@ -14,7 +14,7 @@ from .conditions import skip
 from .teardowns import Teardown, teardown
 from .theories import theory, inlinedata
 from .traits import trait
-from .sync import synchronous
+from .sequential import sequential
 
 from . import mocks
 
@@ -35,5 +35,5 @@ __all__ = [
     'trait',
     'fails',
     'skip',
-    'synchronous',
+    'sequential',
 ]

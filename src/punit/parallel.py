@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Concurrent test execution infrastructure for pUnit.
+Parallel test execution infrastructure for pUnit.
 
 Provides a pool of worker threads, each with its own asyncio event loop,
 for executing tests in parallel.
@@ -16,9 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import os
 import queue
-import sys
 import threading
 import time
 from types import ModuleType
@@ -39,7 +37,7 @@ class _TaskInfo:
         self.exception: BaseException | None = None
 
 
-class ConcurrentPool:
+class ThreadPool:
     """
     Manages a pool of worker threads, each with its own asyncio event loop.
 
@@ -49,23 +47,23 @@ class ConcurrentPool:
 
     Parameters
     ----------
-    concurrency : int
-        Maximum number of tasks to run concurrently.  This also equals the
+    parallelism : int
+        Maximum number of tasks to run in parallel.  This also equals the
         number of worker threads.  Must be at least 1.
     """
 
-    def __init__(self, concurrency: int) -> None:
-        if concurrency < 1:
-            raise ValueError("concurrency must be at least 1")
-        self._concurrency: int = concurrency
+    def __init__(self, parallelism: int) -> None:
+        if parallelism < 1:
+            raise ValueError("parallelism must be at least 1")
+        self._parallelism: int = parallelism
         self._loops: list[asyncio.AbstractEventLoop] = []
         self._queues: list[queue.Queue[_TaskInfo | None]] = []
         self._counter: int = 0
         self._lock: threading.Lock = threading.Lock()
         self._workers: list[threading.Thread] = []
 
-    def __enter__(self) -> ConcurrentPool:
-        for _ in range(self._concurrency):
+    def __enter__(self) -> ThreadPool:
+        for _ in range(self._parallelism):
             loop = asyncio.new_event_loop()
             q: queue.Queue[_TaskInfo | None] = queue.Queue()
             self._loops.append(loop)
@@ -330,3 +328,8 @@ async def _execute_theory(
         result.release_output()
 
     return result
+
+
+__all__ = [
+    'ThreadPool'
+]

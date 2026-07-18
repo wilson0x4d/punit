@@ -28,7 +28,7 @@ class CommandLineInterface:
     """
 
     __aliases: dict[str, str]
-    __concurrentMode: int | None
+    __parallelism: int | None
     __excludePatterns: list[str]
     __excludeTraits: list[Trait]
     __failfast: bool
@@ -49,7 +49,7 @@ class CommandLineInterface:
 
     def __init__(self) -> None:
         self.__aliases = dict[str, str]()
-        self.__concurrentMode = None
+        self.__parallelism = None
         self.__excludePatterns = []
         self.__excludeTraits = []
         self.__failfast = False
@@ -83,7 +83,7 @@ class CommandLineInterface:
         extractAliasPath: bool = False
         extractReportFormat: bool = False
         extractOutputFilename: bool = False
-        extract_concurrent_mode: bool = False
+        extract_parallel: bool = False
         for arg in argv:
             if extractFilter:
                 self.__processFilterArg(arg)
@@ -141,18 +141,18 @@ class CommandLineInterface:
                 extractOutputFilename = False
                 self.__outputFilename = arg
                 continue
-            if extract_concurrent_mode:
-                extract_concurrent_mode = False
+            if extract_parallel:
+                extract_parallel = False
                 try:
-                    self.__concurrentMode = int(arg)
+                    self.__parallelism = int(arg)
                 except ValueError:
-                    self.__concurrentMode = 0
+                    self.__parallelism = 0
                 continue
             match arg:
                 case '-h' | '--help':
                     self.__help = True
-                case '-c' | '--concurrent-mode':
-                    extract_concurrent_mode = True
+                case '--parallel' | '--concurrent-mode':  # NOTE: `--concurrent-mode` is a backward compatibility alias, deprecated.
+                    extract_parallel = True
                 case '-a':
                     extractAliasName = True
                 case '-f' | '--filter':
@@ -186,8 +186,8 @@ class CommandLineInterface:
                 case _:
                     continue
 
-        if extract_concurrent_mode:
-            self.__concurrentMode = 0
+        if extract_parallel:
+            self.__parallelism = 0
 
         if len(FilterManager.instance().filters) == 0:
             FilterManager.instance().add('*')
@@ -205,8 +205,8 @@ class CommandLineInterface:
         return self.__aliases
 
     @property
-    def concurrent_mode(self) -> int | None:
-        return self.__concurrentMode
+    def parallel(self) -> int | None:
+        return self.__parallelism
 
     @property
     def failfast(self) -> bool:
@@ -272,8 +272,8 @@ class CommandLineInterface:
         self.print_version()
         print("""
 Usage: python3 -m punit [-h|--help] [FILE ...]
-                        [-c|--concurrent-mode [N]]
-                        [-q|--quiet] [-v|--verbose]
+                        [-q|--quiet]
+                        [-v|--verbose]
                         [-z|--failfast]
                         [-p|--test-package NAME]
                         [-i|--include PATTERN]
@@ -284,14 +284,15 @@ Usage: python3 -m punit [-h|--help] [FILE ...]
                         [-n|--no-default-patterns]
                         [--no-exitcode]
                         [--no-pathfix]
+                        [--parallel [THREADS]]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
 
 Options:
     -h, --help           Show this help text and exit
-    -c, --concurrent-mode [N]
-        Run tests concurrently using up to N worker threads,
-        each with its own asyncio event loop.  If N is omitted
+    --parallel [THREADS]
+        Run tests using specified number of worker threads,
+        each with its own asyncio event loop.  If omitted
         the default is half the number of CPU cores.
     -q, --quiet          Quiet output
     -v, --verbose        Verbose output

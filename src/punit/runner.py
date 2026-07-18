@@ -13,7 +13,7 @@ from typing import Any, Callable, Optional
 
 from .TextIOCapture import setup_global_text_io, _PERSISTENT_STDOUT, _PERSISTENT_STDERR
 from .cli import CommandLineInterface
-from .concurrent import ConcurrentPool, _execute_fact, _execute_theory
+from .parallel import ThreadPool, _execute_fact, _execute_theory
 from .facts.FactManager import FactManager
 from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
@@ -37,19 +37,19 @@ def _get_skip_condition(target: Any) -> bool | Callable[..., bool] | None:
     return None
 
 
-def _is_synchronous(target: Any) -> bool:
-    """Return True if *target* is marked with ``@synchronous``."""
+def _is_sequential(target: Any) -> bool:
+    """Return True if *target* is marked with ``@sequential``."""
     unwrapped = inspect.unwrap(target)
-    return getattr(unwrapped, '__punit_synchronous', None) is True
+    return getattr(unwrapped, '__punit_sequential', None) is True
 
 
-def _get_concurrency(cli: 'CommandLineInterface') -> int:
-    """Resolve the concurrency level from CLI.
+def _get_parallelism(cli: 'CommandLineInterface') -> int:
+    """Resolve the parallelism level from CLI.
 
-    Returns ``-1`` when concurrent mode is disabled (use sequential flow).
+    Returns ``-1`` when parallel mode is disabled (use sequential flow).
     Returns the worker count when enabled; ``0`` maps to ``cpu_count // 2``.
     """
-    mode = cli.concurrent_mode
+    mode = cli.parallel
     if mode is None:
         return -1
     if mode <= 0:
@@ -276,17 +276,17 @@ class TestRunner:
         results: list[TestResult] = []
         result: TestResult
         # TODO: aliasing
-        # Install persistent TextIO captures so both serial and concurrent
+        # Install persistent TextIO captures so both serial and parallel
         # paths dispatch writes to the correct task-local receivers.
         setup_global_text_io()
         # Set quiet passthrough on the global captures based on CLI
         _PERSISTENT_STDOUT.quiet = self.__cli.quiet
         _PERSISTENT_STDERR.quiet = self.__cli.quiet
         test_package_path = os.path.join(os.path.abspath(os.curdir), self.__test_package_name).replace('\\', '/')
-        concurrency = _get_concurrency(self.__cli)
+        parallelism = _get_parallelism(self.__cli)
 
-        if concurrency > 0:
-            return await self._run_concurrent(results, test_package_path)
+        if parallelism > 0:
+            return await self._run_parallel(results, test_package_path)
 
         for filename in self.__filenames:
             ts = time.time()
@@ -330,15 +330,15 @@ class TestRunner:
         return results
 
     # ------------------------------------------------------------------
-    # Concurrent execution
+    # Parallel execution
     # ------------------------------------------------------------------
 
-    async def _run_concurrent(self, results: list[TestResult], test_package_path: str) -> list[TestResult]:
+    async def _run_parallel(self, results: list[TestResult], test_package_path: str) -> list[TestResult]:
         """Execute all tests with a worker pool (each worker has its own event loop)."""
-        concurrency = _get_concurrency(self.__cli)
-        pool: ConcurrentPool | None = None
+        parallelism = _get_parallelism(self.__cli)
+        pool: ThreadPool | None = None
         try:
-            pool = ConcurrentPool(concurrency)
+            pool = ThreadPool(parallelism)
             with pool:
                 module_report_name = ''
                 for filename in self.__filenames:
@@ -356,16 +356,16 @@ class TestRunner:
                             test_module = importlib.import_module(module_import_name, self.__test_package_name)
                         host_name = socket.gethostname()
 
-                        await self._run_concurrent_facts(host_name, test_module, filename, module_report_name, results, pool)
+                        await self._run_parallel_facts(host_name, test_module, filename, module_report_name, results, pool)
                         if self.__cli.failfast and any(e.is_success is False for e in results):
                             break
 
-                        await self._run_concurrent_theories(host_name, test_module, filename, module_report_name, results, pool)
+                        await self._run_parallel_theories(host_name, test_module, filename, module_report_name, results, pool)
                         if self.__cli.failfast and any(e.is_success is False for e in results):
                             break
 
-                        await self._run_synchronous_facts(host_name, test_module, filename, module_report_name, results, pool)
-                        await self._run_synchronous_theories(host_name, test_module, filename, module_report_name, results, pool)
+                        await self._run_sequential_facts(host_name, test_module, filename, module_report_name, results, pool)
+                        await self._run_sequential_theories(host_name, test_module, filename, module_report_name, results, pool)
 
                     except Exception as ex:
                         result = TestResult()
@@ -384,14 +384,20 @@ class TestRunner:
             pass
         return results
 
-    async def _run_concurrent_facts(self, host_name: str, test_module: ModuleType, filename: str,
-                                     module_report_name: str, results: list[TestResult],
-                                     pool: ConcurrentPool) -> None:
-        """Run non-synchronous facts concurrently via the worker pool."""
+    async def _run_parallel_facts(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        filename: str,
+        module_report_name: str,
+        results: list[TestResult],
+        pool: ThreadPool
+    ) -> None:
+        """Run non-sequential facts in parallel via thread pool."""
         facts = FactManager.instance().get(test_module.__name__)
         coros: list[Any] = []
         for fact in facts:
-            if _is_synchronous(fact.target):
+            if _is_sequential(fact.target):
                 continue
             coro = _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
             coros.append(coro)
@@ -403,15 +409,20 @@ class TestRunner:
                 if self.__cli.failfast and not test_result.is_success:
                     return
 
-    async def _run_concurrent_theories(self, host_name: str, test_module: ModuleType, filename: str,
-                                        module_report_name: str, results: list[TestResult],
-                                        pool: ConcurrentPool) -> None:
-        """Run non-synchronous theory data-points concurrently."""
+    async def _run_parallel_theories(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        filename: str,
+        module_report_name: str, results: list[TestResult],
+        pool: ThreadPool
+    ) -> None:
+        """Run non-sequential theory data-points concurrently."""
         theories = TheoryManager.instance().get(test_module.__name__)
         coros: list[Any] = []
         for theory in theories:
             for data in theory.datas:
-                if _is_synchronous(theory.target):
+                if _is_sequential(theory.target):
                     continue
                 coro = _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
                 coros.append(coro)
@@ -423,13 +434,19 @@ class TestRunner:
                 if self.__cli.failfast and not test_result.is_success:
                     return
 
-    async def _run_synchronous_facts(self, host_name: str, test_module: ModuleType, filename: str,
-                                      module_report_name: str, results: list[TestResult],
-                                      pool: ConcurrentPool) -> None:
-        """Run @synchronous facts sequentially."""
+    async def _run_sequential_facts(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        filename: str,
+        module_report_name: str,
+        results: list[TestResult],
+        pool: ThreadPool
+    ) -> None:
+        """Run @sequential facts sequentially."""
         facts = FactManager.instance().get(test_module.__name__)
         for fact in facts:
-            if not _is_synchronous(fact.target):
+            if not _is_sequential(fact.target):
                 continue
             test_result = await _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
             results.append(test_result)
@@ -437,13 +454,19 @@ class TestRunner:
             if self.__cli.failfast and not test_result.is_success:
                 return
 
-    async def _run_synchronous_theories(self, host_name: str, test_module: ModuleType, filename: str,
-                                         module_report_name: str, results: list[TestResult],
-                                         pool: ConcurrentPool) -> None:
-        """Run @synchronous theory data-points sequentially."""
+    async def _run_sequential_theories(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        filename: str,
+        module_report_name: str,
+        results: list[TestResult],
+        pool: ThreadPool
+    ) -> None:
+        """Run @sequential theory data-points sequentially."""
         theories = TheoryManager.instance().get(test_module.__name__)
         for theory in theories:
-            if not _is_synchronous(theory.target):
+            if not _is_sequential(theory.target):
                 continue
             for data in theory.datas:
                 test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)

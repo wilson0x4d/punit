@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Verify output capture works in both serial and concurrent execution paths.
+Verify output capture works in both sequential and parallel execution paths.
 
 The new design uses a persistent global ``_TextIOCapture`` for stdout/stderr
 that dispatches writes to a ``TextIOReceiver`` via a contextvars.ContextVar.
@@ -17,41 +17,37 @@ from punit import fact
 from punit.TestResult import TestResult
 
 
-# --------------------------------------------------------------
-# Serial (non-concurrent path)
-# --------------------------------------------------------------
-
 @fact
-def serial_captures_stdout() -> None:
+def captures_stdout() -> None:
     result = TestResult()
     result.capture_output()
-    print('serial-stdout-test')
-    assert result.stdout == 'serial-stdout-test\n'
+    print('stdout-test')
+    assert result.stdout == 'stdout-test\n'
     result.release_output()
 
 
 @fact
-def serial_captures_stderr() -> None:
+def captures_stderr() -> None:
     result = TestResult()
     result.capture_output()
-    print('serial-stderr-test', file=sys.stderr)
-    assert result.stderr == 'serial-stderr-test\n'
+    print('stderr-test', file=sys.stderr)
+    assert result.stderr == 'stderr-test\n'
     result.release_output()
 
 
 @fact
-def serial_captures_both_stdout_and_stderr() -> None:
+def captures_both_stdout_and_stderr() -> None:
     result = TestResult()
     result.capture_output()
-    print('serial-both-stdout')
-    print('serial-both-stderr', file=sys.stderr)
-    assert result.stdout == 'serial-both-stdout\n'
-    assert result.stderr == 'serial-both-stderr\n'
+    print('both-stdout')
+    print('both-stderr', file=sys.stderr)
+    assert result.stdout == 'both-stdout\n'
+    assert result.stderr == 'both-stderr\n'
     result.release_output()
 
 
 @fact
-def serial_release_output_stops_receiving() -> None:
+def release_output_stops_receiving() -> None:
     """Verify that after release_output, text is no longer captured."""
     result = TestResult()
     result.capture_output()
@@ -63,7 +59,7 @@ def serial_release_output_stops_receiving() -> None:
 
 
 @fact
-def serial_captures_multiple_print_calls() -> None:
+def captures_multiple_print_calls() -> None:
     result = TestResult()
     result.capture_output()
     print('line1')
