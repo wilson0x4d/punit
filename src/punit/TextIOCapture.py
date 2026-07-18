@@ -187,3 +187,18 @@ def _clear_receivers() -> None:
     collect writes during teardown or unexpected post-test output.
     """
     _text_io_receivers_ctx.set(None)
+
+
+def teardown_global_text_io() -> None:
+    """Detach the persistent captures and restore ``sys.stdout``/``sys.stderr``.
+
+    Calls ``_clear_receivers`` (so the contextvar is nulled) and replaces
+    ``sys.stdout`` / ``sys.stderr`` back to their original values.
+
+    Must be called after all tests have completed and test-result printing
+    is finished, so that report output and summary lines are written through
+    the original streams unobstructed.
+    """
+    _text_io_receivers_ctx.set(None)
+    sys.stdout = sys.__stdout__
+    sys.stderr = sys.__stderr__

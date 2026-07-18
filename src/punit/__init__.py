@@ -15,7 +15,6 @@ from .teardowns import Teardown, teardown
 from .theories import theory, inlinedata
 from .traits import trait
 from .sync import synchronous
-from .concurrent import ConcurrentPool
 
 from . import mocks
 
@@ -37,5 +36,4 @@ __all__ = [
     'fails',
     'skip',
     'synchronous',
-    'ConcurrentPool',
 ]

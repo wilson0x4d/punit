@@ -7,6 +7,7 @@ import sys
 import time
 from pathlib import Path
 
+from .TextIOCapture import teardown_global_text_io
 from .cli import CommandLineInterface
 from .discovery import TestModuleDiscovery
 from .facts.FactManager import FactManager
@@ -57,6 +58,8 @@ async def async_main() -> None:
         test_runner = TestRunner(cli.test_package_name, test_module_discovery.filenames, cli)
     results = await test_runner.run()
     total_time = time.time() - start_time
+    # Detach IO captures so report and summary output use real stdout/stderr
+    teardown_global_text_io()
     failure_count = 0
     for result in results:
         if not result.is_success:

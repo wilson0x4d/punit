@@ -16,3 +16,4 @@ requirement*.txt
 htmlcov/
 CHANGELOG.*
 .ignore
+tmp/
