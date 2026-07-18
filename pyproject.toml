@@ -2,7 +2,7 @@
 name = "pUnit"
 version = "0.0.0"
 description = "A modernized unit-test framework for Python."
-keywords = ["test", "unittest", "unit-test", "xUnit", "nUnit", "pytest"]
+keywords = ["test", "unittest", "unit-test", "xUnit", "nUnit", "pytest", "mock", "patch", "parallelism", "vscode", "vscodium"]
 authors = [
     { name="Shaun Wilson", email="mrshaunwilson@msn.com" }
 ]

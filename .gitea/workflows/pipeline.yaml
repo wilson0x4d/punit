@@ -9,7 +9,7 @@ on:
       - '.scripts/punit'
       - 'src/**'
       - 'pyproject.toml'
-      - '!README.md'
+      - 'README.md'
       - '!docs/**'
       - '.gitea/workflows/pipeline.yaml'
 jobs:

@@ -5,7 +5,7 @@ Quick Start
 Installation
 ------------
 
-You can install the library from `PyPI <https://pypi.org/project/punit/>`_ using typical methods, such as ``pip``:
+You can install pUnit from `PyPI <https://pypi.org/project/punit/>`_ using typical methods, such as ``pip``:
 
 .. code:: bash
 
