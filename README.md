@@ -6,7 +6,7 @@ This README is only a high-level introduction to **pUnit**. For more detailed do
 
 - **IDE Support**; Run/Debug tests and review results with full error detail from within vscode using the [x4d.punit-testadapter](https://marketplace.visualstudio.com/items?itemName=x4d.punit-testadapter) extension ([also available for VSCodium via Open VSX](https://open-vsx.org/extension/x4d/punit-testadapter))
 - **Fact/Theory Based TEsting**; Separate `@fact` and `@theory` decorators distinguish invariant tests from variant (parameterized) tests, allowing for more concise test permutation syntaxes.
-- **Parallel Test Execution**; Optionally run tests concurrently with multiple worker threads, each with its own async event loop. Enable via `--parallel` CLI flag or `@parallel` decorator. Mix parallel and `@sequential`-marked tests in the same file.
+- **Parallel Test Execution**; Optionally run tests concurrently with multiple worker threads, each with its own async event loop. Enable via `--parallelism` CLI flag or `@parallel` decorator. Mix parallel and `@sequential`-marked tests in the same file.
 - **Dual-Scope Setup/Teardown**; Module-scoped and class-scoped setup/teardown as bare decorated functions, no fixture plumbing or injection required. Configure with `@setup` and `@teardown`.
 - **Per-Test Output Capture**; Captures each test's stdout/stderr output in isolation, included in the test results and all report formats.
 - **Traits**; Categorical name/value test metadata queryable at discovery time via CLI flags. Unlike traditional marks, traits are filterable during discovery, not at decoration, and can also be used to filter in the IDE.

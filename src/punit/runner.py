@@ -372,7 +372,7 @@ class TestRunner:
         """Execute ``@parallel``-decorated tests in a worker pool, rest sequentially.
 
         This is used when ``@parallel`` decorators are detected at runtime and
-        no ``--parallel`` CLI flag was provided: only tests marked with
+        no ``--parallelism`` CLI flag was provided: only tests marked with
         ``@parallel`` go into the parallel batch, everything else runs one-by-one.
         """
         try:

@@ -151,7 +151,7 @@ class CommandLineInterface:
             match arg:
                 case '-h' | '--help':
                     self.__help = True
-                case '--parallel' | '--concurrent-mode':  # NOTE: `--concurrent-mode` is a backward compatibility alias, deprecated.
+                case '--parallelism' | '--concurrent-mode':  # NOTE: `--concurrent-mode` is a backward compatibility alias, deprecated.
                     extract_parallel = True
                 case '-a':
                     extractAliasName = True
@@ -284,13 +284,13 @@ Usage: python3 -m punit [-h|--help] [FILE ...]
                         [-n|--no-default-patterns]
                         [--no-exitcode]
                         [--no-pathfix]
-                        [--parallel [THREADS]]
+                        [--parallelism [THREADS]]
                         [-r|--report {junit|json}]
                         [-o|--output FILENAME]
 
 Options:
     -h, --help           Show this help text and exit
-    --parallel [THREADS]
+    --parallelism [THREADS]
         Run tests using specified number of worker threads,
         each with its own asyncio event loop.  If omitted
         the default is half the number of CPU cores.

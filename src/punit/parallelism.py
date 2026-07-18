@@ -5,17 +5,17 @@
 Parallelism for pUnit.
 
 pUnit provides three mechanisms for controlling test execution parallelism:
-the **``--parallel [THREADS]``** CLI flag, the **``@parallel``** decorator,
+the **``--parallelism [THREADS]``** CLI flag, the **``@parallel``** decorator,
 and the **``@sequential``** decorator.
 
 CLI flag
 --------
-The ``--parallel [THREADS]`` option enables multi-threaded parallel execution.
+The ``--parallelism [THREADS]`` option enables multi-threaded parallel execution.
 Each worker thread runs its own asyncio event loop for isolation.
 
-* ``--parallel`` (bare flag, no number) runs tests using
+* ``--parallelism`` (bare flag, no number) runs tests using
   ``cpu_count // 2`` workers.
-* ``--parallel N`` runs tests using *N* workers.
+* ``--parallelism N`` runs tests using *N* workers.
 * No flag means tests run sequentially, one after another.
 
 When parallel mode is active the runner processes each test file in four
@@ -26,7 +26,7 @@ sequential theories.
 -------------------
 Marking a fact or theory with ``@parallel`` triggers **auto-enable** mode.
 When pUnit scans the test package and finds at least one ``@parallel``
-decorated test (and no ``--parallel`` flag was given on the CLI):
+decorated test (and no ``--parallelism`` flag was given on the CLI):
 
 * Parallel execution is enabled automatically with
   ``cpu_count // 2`` workers.
@@ -35,7 +35,7 @@ decorated test (and no ``--parallel`` flag was given on the CLI):
 
 Applying ``@parallel`` to a **class** marks every method of that class.
 
-``@parallel`` is a no-op when ``--parallel`` is specified on the CLI; the
+``@parallel`` is a no-op when ``--parallelism`` is specified on the CLI; the
 CLI flag takes full priority.
 
 @sequential decorator
@@ -46,7 +46,7 @@ completed.  This lets you co-run certain tests one-at-a-time inside
 an otherwise parallel test suite (for example, tests that share mutable
 state).
 
-When no ``@parallel`` decorator is present and ``--parallel`` is not used
+When no ``@parallel`` decorator is present and ``--parallelism`` is not used
 on the CLI, all tests run sequentially (the default).
 
 Examples
@@ -54,7 +54,7 @@ Examples
 
 Enable parallel mode for the entire test package via CLI::
 
-    punit tests/ --parallel 4
+    punit tests/ --parallelism 4
 
 Run only selected tests in parallel -- no CLI flag needed::
 
@@ -409,7 +409,7 @@ async def _execute_theory(
 def sequential(target: Callable[..., Any] | type) -> Callable[..., Any]:
     """Mark a test function, method, or class for **sequential** execution.
 
-    When pUnit is started with ``--parallel THREADS`` (where *THREADS* > 1),
+    When pUnit is started with ``--parallelism THREADS`` (where *THREADS* > 1),
     tests decorated without ``@sequential`` run in parallel up to *N* at
     any given point.  ``@sequential`` tests are **not** added to the
     concurrent dispatch queue -- after all peers at the same scope finish
@@ -481,7 +481,7 @@ def parallel(target: Callable[..., Any]) -> Callable[..., Any]:
 
     When pUnit detects any ``@parallel``-decorated tests in a test package at
     runtime, it automatically triggers (multi-threaded) parallel execution for
-    the entire test run -- no ``--parallel`` CLI flag is required.
+    the entire test run -- no ``--parallelism`` CLI flag is required.
 
     When ``@parallel`` triggers auto-enable:
 
@@ -489,10 +489,10 @@ def parallel(target: Callable[..., Any]) -> Callable[..., Any]:
     * Tests not marked with ``@parallel`` are treated as sequential
       (as if decorated with ``@sequential``)
     * The thread pool is initialized with ``cpu_count // 2`` workers
-    * This auto-enable is superseded by ``--parallel`` on the CLI
+    * This auto-enable is superseded by ``--parallelism`` on the CLI
 
-    When ``--parallel`` is specified on the CLI, this decorator has no effect;
-    the existing ``--parallel`` behavior takes priority and all
+    When ``--parallelism`` is specified on the CLI, this decorator has no effect;
+    the existing ``--parallelism`` behavior takes priority and all
     non-``@sequential`` tests run in parallel as before.
 
     When applied to a class, all methods of the class are automatically marked
