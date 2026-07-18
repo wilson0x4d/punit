@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+import asyncio
 import importlib
 import inspect
 import os
@@ -10,7 +11,9 @@ import traceback
 from types import ModuleType
 from typing import Any, Callable, Optional
 
+from .TextIOCapture import setup_global_text_io, _PERSISTENT_STDOUT, _PERSISTENT_STDERR
 from .cli import CommandLineInterface
+from .concurrent import ConcurrentPool, _execute_fact, _execute_theory
 from .facts.FactManager import FactManager
 from .setups.SetupManager import SetupManager
 from .teardowns.TeardownManager import TeardownManager
@@ -32,6 +35,27 @@ def _get_skip_condition(target: Any) -> bool | Callable[..., bool] | None:
     if hasattr(unwrapped, '__punit_skip_condition'):
         return getattr(unwrapped, '__punit_skip_condition')
     return None
+
+
+def _is_synchronous(target: Any) -> bool:
+    """Return True if *target* is marked with ``@synchronous``."""
+    unwrapped = inspect.unwrap(target)
+    return getattr(unwrapped, '__punit_synchronous', None) is True
+
+
+def _get_concurrency(cli: 'CommandLineInterface') -> int:
+    """Resolve the concurrency level from CLI.
+
+    Returns ``-1`` when concurrent mode is disabled (use sequential flow).
+    Returns the worker count when enabled; ``0`` maps to ``cpu_count // 2``.
+    """
+    mode = cli.concurrent_mode
+    if mode is None:
+        return -1
+    if mode <= 0:
+        cores = os.cpu_count() or 1
+        return max(1, cores // 2)
+    return mode
 
 
 class TestRunner:
@@ -56,7 +80,6 @@ class TestRunner:
         setup_manager = SetupManager.instance()
 
         if class_name is not None and len(class_name) > 0:
-            # Class-scoped path -- this test lives inside a class
             sd = setup_manager.get('class', module_name, class_name)
             if sd is not None:
                 try:
@@ -72,7 +95,6 @@ class TestRunner:
                         print(f'Setup Error ({target_desc}): {ex}')
                     return False
         else:
-            # Module-scoped path -- this is a bare-function test
             sd = setup_manager.get('module', module_name, '')
             if sd is not None:
                 try:
@@ -100,7 +122,6 @@ class TestRunner:
         teardown_manager = TeardownManager.instance()
 
         if class_name is not None:
-            # Class-scoped path -- this test lives inside a class
             td = teardown_manager.get('class', module_name, class_name)
             if td is not None:
                 try:
@@ -115,7 +136,6 @@ class TestRunner:
                         )
                         print(f'Teardown Error ({target_desc}): {ex}')
         else:
-            # Module-scoped path -- this is a bare-function test
             td = teardown_manager.get('module', module_name, '')
             if td is not None:
                 try:
@@ -157,7 +177,7 @@ class TestRunner:
             result.file_name = filename
             result.module_name = module_report_name
             result.start_time = time.time()
-            result.capture_output(False)
+            result.capture_output()
             try:
                 class_instance: Any = None
                 skip_condition = _get_skip_condition(fact.target)
@@ -180,15 +200,11 @@ class TestRunner:
                         result.is_success = False
                         result.exception = ex
                 else:
-                    # Setup failed; record a failure result.
                     result.is_success = False
                 fails_reason = _get_fails_reason(fact.target)
                 if fails_reason is not None:
                     result.expected_failure_reason = fails_reason
-                    # Invert the result: a failing test with @fails counts as success,
-                    # and a passing test with @fails counts as failure (regression).
                     result.is_success = not result.is_success
-                    # Set an exception so report generators can show the reason text.
                     if not result.exception:
                         result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
                 result.stop_time = time.time()
@@ -214,7 +230,7 @@ class TestRunner:
                 result.file_name = filename
                 result.module_name = module_report_name
                 result.start_time = time.time()
-                result.capture_output(False)
+                result.capture_output()
                 try:
                     class_instance: Any = None
                     skip_condition = _get_skip_condition(theory.target)
@@ -237,16 +253,12 @@ class TestRunner:
                             result.is_success = False
                             result.exception = ex
                     else:
-                        # Setup failed; record a failure result.
                         result.is_success = False
                     fails_reason = _get_fails_reason(theory.target)
                     if fails_reason is not None:
                         result.is_expected_failure = True
                         result.expected_failure_reason = fails_reason
-                        # Invert the result: a failing test with @fails counts as success,
-                        # and a passing test with @fails counts as failure (regression).
                         result.is_success = not result.is_success
-                        # Set an exception so report generators can show the reason text.
                         if not result.exception:
                             result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
                     result.stop_time = time.time()
@@ -264,7 +276,18 @@ class TestRunner:
         results: list[TestResult] = []
         result: TestResult
         # TODO: aliasing
+        # Install persistent TextIO captures so both serial and concurrent
+        # paths dispatch writes to the correct task-local receivers.
+        setup_global_text_io()
+        # Set quiet passthrough on the global captures based on CLI
+        _PERSISTENT_STDOUT.quiet = self.__cli.quiet
+        _PERSISTENT_STDERR.quiet = self.__cli.quiet
         test_package_path = os.path.join(os.path.abspath(os.curdir), self.__test_package_name).replace('\\', '/')
+        concurrency = _get_concurrency(self.__cli)
+
+        if concurrency > 0:
+            return await self._run_concurrent(results, test_package_path)
+
         for filename in self.__filenames:
             ts = time.time()
             if not self.__test_package_name:
@@ -292,9 +315,6 @@ class TestRunner:
                     return results
 
             except Exception as ex:
-                # module-level failure, report test failure against the module
-                # this is a best-attempt to create output that report readers
-                # can consume to show there was a broad failure in a module.
                 result = TestResult()
                 result.class_name = '*'
                 result.module_name = module_report_name
@@ -308,3 +328,126 @@ class TestRunner:
                 if self.__cli.failfast:
                     return results
         return results
+
+    # ------------------------------------------------------------------
+    # Concurrent execution
+    # ------------------------------------------------------------------
+
+    async def _run_concurrent(self, results: list[TestResult], test_package_path: str) -> list[TestResult]:
+        """Execute all tests with a worker pool (each worker has its own event loop)."""
+        concurrency = _get_concurrency(self.__cli)
+        pool: ConcurrentPool | None = None
+        try:
+            pool = ConcurrentPool(concurrency)
+            with pool:
+                module_report_name = ''
+                for filename in self.__filenames:
+                    try:
+                        if not self.__test_package_name:
+                            module_import_name = filename
+                        else:
+                            module_import_name = filename.replace(test_package_path, '').replace('/', '.')
+                            if module_import_name.endswith('.py'):
+                                module_import_name = module_import_name[:-3]
+                        module_report_name = module_import_name.lstrip('.')
+                        if not self.__test_package_name:
+                            test_module = importlib.import_module(module_import_name)
+                        else:
+                            test_module = importlib.import_module(module_import_name, self.__test_package_name)
+                        host_name = socket.gethostname()
+
+                        await self._run_concurrent_facts(host_name, test_module, filename, module_report_name, results, pool)
+                        if self.__cli.failfast and any(e.is_success is False for e in results):
+                            break
+
+                        await self._run_concurrent_theories(host_name, test_module, filename, module_report_name, results, pool)
+                        if self.__cli.failfast and any(e.is_success is False for e in results):
+                            break
+
+                        await self._run_synchronous_facts(host_name, test_module, filename, module_report_name, results, pool)
+                        await self._run_synchronous_theories(host_name, test_module, filename, module_report_name, results, pool)
+
+                    except Exception as ex:
+                        result = TestResult()
+                        result.class_name = '*'
+                        result.module_name = module_report_name
+                        result.test_name = '*'
+                        result.start_time = time.time()
+                        result.stop_time = time.time()
+                        result.is_success = False
+                        result.exception = ex
+                        results.append(result)
+                        self.print_test_result(result)
+                        if self.__cli.failfast:
+                            break
+        except Exception:
+            pass
+        return results
+
+    async def _run_concurrent_facts(self, host_name: str, test_module: ModuleType, filename: str,
+                                     module_report_name: str, results: list[TestResult],
+                                     pool: ConcurrentPool) -> None:
+        """Run non-synchronous facts concurrently via the worker pool."""
+        facts = FactManager.instance().get(test_module.__name__)
+        coros: list[Any] = []
+        for fact in facts:
+            if _is_synchronous(fact.target):
+                continue
+            coro = _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
+            coros.append(coro)
+        if coros:
+            test_results = await asyncio.gather(*coros)
+            for test_result in test_results:
+                results.append(test_result)
+                self.print_test_result(test_result)
+                if self.__cli.failfast and not test_result.is_success:
+                    return
+
+    async def _run_concurrent_theories(self, host_name: str, test_module: ModuleType, filename: str,
+                                        module_report_name: str, results: list[TestResult],
+                                        pool: ConcurrentPool) -> None:
+        """Run non-synchronous theory data-points concurrently."""
+        theories = TheoryManager.instance().get(test_module.__name__)
+        coros: list[Any] = []
+        for theory in theories:
+            for data in theory.datas:
+                if _is_synchronous(theory.target):
+                    continue
+                coro = _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                coros.append(coro)
+        if coros:
+            test_results = await asyncio.gather(*coros)
+            for test_result in test_results:
+                results.append(test_result)
+                self.print_test_result(test_result)
+                if self.__cli.failfast and not test_result.is_success:
+                    return
+
+    async def _run_synchronous_facts(self, host_name: str, test_module: ModuleType, filename: str,
+                                      module_report_name: str, results: list[TestResult],
+                                      pool: ConcurrentPool) -> None:
+        """Run @synchronous facts sequentially."""
+        facts = FactManager.instance().get(test_module.__name__)
+        for fact in facts:
+            if not _is_synchronous(fact.target):
+                continue
+            test_result = await _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
+            results.append(test_result)
+            self.print_test_result(test_result)
+            if self.__cli.failfast and not test_result.is_success:
+                return
+
+    async def _run_synchronous_theories(self, host_name: str, test_module: ModuleType, filename: str,
+                                         module_report_name: str, results: list[TestResult],
+                                         pool: ConcurrentPool) -> None:
+        """Run @synchronous theory data-points sequentially."""
+        theories = TheoryManager.instance().get(test_module.__name__)
+        for theory in theories:
+            if not _is_synchronous(theory.target):
+                continue
+            for data in theory.datas:
+                test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                results.append(test_result)
+                self.print_test_result(test_result)
+                if self.__cli.failfast and not test_result.is_success:
+                    return

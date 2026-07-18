@@ -1,61 +1,17 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-import io
 import sys
-from typing import Any, Optional, TextIO
+from typing import Any, Optional, Tuple
 
-
-class TextIOCapture(io.TextIOBase):
-
-    __quiet: bool
-    output: str | None = None
-    target: TextIO
-
-    def __init__(self, target: TextIO, quiet: bool = False) -> None:
-        self.__quiet = quiet
-        self.output = None
-        self.target = target
-
-    @property
-    def closed(self) -> bool:
-        return False
-
-    def close(self) -> None:
-        pass
-
-    def fileno(self) -> int:
-        return self.target.fileno()
-
-    def flush(self) -> None:
-        if not self.__quiet:
-            self.target.flush()
-
-    def isatty(self) -> bool:
-        return self.target.isatty()
-
-    def readable(self) -> bool:
-        return self.target.readable()
-
-    def read(self, n: int | None = -1, /) -> str:
-        return self.target.read(n)  # type: ignore[arg-type]
-
-    def reconfigure(
-        self, *, encoding: str | None = None, errors: str | None = None, newline: str | None = None, **kwargs: Any
-    ) -> io.TextIOBase:
-        return self
-
-    def writable(self) -> bool:
-        return self.target.writable()
-
-    def write(self, text: str) -> int:
-        if self.output is None:
-            self.output = text
-        else:
-            self.output += text
-        if not self.__quiet:
-            self.target.write(text)
-        return len(text)
+from .TextIOCapture import (
+    TextIOReceiver,
+    _TextIOCapture,
+    _clear_receivers,
+    _PERSISTENT_STDOUT,
+    _PERSISTENT_STDERR,
+    _set_receivers,
+)
 
 
 class TestResult:
@@ -87,8 +43,8 @@ class TestResult:
     __package_name: str | None
     __properties: dict[str, Any]
     __start_time: float | None
-    __stderr_capture: TextIOCapture | None
-    __stdout_capture: TextIOCapture | None
+    __stdout_receiver: TextIOReceiver | None
+    __stderr_receiver: TextIOReceiver | None
     __stop_time: float | None
     __test_name: str | None
 
@@ -104,8 +60,8 @@ class TestResult:
         self.__package_name = None
         self.__properties = dict[str, Any]()
         self.__start_time = None
-        self.__stderr_capture = None
-        self.__stdout_capture = None
+        self.__stdout_receiver = None
+        self.__stderr_receiver = None
         self.__stop_time = None
         self.__test_name = None
 
@@ -213,11 +169,11 @@ class TestResult:
 
     @property
     def stderr(self) -> str | None:
-        return None if self.__stderr_capture is None else self.__stderr_capture.output
+        return None if self.__stderr_receiver is None else self.__stderr_receiver.output
 
     @property
     def stdout(self) -> str | None:
-        return None if self.__stdout_capture is None else self.__stdout_capture.output
+        return None if self.__stdout_receiver is None else self.__stdout_receiver.output
 
     @property
     def stop_time(self) -> float | None:
@@ -255,14 +211,30 @@ class TestResult:
         else:
             return f'{(took*1000000):.3f}'.rstrip('0').rstrip('.') + 'ns'
 
-    def capture_output(self, quiet: bool = False) -> None:
-        self.__stdout_capture = TextIOCapture(sys.stdout, quiet)
-        self.__stderr_capture = TextIOCapture(sys.stderr, quiet)
-        sys.stdout = self.__stdout_capture
-        sys.stderr = self.__stderr_capture
+    def capture_output(self) -> None:
+        """Prepare output capture for this test result.
+
+        Creates receiver pair and sets them on the contextvars.ContextVar
+        so that the persistent ``_TextIOCapture`` routes all ``write()``
+        calls to the correct receivers.  The persistent captures control
+        ``quiet`` passthrough based on the process-wide ``--quiet`` flag.
+        """
+        stdout_recv = TextIOReceiver()
+        stderr_recv = TextIOReceiver()
+        stdout_recv.init()
+        stderr_recv.init()
+        self.__stdout_receiver = stdout_recv
+        self.__stderr_receiver = stderr_recv
+        _set_receivers(stdout_recv, stderr_recv)
 
     def release_output(self) -> None:
-        if self.__stdout_capture is not None and self.__stdout_capture.target is not None:
-            sys.stdout = self.__stdout_capture.target
-        if self.__stderr_capture is not None and self.__stderr_capture.target is not None:
-            sys.stderr = self.__stderr_capture.target
+        """Release the receiver pair from the contextvars.ContextVar.
+
+        This clears the contextvars.ContextVar so that further writes
+        (e.g. from teardown or unexpected post-test output) are not
+        captured.  The receiver's ``output`` attribute remains available
+        for inspection via the ``stdout`` / ``stderr`` properties.
+        """
+        self.__stdout_receiver = None
+        self.__stderr_receiver = None
+        _clear_receivers()

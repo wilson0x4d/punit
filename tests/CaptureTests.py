@@ -1,48 +1,93 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
+"""
+Verify output capture works in both serial and concurrent execution paths.
+
+The new design uses a persistent global ``_TextIOCapture`` for stdout/stderr
+that dispatches writes to a ``TextIOReceiver`` via a contextvars.ContextVar.
+When ``TestResult.capture_output()`` is called, receivers are set on the
+contextvar.  Writes to ``sys.stdout`` (which points to the persistent
+capture) are routed to the receiver for the current task.
+"""
+
 import sys
+
 from punit import fact
-from punit.TestResult import TextIOCapture
+from punit.TestResult import TestResult
+
+
+# --------------------------------------------------------------
+# Serial (non-concurrent path)
+# --------------------------------------------------------------
+
+@fact
+def serial_captures_stdout() -> None:
+    result = TestResult()
+    result.capture_output()
+    print('serial-stdout-test')
+    assert result.stdout == 'serial-stdout-test\n'
+    result.release_output()
 
 
 @fact
-def captures_stdout() -> None:
-    capture = TextIOCapture(sys.stdout, False)
-    sys.stdout = capture
-    print('stdout-test')
-    assert capture.output == 'stdout-test\n'
+def serial_captures_stderr() -> None:
+    result = TestResult()
+    result.capture_output()
+    print('serial-stderr-test', file=sys.stderr)
+    assert result.stderr == 'serial-stderr-test\n'
+    result.release_output()
 
 
 @fact
-def captures_stderr() -> None:
-    capture = TextIOCapture(sys.stderr, False)
-    sys.stderr = capture
-    print('stderr-test', file=sys.stderr)
-    assert capture.output == 'stderr-test\n'
+def serial_captures_both_stdout_and_stderr() -> None:
+    result = TestResult()
+    result.capture_output()
+    print('serial-both-stdout')
+    print('serial-both-stderr', file=sys.stderr)
+    assert result.stdout == 'serial-both-stdout\n'
+    assert result.stderr == 'serial-both-stderr\n'
+    result.release_output()
 
 
 @fact
-def captures_stdout_and_stderr() -> None:
-    capture1 = TextIOCapture(sys.stdout, False)
-    sys.stdout = capture1
-    capture2 = TextIOCapture(sys.stderr, False)
-    sys.stderr = capture2
-    print('stdout-test', file=sys.stdout)
-    print('stderr-test', file=sys.stderr)
-    assert capture1.output == 'stdout-test\n'
-    assert capture2.output == 'stderr-test\n'
+def serial_release_output_stops_receiving() -> None:
+    """Verify that after release_output, text is no longer captured."""
+    result = TestResult()
+    result.capture_output()
+    print('before-release')
+    assert result.stdout == 'before-release\n'
+    result.release_output()
+    # After release_output, the receiver is None so stdout is None too
+    assert result.stdout is None
 
 
 @fact
-def isatty_delegates_to_target() -> None:
-    capture = TextIOCapture(sys.stdout, False)
-    assert capture.isatty() == sys.stdout.isatty()
+def serial_captures_multiple_print_calls() -> None:
+    result = TestResult()
+    result.capture_output()
+    print('line1')
+    print('line2')
+    print('line3')
+    assert result.stdout == 'line1\nline2\nline3\n'
+    result.release_output()
 
 
 @fact
-def flush_is_noop_on_quiet() -> None:
-    capture = TextIOCapture(sys.stdout, True)
-    # Should not raise even though quiet mode
-    capture.flush()
-    assert capture.output is None
+def stdout_is_none_without_capture() -> None:
+    result = TestResult()
+    assert result.stdout is None
+    assert result.stderr is None
+
+
+@fact
+def release_output_clears_internal_references() -> None:
+    """Verify release_output resets internal state after capture completes."""
+    result = TestResult()
+    result.capture_output()
+    print('test')
+    captured = result.stdout  # save before release
+    assert captured == 'test\n'
+    result.release_output()
+    assert result.stdout is None
+    assert result.stderr is None
