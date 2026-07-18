@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from punit import fact, teardown
+from punit import fact, sequential, teardown
 from punit.mocks import Mock
 
 
@@ -10,6 +10,7 @@ from punit.mocks import Mock
 _class_teardown_calls = Mock()
 
 
+@sequential
 class TeardownClassTests:
     """Tests that a class-scoped @teardown fires after each method."""
 

@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import asyncio
-from punit import fact, teardown
+from punit import fact, teardown, sequential
 from punit.mocks import Mock
 
 
@@ -17,6 +17,7 @@ def module_teardown() -> None:
 
 
 @fact
+@sequential
 def aaa_fact_one() -> None:
     """First fact triggers one teardown call."""
     # teardown fires AFTER this test, so count is still 0 during execution.
@@ -24,6 +25,7 @@ def aaa_fact_one() -> None:
 
 
 @fact
+@sequential
 async def async_fact_two() -> None:
     """Async fact also triggers the module-scoped teardown."""
     await asyncio.sleep(0.01)
@@ -31,6 +33,7 @@ async def async_fact_two() -> None:
 
 
 @fact
+@sequential
 def fact_three() -> None:
     """Third fact; verify total teardown count after all tests run."""
     assert _module_teardown_calls.call_count == 2, \
