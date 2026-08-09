@@ -20,6 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "coverage",
     "mypy",
     "twine"
