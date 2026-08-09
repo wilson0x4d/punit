@@ -7,6 +7,7 @@ from .assertions import collections, exceptions, numeric, strings
 from .assertions.exceptions import raises
 from .assertions.numeric import approx
 from .facts import fact
+from .lifecycle import Lifecycle, lifecycle
 from .mocks.mock import Mock
 from .results import fails
 from .setups import Setup, setup
@@ -25,6 +26,7 @@ __all__ = [
     'assertions',
     'collections',
     'exceptions', 'raises',
+    'lifecycle', 'Lifecycle',
     'mocks', 'Mock',
     'numeric', 'approx',
     'strings',

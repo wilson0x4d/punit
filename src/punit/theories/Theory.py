@@ -52,24 +52,42 @@ class Theory:
     def target(self) -> Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]:
         return self.__target
 
-    async def execute(self, module: ModuleType, data: tuple) -> Any | None:
-        class_instance: Any | None = None
+    async def execute(
+        self,
+        module: ModuleType,
+        data: tuple,
+        class_instance: Any | None = None,
+    ) -> Any | None:
+        """Execute the theory, optionally using *class_instance*.
+
+        When *class_instance* is ``None`` and the target is a class-method,
+        a fresh instance is created.  Otherwise the provided instance is used
+        directly.
+        """
         coro: Coroutine | None = None
-        if hasattr(self.__target, '__qualname__') and self.__target.__qualname__.find('.') > -1:
-            qnparts = self.__target.__qualname__.split('.')
+        if class_instance is not None or (
+            hasattr(self.__target, '__qualname__')
+            and self.__target.__qualname__.find('.') > -1
+        ):
             if isinstance(self.__target, staticmethod):
                 coro = self.__target(*data)
             else:
-                qnparts = [p for p in self.__target.__qualname__.split('.') if p != '<locals>']
-                qntarget = module
+                qnparts = [
+                    p
+                    for p in self.__target.__qualname__.split('.')
+                    if p != '<locals>'
+                ]
+                qntarget: Any = module
                 for qnpart in qnparts[0:-1]:
                     qntarget = getattr(qntarget, qnpart)
                 if isinstance(self.__target, classmethod):
                     args = (qntarget,) + data
                     coro = self.__target.__func__(*args)
                 else:
-                    # every test execution gets a new instance of class
-                    class_instance = cast(Any, cast(Callable, qntarget)())
+                    if class_instance is None:
+                        class_instance = cast(
+                            Any, cast(Callable, qntarget)()
+                        )
                     args = (class_instance,) + data
                     coro = self.__target(*args)
         else:

@@ -13,6 +13,8 @@ from typing import Any, Callable, Optional
 
 from .TextIOCapture import setup_global_text_io, _PERSISTENT_STDOUT, _PERSISTENT_STDERR
 from .cli import CommandLineInterface
+from .lifecycle import Lifecycle
+from .lifecycle_manager import LifecycleManager
 from .parallelism import ThreadPool, _execute_fact, _execute_theory
 from .facts.FactManager import FactManager
 from .setups.SetupManager import SetupManager
@@ -47,6 +49,21 @@ def _is_parallel(target: Any) -> bool:
     """Return True if *target* is marked with ``@parallel``."""
     unwrapped = inspect.unwrap(target)
     return getattr(unwrapped, '__punit_parallel', None) is True
+
+
+def _has_per_run_lifecycle(target: Any, module: ModuleType) -> bool:
+    """Return True if *target* belongs to a class decorated with ``@lifecycle(PER_RUN)``."""
+    md = target.metadata if hasattr(target, 'metadata') else None
+    if md is None:
+        return False
+    cn = getattr(md, 'class_name', None)
+    if not cn or len(cn) == 0:
+        return False
+    cls: Any = module
+    for part in cn.split('.'):
+        cls = getattr(cls, part)
+    lc = LifecycleManager.get_lifecycle(cls)
+    return lc == Lifecycle.PER_RUN
 
 
 def _get_parallelism(cli: 'CommandLineInterface') -> int:
@@ -191,7 +208,141 @@ class TestRunner:
 
     async def __run_facts(self, host_name: str, test_module: ModuleType, filename: str, module_report_name: str, results: list[TestResult]) -> None:
         """Run all facts for a test module and return their results."""
+        from .facts.Fact import Fact
         facts = FactManager.instance().get(test_module.__name__)
+        module_name = test_module.__name__
+
+        # Group facts by class_name for lifecycle-aware execution
+        class_facts: dict[str | None, list[Fact]] = {}
+        for fact in facts:
+            key: str | None = fact.metadata.class_name or ''
+            if key == '':
+                key = None
+            if key not in class_facts:
+                class_facts[key] = []
+            class_facts[key].append(fact)
+
+        for class_name, facts_list in class_facts.items():
+            if class_name is not None and len(class_name) > 0:
+                # Resolve the class type for lifecycle-based decisions
+                cls = test_module
+                for part in class_name.split("."):
+                    cls = getattr(cls, part)
+                lifecycle = LifecycleManager.get_lifecycle(cls)
+                if lifecycle == Lifecycle.PER_RUN:
+                    await self.__run_facts_per_run(
+                        host_name, test_module, module_name,
+                        module_report_name, filename, class_name, facts_list, results,
+                        lifecycle, cls,
+                    )
+                else:
+                    await self.__run_facts_per_test(
+                        host_name, test_module, module_name,
+                        module_report_name, filename, class_name, facts_list, results,
+                    )
+            else:
+                await self.__run_facts_per_test(
+                    host_name, test_module, module_name,
+                    module_report_name, filename, None, facts_list, results,
+                )
+
+    async def __run_facts_per_run(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        module_name: str,
+        module_report_name: str,
+        filename: str,
+        class_name: str,
+        facts: list,
+        results: list[TestResult],
+        lifecycle: Lifecycle,
+        cls: Any,
+    ) -> None:
+        """Run facts in lifecycle-aware mode: setup once, all tests, teardown once."""
+        factory = lambda cn=class_name: getattr(test_module, cn)()  # type: ignore[misc]
+        class_instance, state = LifecycleManager.get_or_create(cls, lifecycle, factory)
+
+        # Fire setup once for PER_RUN; always fire for PER_TEST
+        if state is not None and not state.setup_fired:
+            state.setup_fired = True
+        setup_ok = await self.__setup(test_module, module_name, class_name, class_instance)
+
+        for fact in facts:
+            result = TestResult()
+            result.host_name = host_name
+            result.package_name = self.__test_package_name
+            result.file_name = filename
+            result.module_name = module_report_name
+            result.start_time = time.time()
+            result.capture_output()
+            try:
+                skip_condition = _get_skip_condition(fact.target)
+                skipped: bool = False
+                if skip_condition is not None:
+                    if callable(skip_condition):
+                        if skip_condition():
+                            skipped = True
+                    else:
+                        skipped = skip_condition is True
+
+                if skipped:
+                    result.is_skip = True
+                    result.is_success = True
+                elif setup_ok:
+                    try:
+                        await fact.execute(test_module, class_instance)
+                        result.is_success = True
+                    except Exception as ex:
+                        result.is_success = False
+                        result.exception = ex
+                else:
+                    result.is_success = False
+
+                fails_reason = _get_fails_reason(fact.target)
+                if fails_reason is not None:
+                    result.expected_failure_reason = fails_reason
+                    result.is_success = not result.is_success
+                    if not result.exception:
+                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+
+                result.stop_time = time.time()
+                result.class_name = fact.metadata.class_name
+                result.test_name = fact.metadata.name
+                results.append(result)
+            finally:
+                result.release_output()
+            self.print_test_result(result)
+            if self.__cli.failfast and not result.is_success:
+                LifecycleManager.clear(cls)
+                return
+
+        if setup_ok:
+            await self.__teardown(test_module, module_name, class_name, class_instance)
+        LifecycleManager.clear(cls)
+
+    async def __run_facts_per_test(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        module_name: str,
+        module_report_name: str,
+        filename: str,
+        class_name: Optional[str],
+        facts: list,
+        results: list[TestResult],
+    ) -> None:
+        """Run facts in PER_TEST lifecycle: setup/execute/teardown per test."""
+        factory: Callable[[], Any]
+        cls: Any = None
+        if class_name is not None and len(class_name) > 0:
+            cls = test_module
+            for part in class_name.split("."):
+                cls = getattr(cls, part)
+            factory = lambda cn=class_name: getattr(test_module, cn)()  # type: ignore[misc]
+        else:
+            factory = lambda: None  # type: ignore
+
         for fact in facts:
             result = TestResult()
             result.host_name = host_name
@@ -214,26 +365,42 @@ class TestRunner:
                 if skipped:
                     result.is_skip = True
                     result.is_success = True
-                elif await self.__setup(test_module, test_module.__name__, fact.metadata.class_name, class_instance):
-                    try:
-                        class_instance = await fact.execute(test_module)
-                        result.is_success = True
-                    except Exception as ex:
+                elif cls is not None:
+                    class_instance, _ = LifecycleManager.get_or_create(
+                        cls, Lifecycle.PER_TEST, factory,
+                    )
+                    if await self.__setup(test_module, module_name, class_name, class_instance):
+                        try:
+                            await fact.execute(test_module, class_instance)
+                            result.is_success = True
+                        except Exception as ex:
+                            result.is_success = False
+                            result.exception = ex
+                    else:
                         result.is_success = False
-                        result.exception = ex
                 else:
-                    result.is_success = False
+                    if await self.__setup(test_module, module_name, None, class_instance):
+                        try:
+                            await fact.execute(test_module, class_instance)
+                            result.is_success = True
+                        except Exception as ex:
+                            result.is_success = False
+                            result.exception = ex
+                    else:
+                        result.is_success = False
+
                 fails_reason = _get_fails_reason(fact.target)
                 if fails_reason is not None:
                     result.expected_failure_reason = fails_reason
                     result.is_success = not result.is_success
                     if not result.exception:
                         result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+
                 result.stop_time = time.time()
                 result.class_name = fact.metadata.class_name
                 result.test_name = fact.metadata.name
                 results.append(result)
-                await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
+                await self.__teardown(test_module, module_name, result.class_name, class_instance)
             finally:
                 result.release_output()
             self.print_test_result(result)
@@ -243,56 +410,208 @@ class TestRunner:
     async def __run_theories(self, host_name: str, test_module: ModuleType, filename: str, module_report_name: str, results: list[TestResult]) -> None:
         """Run all theory data-points for a test module and return their results."""
         theories = TheoryManager.instance().get(test_module.__name__)
-        for theory in theories:
-            for data in theory.datas:
-                result = TestResult()
-                result.host_name = host_name
-                result.package_name = self.__test_package_name
-                result.properties['data'] = data
-                result.file_name = filename
-                result.module_name = module_report_name
-                result.start_time = time.time()
-                result.capture_output()
-                try:
-                    class_instance: Any = None
-                    skip_condition = _get_skip_condition(theory.target)
-                    skipped: bool = False
-                    if skip_condition is not None:
-                        if callable(skip_condition):
-                            if skip_condition():
-                                skipped = True
-                        else:
-                            skipped = skip_condition is True
+        module_name = test_module.__name__
 
-                    if skipped:
-                        result.is_skip = True
+        # Group theories by class_name for lifecycle-aware execution
+        class_theories: dict[str | None, list[tuple[Any, ...]]] = {}
+        for theory in theories:
+            # Each theory can have multiple data points; they all belong to the same class
+            # We treat (theory, data) as individual test units but group by class for lifecycle
+            key: str | None = theory.metadata.class_name or ''
+            if key == '':
+                key = None
+            if key not in class_theories:
+                class_theories[key] = []
+            for data in theory.datas:
+                class_theories[key].append((theory, data))
+
+        for class_name, theory_data_list in class_theories.items():
+            if class_name is not None and len(class_name) > 0:
+                cls = test_module
+                for part in class_name.split("."):
+                    cls = getattr(cls, part)
+                lifecycle = LifecycleManager.get_lifecycle(cls)
+                if lifecycle == Lifecycle.PER_RUN:
+                    await self.__run_theories_per_run(
+                        host_name, test_module, module_name,
+                        module_report_name, filename, class_name, theory_data_list, results,
+                        lifecycle, cls,
+                    )
+                else:
+                    await self.__run_theories_per_test(
+                        host_name, test_module, module_name,
+                        module_report_name, filename, class_name, theory_data_list, results,
+                    )
+            else:
+                await self.__run_theories_per_test(
+                    host_name, test_module, module_name,
+                    module_report_name, filename, None, theory_data_list, results,
+                )
+
+    async def __run_theories_per_run(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        module_name: str,
+        module_report_name: str,
+        filename: str,
+        class_name: str,
+        theory_data: list[tuple],
+        results: list[TestResult],
+        lifecycle: Lifecycle,
+        cls: Any,
+    ) -> None:
+        """Run theory data-points in lifecycle-aware mode: setup once, all data points, teardown once."""
+        factory = lambda cn=class_name: getattr(test_module, cn)()  # type: ignore[misc]
+        class_instance, state = LifecycleManager.get_or_create(cls, lifecycle, factory)
+
+        # Fire setup once for PER_RUN; always fire for PER_TEST
+        if state is not None and not state.setup_fired:
+            state.setup_fired = True
+        setup_ok = await self.__setup(test_module, module_name, class_name, class_instance)
+
+        for theory, data in theory_data:
+            result = TestResult()
+            result.host_name = host_name
+            result.package_name = self.__test_package_name
+            result.properties['data'] = data
+            result.file_name = filename
+            result.module_name = module_report_name
+            result.start_time = time.time()
+            result.capture_output()
+            try:
+                skip_condition = _get_skip_condition(theory.target)
+                skipped: bool = False
+                if skip_condition is not None:
+                    if callable(skip_condition):
+                        if skip_condition():
+                            skipped = True
+                    else:
+                        skipped = skip_condition is True
+
+                if skipped:
+                    result.is_skip = True
+                    result.is_success = True
+                elif setup_ok:
+                    try:
+                        await theory.execute(test_module, data, class_instance)
                         result.is_success = True
-                    elif await self.__setup(test_module, test_module.__name__, theory.metadata.class_name, class_instance):
+                    except Exception as ex:
+                        result.is_success = False
+                        result.exception = ex
+                else:
+                    result.is_success = False
+
+                fails_reason = _get_fails_reason(theory.target)
+                if fails_reason is not None:
+                    result.is_expected_failure = True
+                    result.expected_failure_reason = fails_reason
+                    result.is_success = not result.is_success
+                    if not result.exception:
+                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+
+                result.stop_time = time.time()
+                result.class_name = theory.metadata.class_name
+                result.test_name = theory.metadata.name
+                results.append(result)
+            finally:
+                result.release_output()
+            self.print_test_result(result)
+            if self.__cli.failfast and not result.is_success:
+                LifecycleManager.clear(cls)
+                return
+
+        if setup_ok:
+            await self.__teardown(test_module, module_name, class_name, class_instance)
+        LifecycleManager.clear(cls)
+
+    async def __run_theories_per_test(
+        self,
+        host_name: str,
+        test_module: ModuleType,
+        module_name: str,
+        module_report_name: str,
+        filename: str,
+        class_name: Optional[str],
+        theory_data: list[tuple],
+        results: list[TestResult],
+    ) -> None:
+        """Run theory data-points in PER_TEST lifecycle: setup/execute/teardown per data-point."""
+        factory: Callable[[], Any]
+        cls: Any = None
+        if class_name is not None and len(class_name) > 0:
+            cls = test_module
+            for part in class_name.split("."):
+                cls = getattr(cls, part)
+            factory = lambda cn=class_name: getattr(test_module, cn)()  # type: ignore[misc]
+        else:
+            factory = lambda: None  # type: ignore
+
+        for theory, data in theory_data:
+            result = TestResult()
+            result.host_name = host_name
+            result.package_name = self.__test_package_name
+            result.properties['data'] = data
+            result.file_name = filename
+            result.module_name = module_report_name
+            result.start_time = time.time()
+            result.capture_output()
+            try:
+                class_instance: Any = None
+                skip_condition = _get_skip_condition(theory.target)
+                skipped: bool = False
+                if skip_condition is not None:
+                    if callable(skip_condition):
+                        if skip_condition():
+                            skipped = True
+                    else:
+                        skipped = skip_condition is True
+
+                if skipped:
+                    result.is_skip = True
+                    result.is_success = True
+                elif cls is not None:
+                    class_instance, _ = LifecycleManager.get_or_create(
+                        cls, Lifecycle.PER_TEST, factory,
+                    )
+                    if await self.__setup(test_module, module_name, class_name, class_instance):
                         try:
-                            class_instance = await theory.execute(test_module, data)
+                            await theory.execute(test_module, data, class_instance)
                             result.is_success = True
                         except Exception as ex:
                             result.is_success = False
                             result.exception = ex
                     else:
                         result.is_success = False
-                    fails_reason = _get_fails_reason(theory.target)
-                    if fails_reason is not None:
-                        result.is_expected_failure = True
-                        result.expected_failure_reason = fails_reason
-                        result.is_success = not result.is_success
-                        if not result.exception:
-                            result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
-                    result.stop_time = time.time()
-                    result.class_name = theory.metadata.class_name
-                    result.test_name = theory.metadata.name
-                    results.append(result)
-                    await self.__teardown(test_module, test_module.__name__, result.class_name, class_instance)
-                finally:
-                    result.release_output()
-                self.print_test_result(result)
-                if self.__cli.failfast and not result.is_success:
-                    return
+                else:
+                    if await self.__setup(test_module, module_name, None, class_instance):
+                        try:
+                            await theory.execute(test_module, data, class_instance)
+                            result.is_success = True
+                        except Exception as ex:
+                            result.is_success = False
+                            result.exception = ex
+                    else:
+                        result.is_success = False
+
+                fails_reason = _get_fails_reason(theory.target)
+                if fails_reason is not None:
+                    result.is_expected_failure = True
+                    result.expected_failure_reason = fails_reason
+                    result.is_success = not result.is_success
+                    if not result.exception:
+                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+
+                result.stop_time = time.time()
+                result.class_name = theory.metadata.class_name
+                result.test_name = theory.metadata.name
+                results.append(result)
+                await self.__teardown(test_module, module_name, result.class_name, class_instance)
+            finally:
+                result.release_output()
+            self.print_test_result(result)
+            if self.__cli.failfast and not result.is_success:
+                return
 
     async def run(self) -> list[TestResult]:
         results: list[TestResult] = []
@@ -500,6 +819,10 @@ class TestRunner:
         pool: ThreadPool
     ) -> None:
         """Run non-sequential facts in parallel via thread pool."""
+        # Ensure LifecycleManager singleton exists before dispatching to
+        # workers — otherwise workers may see `__instance is None` and
+        # skip the global cache.
+        LifecycleManager.instance()
         facts = FactManager.instance().get(test_module.__name__)
         coros: list[Any] = []
         for fact in facts:
@@ -524,6 +847,9 @@ class TestRunner:
         pool: ThreadPool
     ) -> None:
         """Run non-sequential theory data-points concurrently."""
+        # Ensure LifecycleManager singleton exists before dispatching to
+        # workers.
+        LifecycleManager.instance()
         theories = TheoryManager.instance().get(test_module.__name__)
         coros: list[Any] = []
         for theory in theories:
@@ -591,6 +917,7 @@ class TestRunner:
         pool: ThreadPool
     ) -> None:
         """Run @parallel facts in parallel (auto-enable mode)."""
+        LifecycleManager.instance()
         facts = FactManager.instance().get(test_module.__name__)
         coros: list[Any] = []
         for fact in facts:
@@ -616,6 +943,7 @@ class TestRunner:
         pool: ThreadPool
     ) -> None:
         """Run @parallel theory data-points in parallel (auto-enable mode)."""
+        LifecycleManager.instance()
         theories = TheoryManager.instance().get(test_module.__name__)
         coros: list[Any] = []
         for theory in theories:

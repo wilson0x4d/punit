@@ -44,22 +44,40 @@ class Fact:
     def target(self) -> Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]:
         return self.__target
 
-    async def execute(self, module: ModuleType) -> Any | None:
-        class_instance: Any | None = None
+    async def execute(
+        self,
+        module: ModuleType,
+        class_instance: Any | None = None,
+    ) -> Any | None:
+        """Execute the fact, optionally using *class_instance*.
+
+        When *class_instance* is ``None`` and the target is a class-method,
+        a fresh instance is created.  Otherwise the provided instance is used
+        directly, allowing lifecycle managers to control instance creation.
+        """
         coro: Coroutine | None = None
-        if hasattr(self.__target, '__qualname__') and self.__target.__qualname__.find('.') > -1:
+        if class_instance is not None or (
+            hasattr(self.__target, '__qualname__')
+            and self.__target.__qualname__.find('.') > -1
+        ):
             if isinstance(self.__target, staticmethod):
                 coro = self.__target()
             else:
-                qnparts = [p for p in self.__target.__qualname__.split('.') if p != '<locals>']
-                qntarget = module
+                qnparts = [
+                    p
+                    for p in self.__target.__qualname__.split('.')
+                    if p != '<locals>'
+                ]
+                qntarget: Any = module
                 for qnpart in qnparts[0:-1]:
                     qntarget = getattr(qntarget, qnpart)
                 if isinstance(self.__target, classmethod):
                     coro = self.__target.__func__(qntarget)
                 else:
-                    # every test execution gets a new instance of class
-                    class_instance = cast(Any, cast(Callable, qntarget)())
+                    if class_instance is None:
+                        class_instance = cast(
+                            Any, cast(Callable, qntarget)()
+                        )
                     coro = self.__target(class_instance)
         else:
             coro = self.__target()

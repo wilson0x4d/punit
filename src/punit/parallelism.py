@@ -99,6 +99,8 @@ from types import ModuleType
 from typing import Any, Callable
 
 from .TestResult import TestResult
+from .lifecycle import Lifecycle
+from .lifecycle_manager import LifecycleManager
 
 
 class _TaskInfo:
@@ -240,9 +242,21 @@ async def _execute_fact(
     result.capture_output()
 
     class_instance: Any = None
+    state: Any = None
     try:
         md = fact.metadata
         unwrapped = inspect.unwrap(fact.target)
+
+        # -- lifecycle-aware instance creation --
+        if md.class_name and len(md.class_name) > 0:
+            cls = module
+            for part in md.class_name.split("."):
+                cls = getattr(cls, part)
+            lifecycle = LifecycleManager.get_lifecycle(cls)
+            factory = lambda cn=md.class_name: getattr(module, cn)()  # type: ignore[misc]
+            class_instance, state = LifecycleManager.get_or_create(
+                cls, lifecycle, factory,
+            )
 
         # -- skip check --
         skip_cond = getattr(unwrapped, '__punit_skip_condition', None)
@@ -266,18 +280,25 @@ async def _execute_fact(
         from .setups.SetupManager import SetupManager
         sd = SetupManager.instance().get(scope, module.__name__, md.class_name or '')
         if sd is not None:
-            try:
-                coro = sd.execute(module, class_instance)
-                if inspect.iscoroutine(coro):
-                    await coro
-            except Exception:
-                result.is_success = False
-                result.stop_time = time.time()
-                return result
+            # PER_TEST (state is None) → always fire setup.
+            # PER_RUN (state not None) → fire only the first time.
+            if state is None or (state is not None and not state.setup_fired):
+                if state is not None:
+                    with state._setup_lock:
+                        if not state.setup_fired:
+                            state.setup_fired = True
+                try:
+                    coro = sd.execute(module, class_instance)
+                    if inspect.iscoroutine(coro):
+                        await coro
+                except Exception:
+                    result.is_success = False
+                    result.stop_time = time.time()
+                    return result
 
         # -- test --
         try:
-            class_instance = await fact.execute(module)
+            await fact.execute(module, class_instance)
             result.is_success = True
         except Exception as ex:
             result.is_success = False
@@ -297,17 +318,34 @@ async def _execute_fact(
     finally:
         # -- teardown --
         if result.is_success is not None:
-            md = fact.metadata
-            scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
-            from .teardowns.TeardownManager import TeardownManager
-            td = TeardownManager.instance().get(scope, module.__name__, md.class_name or '')
-            if td is not None:
-                try:
-                    coro = td.execute(module, class_instance)
-                    if inspect.iscoroutine(coro):
-                        await coro
-                except Exception:
-                    pass
+            # For PER_RUN: signal done, fire teardown when last test finishes.
+            if state is not None:
+                LifecycleManager.release(state)
+                if state.teardown_ready:
+                    md = fact.metadata
+                    scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
+                    from .teardowns.TeardownManager import TeardownManager
+                    td = TeardownManager.instance().get(scope, module.__name__, md.class_name or '')
+                    if td is not None:
+                        try:
+                            coro = td.execute(module, class_instance)
+                            if inspect.iscoroutine(coro):
+                                await coro
+                        except Exception:
+                            pass
+            else:
+                # PER_TEST or no class — always fire teardown.
+                md = fact.metadata
+                scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
+                from .teardowns.TeardownManager import TeardownManager
+                td = TeardownManager.instance().get(scope, module.__name__, md.class_name or '')
+                if td is not None:
+                    try:
+                        coro = td.execute(module, class_instance)
+                        if inspect.iscoroutine(coro):
+                            await coro
+                    except Exception:
+                        pass
         result.release_output()
 
     return result
@@ -333,9 +371,21 @@ async def _execute_theory(
     result.capture_output()
 
     class_instance: Any = None
+    state: Any = None
     try:
         md = theory.metadata
         unwrapped = inspect.unwrap(theory.target)
+
+        # -- lifecycle-aware instance creation --
+        if md.class_name and len(md.class_name) > 0:
+            cls = module
+            for part in md.class_name.split("."):
+                cls = getattr(cls, part)
+            lifecycle = LifecycleManager.get_lifecycle(cls)
+            factory = lambda cn=md.class_name: getattr(module, cn)()  # type: ignore[misc]
+            class_instance, state = LifecycleManager.get_or_create(
+                cls, lifecycle, factory,
+            )
 
         # -- skip check --
         skip_cond = getattr(unwrapped, '__punit_skip_condition', None)
@@ -359,18 +409,25 @@ async def _execute_theory(
         from .setups.SetupManager import SetupManager
         sd = SetupManager.instance().get(scope, module.__name__, md.class_name or '')
         if sd is not None:
-            try:
-                coro = sd.execute(module, class_instance)
-                if inspect.iscoroutine(coro):
-                    await coro
-            except Exception:
-                result.is_success = False
-                result.stop_time = time.time()
-                return result
+            # PER_TEST (state is None) → always fire setup.
+            # PER_RUN (state not None) → fire only the first time.
+            if state is None or (state is not None and not state.setup_fired):
+                if state is not None:
+                    with state._setup_lock:
+                        if not state.setup_fired:
+                            state.setup_fired = True
+                try:
+                    coro = sd.execute(module, class_instance)
+                    if inspect.iscoroutine(coro):
+                        await coro
+                except Exception:
+                    result.is_success = False
+                    result.stop_time = time.time()
+                    return result
 
         # -- test --
         try:
-            class_instance = await theory.execute(module, data)
+            await theory.execute(module, data, class_instance)
             result.is_success = True
         except Exception as ex:
             result.is_success = False
