@@ -98,8 +98,8 @@ import time
 from types import ModuleType
 from typing import Any, Callable
 
-from .TestResult import TestResult
-from .lifecycle import Lifecycle
+from .theories import TheoryDescriptor
+from .test_result import TestResult
 from .lifecycle_manager import LifecycleManager
 
 
@@ -244,16 +244,16 @@ async def _execute_fact(
     class_instance: Any = None
     state: Any = None
     try:
-        md = fact.metadata
+        metadata = fact.metadata
         unwrapped = inspect.unwrap(fact.target)
 
         # -- lifecycle-aware instance creation --
-        if md.class_name and len(md.class_name) > 0:
+        if metadata.class_name and len(metadata.class_name) > 0:
             cls = module
-            for part in md.class_name.split("."):
+            for part in metadata.class_name.split("."):
                 cls = getattr(cls, part)
             lifecycle = LifecycleManager.get_lifecycle(cls)
-            factory = lambda cn=md.class_name: getattr(module, cn)()  # type: ignore[misc]
+            factory = lambda cn=metadata.class_name: getattr(module, cn)()  # type: ignore[misc]
             class_instance, state = LifecycleManager.get_or_create(
                 cls, lifecycle, factory,
             )
@@ -276,10 +276,10 @@ async def _execute_fact(
             return result
 
         # -- setup --
-        scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
-        from .setups.SetupManager import SetupManager
-        sd = SetupManager.instance().get(scope, module.__name__, md.class_name or '')
-        if sd is not None:
+        scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+        from .setups import SetupManager
+        setup_descriptor = SetupManager.instance().get(scope, module.__name__, metadata.class_name or '')
+        if setup_descriptor is not None:
             # PER_TEST (state is None) → always fire setup.
             # PER_RUN (state not None) → fire only the first time.
             if state is None or (state is not None and not state.setup_fired):
@@ -288,7 +288,7 @@ async def _execute_fact(
                         if not state.setup_fired:
                             state.setup_fired = True
                 try:
-                    coro = sd.execute(module, class_instance)
+                    coro = setup_descriptor.execute(module, class_instance)
                     if inspect.iscoroutine(coro):
                         await coro
                 except Exception:
@@ -312,8 +312,8 @@ async def _execute_fact(
                 result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
         result.stop_time = time.time()
-        result.class_name = md.class_name
-        result.test_name = md.name
+        result.class_name = metadata.class_name
+        result.test_name = metadata.name
 
     finally:
         # -- teardown --
@@ -322,10 +322,10 @@ async def _execute_fact(
             if state is not None:
                 LifecycleManager.release(state)
                 if state.teardown_ready:
-                    md = fact.metadata
-                    scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
-                    from .teardowns.TeardownManager import TeardownManager
-                    td = TeardownManager.instance().get(scope, module.__name__, md.class_name or '')
+                    metadata = fact.metadata
+                    scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                    from .teardowns import TeardownManager
+                    td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
                     if td is not None:
                         try:
                             coro = td.execute(module, class_instance)
@@ -335,10 +335,10 @@ async def _execute_fact(
                             pass
             else:
                 # PER_TEST or no class — always fire teardown.
-                md = fact.metadata
-                scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
-                from .teardowns.TeardownManager import TeardownManager
-                td = TeardownManager.instance().get(scope, module.__name__, md.class_name or '')
+                metadata = fact.metadata
+                scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                from .teardowns import TeardownManager
+                td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
                 if td is not None:
                     try:
                         coro = td.execute(module, class_instance)
@@ -352,7 +352,7 @@ async def _execute_fact(
 
 
 async def _execute_theory(
-    theory: Any,
+    theory_descriptor: TheoryDescriptor,
     data: tuple[Any, ...],
     module: ModuleType,
     module_report_name: str,
@@ -373,16 +373,16 @@ async def _execute_theory(
     class_instance: Any = None
     state: Any = None
     try:
-        md = theory.metadata
-        unwrapped = inspect.unwrap(theory.target)
+        metadata = theory_descriptor.metadata
+        unwrapped = inspect.unwrap(theory_descriptor.target)
 
         # -- lifecycle-aware instance creation --
-        if md.class_name and len(md.class_name) > 0:
+        if metadata.class_name and len(metadata.class_name) > 0:
             cls = module
-            for part in md.class_name.split("."):
+            for part in metadata.class_name.split("."):
                 cls = getattr(cls, part)
             lifecycle = LifecycleManager.get_lifecycle(cls)
-            factory = lambda cn=md.class_name: getattr(module, cn)()  # type: ignore[misc]
+            factory = lambda cn=metadata.class_name: getattr(module, cn)()  # type: ignore[misc]
             class_instance, state = LifecycleManager.get_or_create(
                 cls, lifecycle, factory,
             )
@@ -405,10 +405,10 @@ async def _execute_theory(
             return result
 
         # -- setup --
-        scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
-        from .setups.SetupManager import SetupManager
-        sd = SetupManager.instance().get(scope, module.__name__, md.class_name or '')
-        if sd is not None:
+        scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+        from .setups import SetupManager
+        setup_descriptor = SetupManager.instance().get(scope, module.__name__, metadata.class_name or '')
+        if setup_descriptor is not None:
             # PER_TEST (state is None) → always fire setup.
             # PER_RUN (state not None) → fire only the first time.
             if state is None or (state is not None and not state.setup_fired):
@@ -417,7 +417,7 @@ async def _execute_theory(
                         if not state.setup_fired:
                             state.setup_fired = True
                 try:
-                    coro = sd.execute(module, class_instance)
+                    coro = setup_descriptor.execute(module, class_instance)
                     if inspect.iscoroutine(coro):
                         await coro
                 except Exception:
@@ -427,7 +427,7 @@ async def _execute_theory(
 
         # -- test --
         try:
-            await theory.execute(module, data, class_instance)
+            await theory_descriptor.execute(module, data, class_instance)
             result.is_success = True
         except Exception as ex:
             result.is_success = False
@@ -441,16 +441,16 @@ async def _execute_theory(
                 result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
         result.stop_time = time.time()
-        result.class_name = md.class_name
-        result.test_name = md.name
+        result.class_name = metadata.class_name
+        result.test_name = metadata.name
 
     finally:
         # -- teardown --
         if result.is_success is not None:
-            md = theory.metadata
-            scope = 'class' if (md.class_name and len(md.class_name) > 0) else 'module'
-            from .teardowns.TeardownManager import TeardownManager
-            td = TeardownManager.instance().get(scope, module.__name__, md.class_name or '')
+            metadata = theory_descriptor.metadata
+            scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+            from .teardowns import TeardownManager
+            td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
             if td is not None:
                 try:
                     coro = td.execute(module, class_instance)

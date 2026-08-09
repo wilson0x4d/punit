@@ -5,7 +5,7 @@ import json
 import traceback
 from typing import Any
 
-from ..TestResult import TestResult
+from ..test_result import TestResult
 
 
 class JsonReportGenerator:

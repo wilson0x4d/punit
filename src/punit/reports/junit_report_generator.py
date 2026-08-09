@@ -5,7 +5,7 @@ from typing import Optional
 import datetime
 import xml.etree.ElementTree as et
 from xml.sax.saxutils import escape
-from ..TestResult import TestResult
+from ..test_result import TestResult
 
 
 class JUnitError:
@@ -50,7 +50,7 @@ class JUnitTestCase:
                 self.error = error
         self.stdout = None if test_result.stdout is None else escape(test_result.stdout)
         self.stderr = None if test_result.stderr is None else escape(test_result.stderr)
-        self.skipped = bool(test_result.is_skip)
+        self.skipped = test_result.is_skip is True
         self.expected_failure_reason = test_result.expected_failure_reason if test_result.expected_failure_reason is not None else None
 
 

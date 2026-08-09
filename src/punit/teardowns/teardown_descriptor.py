@@ -8,25 +8,25 @@ from typing import Callable, Coroutine, Union, cast
 from ..metadata import CallableMetadata
 
 
-class Setup:
-    """Wraps a ``@setup``-decorated initialization function or method.
+class TeardownDescriptor:
+    """Wraps a ``@teardown``-decorated cleanup function or method.
 
-    Setups execute immediately before each test runs, allowing you to prepare
+    Teardowns execute immediately after each test runs, allowing you to release
     resources or reset state without cluttering test bodies with try/finally blocks.
 
-    Setups come in two scopes: module-scoped (bare function) and class-scoped
-    (method inside a test class). The two scopes are independent of each other.
+    Like setups, teardowns come in module-scoped and class-scoped variants. The
+    two scopes are independent of each other.
 
     Example
     -------
 
     .. code-block:: python
 
-        from punit import fact, setup
+        from punit import fact, teardown
 
-        @setup
-        def my_setup():
-            prepare_database()
+        @teardown
+        def my_teardown():
+            cleanup_database()
 
         @fact
         def test_something():
@@ -67,10 +67,10 @@ class Setup:
         return self.__wrapped_target
 
     async def execute(self, module: ModuleType, obj: object | None = None) -> None:
-        """Execute the setup function.
+        """Execute the teardown function.
 
-        For module-scoped setups, ``obj`` is ignored.
-        For class-scoped setups on methods, ``obj`` should be an instance
+        For module-scoped teardowns, ``obj`` is ignored.
+        For class-scoped teardowns on methods, ``obj`` should be an instance
         of the decorated class; it is used as ``self`` via method binding.
         """
         if self.__scope_type == 'module':
@@ -79,7 +79,7 @@ class Setup:
             if inspect.iscoroutine(coro):
                 await coro
         else:
-            # class-scoped setup method;  execute on the provided instance
+            # class-scoped teardown method; execute on the provided instance
             # or create one if none was supplied (defensive fallback).
             obj_instance = obj
             if obj_instance is None:
@@ -97,7 +97,7 @@ class Setup:
                 args = (cls,)
                 coro = self.__wrapped_target.__func__(*args)
             else:
-                # regular instance method;  bind to the instance
+                # regular instance method; bind to the instance
                 bound = getattr(obj_instance, self.__target.__name__)
                 if inspect.iscoroutine(bound):
                     await bound
@@ -107,58 +107,3 @@ class Setup:
                         await coro
 
 
-def setup(target: Callable) -> Callable:
-    """Decorates a function or method as a Setup that runs before each test.
-
-    A setup may be synchronous or asynchronous. If it raises an exception, the
-    corresponding test is marked as failed but no further processing occurs for
-    that test.
-
-    Args:
-        target: The function or method to decorate as a Setup
-
-    Returns:
-        The original, undecorated target -- no wrapper is installed
-
-    Example
-    -------
-
-    .. code-block:: python
-
-        from punit import fact, setup, teardown
-
-        @setup
-        def db_setup():
-            global _connection
-            _connection = connect_to_database()
-
-        @teardown
-        def db_teardown():
-            global _connection
-            if _connection:
-                _connection.close()
-                _connection = None
-
-        @fact
-        def test_query():
-            assert query(_connection) is not None
-
-    Raises:
-        Exception: If target is not a function/method, or if it already carries
-            another pUnit decorator attribute.
-
-    """
-    from .SetupManager import SetupManager
-    unwrapped = inspect.unwrap(target)
-    if not isinstance(unwrapped, (FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType)):
-        raise Exception('@setup can only be applied to functions and methods.')
-    if hasattr(unwrapped, '__punit_decorator'):
-        raise Exception(
-            f'@setup and {getattr(unwrapped, "__punit_decorator")} cannot decorate the same function. '
-            f'Function "{unwrapped.__name__}" has already been decorated.'
-        )
-    setattr(unwrapped, '__punit_decorator', '@setup')
-
-    sd: Setup = Setup(target)
-    SetupManager.instance().put(sd)
-    return target

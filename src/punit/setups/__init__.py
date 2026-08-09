@@ -33,11 +33,13 @@ Example
 
 """
 
-from .Setup import Setup, setup
-from .SetupManager import SetupManager
+from .decorators import setup
+from .setup_descriptor import SetupDescriptor
+from .setup_manager import SetupManager
 
 
 __all__ = [
-    'Setup', 'setup',
-    'SetupManager'
+    'SetupDescriptor',
+    'SetupManager',
+    'setup',
 ]

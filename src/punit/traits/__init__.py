@@ -41,11 +41,13 @@ Example
 
 """
 
-from .TraitManager import TraitManager
-from .Trait import Trait, trait
+from .decorators import trait
+from .trait_descriptor import TraitDescriptor
+from .trait_manager import TraitManager
 
 
 __all__ = [
+    'TraitDescriptor',
     'TraitManager',
-    'Trait', 'trait'
+    'trait'
 ]

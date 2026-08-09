@@ -4,7 +4,7 @@
 import re
 
 
-class Filter:
+class FilterDescriptor:
     """
     Wraps a glob-style filter pattern and compiles it to a case-insensitive regex.
 
@@ -44,5 +44,5 @@ class Filter:
         return self.__pattern
 
     @property
-    def re(self) -> re.Pattern:
+    def re(self) -> re.Pattern[str]:
         return self.__re

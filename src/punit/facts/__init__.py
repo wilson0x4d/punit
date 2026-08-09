@@ -25,11 +25,13 @@ Example
 
 """
 
-from .Fact import Fact, fact
-from .FactManager import FactManager
+from .decorators import fact
+from .fact_descriptor import FactDescriptor
+from .fact_manager import FactManager
 
 
 __all__ = [
-    'Fact', 'fact',
-    'FactManager'
+    'FactDescriptor',
+    'FactManager',
+    'fact',
 ]

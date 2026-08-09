@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from .CallableMetadata import CallableMetadata
+from .callable_metadata import CallableMetadata
 
 
 __all__ = [

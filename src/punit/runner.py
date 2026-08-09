@@ -11,16 +11,17 @@ import traceback
 from types import ModuleType
 from typing import Any, Callable, Optional
 
-from .TextIOCapture import setup_global_text_io, _PERSISTENT_STDOUT, _PERSISTENT_STDERR
 from .cli import CommandLineInterface
 from .lifecycle import Lifecycle
 from .lifecycle_manager import LifecycleManager
 from .parallelism import ThreadPool, _execute_fact, _execute_theory
-from .facts.FactManager import FactManager
-from .setups.SetupManager import SetupManager
-from .teardowns.TeardownManager import TeardownManager
-from .theories.TheoryManager import TheoryManager
-from .TestResult import TestResult
+from .facts.fact_descriptor import FactDescriptor
+from .facts.fact_manager import FactManager
+from .setups import SetupManager
+from .teardowns import TeardownManager
+from .test_result import TestResult
+from .text_io_capture import setup_global_text_io, _PERSISTENT_STDOUT, _PERSISTENT_STDERR
+from .theories import TheoryManager
 
 
 def _get_fails_reason(target: Any) -> str | None:
@@ -53,10 +54,10 @@ def _is_parallel(target: Any) -> bool:
 
 def _has_per_run_lifecycle(target: Any, module: ModuleType) -> bool:
     """Return True if *target* belongs to a class decorated with ``@lifecycle(PER_RUN)``."""
-    md = target.metadata if hasattr(target, 'metadata') else None
-    if md is None:
+    metadata = target.metadata if hasattr(target, 'metadata') else None
+    if metadata is None:
         return False
-    cn = getattr(md, 'class_name', None)
+    cn = getattr(metadata, 'class_name', None)
     if not cn or len(cn) == 0:
         return False
     cls: Any = module
@@ -103,32 +104,32 @@ class TestRunner:
         setup_manager = SetupManager.instance()
 
         if class_name is not None and len(class_name) > 0:
-            sd = setup_manager.get('class', module_name, class_name)
-            if sd is not None:
+            setup_descriptor = setup_manager.get('class', module_name, class_name)
+            if setup_descriptor is not None:
                 try:
-                    await sd.execute(module, class_instance)  # type: ignore[arg-type]
+                    await setup_descriptor.execute(module, class_instance)  # type: ignore[arg-type]
                 except Exception as ex:
                     setup_manager.record_error()
                     if self.__cli.verbose:  # pragma: no cover
                         target_desc = (
-                            f"{sd.metadata.class_name}.{sd.metadata.name}"
-                            if sd.metadata.class_name
-                            else sd.metadata.name
+                            f"{setup_descriptor.metadata.class_name}.{setup_descriptor.metadata.name}"
+                            if setup_descriptor.metadata.class_name
+                            else setup_descriptor.metadata.name
                         )
                         print(f'Setup Error ({target_desc}): {ex}')
                     return False
         else:
-            sd = setup_manager.get('module', module_name, '')
-            if sd is not None:
+            setup_descriptor = setup_manager.get('module', module_name, '')
+            if setup_descriptor is not None:
                 try:
-                    await sd.execute(module, class_instance)  # type: ignore[arg-type]
+                    await setup_descriptor.execute(module, class_instance)  # type: ignore[arg-type]
                 except Exception as ex:
                     setup_manager.record_error()
                     if self.__cli.verbose:  # pragma: no cover
                         target_desc = (
-                            f"{sd.metadata.class_name}.{sd.metadata.name}"
-                            if sd.metadata.class_name
-                            else sd.metadata.name
+                            f"{setup_descriptor.metadata.class_name}.{setup_descriptor.metadata.name}"
+                            if setup_descriptor.metadata.class_name
+                            else setup_descriptor.metadata.name
                         )
                         print(f'Setup Error ({target_desc}): {ex}')
                     return False
@@ -208,12 +209,11 @@ class TestRunner:
 
     async def __run_facts(self, host_name: str, test_module: ModuleType, filename: str, module_report_name: str, results: list[TestResult]) -> None:
         """Run all facts for a test module and return their results."""
-        from .facts.Fact import Fact
         facts = FactManager.instance().get(test_module.__name__)
         module_name = test_module.__name__
 
         # Group facts by class_name for lifecycle-aware execution
-        class_facts: dict[str | None, list[Fact]] = {}
+        class_facts: dict[str | None, list[FactDescriptor]] = {}
         for fact in facts:
             key: str | None = fact.metadata.class_name or ''
             if key == '':
@@ -254,7 +254,7 @@ class TestRunner:
         module_report_name: str,
         filename: str,
         class_name: str,
-        facts: list,
+        facts: list[FactDescriptor],
         results: list[TestResult],
         lifecycle: Lifecycle,
         cls: Any,
@@ -329,7 +329,7 @@ class TestRunner:
         module_report_name: str,
         filename: str,
         class_name: Optional[str],
-        facts: list,
+        facts: list[FactDescriptor],
         results: list[TestResult],
     ) -> None:
         """Run facts in PER_TEST lifecycle: setup/execute/teardown per test."""
@@ -456,7 +456,7 @@ class TestRunner:
         module_report_name: str,
         filename: str,
         class_name: str,
-        theory_data: list[tuple],
+        theory_data: list[tuple[Any, ...]],
         results: list[TestResult],
         lifecycle: Lifecycle,
         cls: Any,
@@ -533,7 +533,7 @@ class TestRunner:
         module_report_name: str,
         filename: str,
         class_name: Optional[str],
-        theory_data: list[tuple],
+        theory_data: list[tuple[Any, ...]],
         results: list[TestResult],
     ) -> None:
         """Run theory data-points in PER_TEST lifecycle: setup/execute/teardown per data-point."""

@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from .TestModuleDiscovery import TestModuleDiscovery
+from .module_discovery import ModuleDiscovery
 
 __all__ = [
-    'TestModuleDiscovery'
+    'ModuleDiscovery'
 ]

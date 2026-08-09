@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-from .Filter import Filter
-from .FilterManager import FilterManager
+from .filter_descriptor import FilterDescriptor
+from .filter_manager import FilterManager
 
 
 __all__ = [
-    'Filter',
+    'FilterDescriptor',
     'FilterManager'
 ]

@@ -23,12 +23,12 @@ Example
 """
 
 import inspect
-from typing import Callable, Optional, TypeVar
+from typing import Any, Callable, Optional, TypeVar
 
 T = TypeVar('T', bound=Callable[..., object])
 
 
-def skip(when: Optional[bool] = None) -> Callable[[T], T]:
+def skip(when: Optional[bool | Callable[..., Any]] = None) -> Callable[[T], T]:
     """Decorator that marks a test for conditional or unconditional skip.
 
     Parameters
@@ -87,13 +87,15 @@ def skip(when: Optional[bool] = None) -> Callable[[T], T]:
             # distinguish between ``@skip(callable_arg)`` (user-provided skip
             # condition) and bare ``@skip(func)`` where ``when`` happens to be
             # the same object as ``target`` (the function being decorated).
-            if target is when or inspect.unwrap(target) is when:
+            if isinstance(when, bool) and (target is when or inspect.unwrap(target) is when):
                 # Bare ``@skip(func)``: the callable is the target itself,
                 # not a condition function → unconditional skip.
                 condition_value = True
-            else:
+            elif callable(when):
                 # ``@skip(callable_arg)``: genuine condition callable.
-                condition_value = when
+                condition_value = when  # type: ignore[assignment]
+            else:
+                raise RuntimeError('`@skip` requires a boolean expression or callable arg')
 
         setattr(unwrapped, '__punit_skip_condition', condition_value)
         return target

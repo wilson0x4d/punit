@@ -1,15 +1,11 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-import sys
-from typing import Any, Optional, Tuple
+from typing import Any, Optional
 
-from .TextIOCapture import (
+from .text_io_capture import (
     TextIOReceiver,
-    _TextIOCapture,
     _clear_receivers,
-    _PERSISTENT_STDOUT,
-    _PERSISTENT_STDERR,
     _set_receivers,
 )
 

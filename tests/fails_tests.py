@@ -11,7 +11,7 @@ from typing import Any, Callable
 from punit import fact, fails
 from punit.mocks import Mock
 from punit.runner import _get_fails_reason
-from punit.TestResult import TestResult
+from punit.test_result import TestResult
 
 
 @fact
@@ -181,7 +181,7 @@ def check_no_inversion_without_fails():
 @fact
 def check_report_html_shows_expected_failure_reason():
     """HTML report includes the expected-failure reason text."""
-    from punit.reports.HtmlReportGenerator import HtmlReportGenerator
+    from punit.reports import HtmlReportGenerator
 
     result = TestResult()
     result.is_success = False
@@ -197,7 +197,7 @@ def check_report_html_shows_expected_failure_reason():
 @fact
 def check_report_junit_has_expected_failure_element():
     """JUnit report includes <expected-failure> element."""
-    from punit.reports.JUnitReportGenerator import JUnitReportGenerator
+    from punit.reports import JUnitReportGenerator
 
     result = TestResult()
     result.is_success = False
@@ -219,7 +219,7 @@ def check_report_junit_has_expected_failure_element():
 @fact
 def check_report_junit_message_contains_fails_reason():
     """JUnit failure/error message attribute includes @fails reason."""
-    from punit.reports.JUnitReportGenerator import JUnitReportGenerator
+    from punit.reports import JUnitReportGenerator
 
     result = TestResult()
     result.is_success = False
@@ -261,7 +261,7 @@ def check_report_junit_message_contains_fails_reason():
 @fact
 def check_report_json_includes_flag():
     """JSON report includes expected_failure boolean and reason string."""
-    from punit.reports.JsonReportGenerator import JsonReportGenerator
+    from punit.reports import JsonReportGenerator
 
     result = TestResult()
     result.is_success = False
@@ -281,7 +281,7 @@ def check_report_json_includes_flag():
 @fact
 def check_report_no_flag_on_normal_test():
     """Report does not add expected-failure fields for normal passing tests."""
-    from punit.reports.JsonReportGenerator import JsonReportGenerator
+    from punit.reports import JsonReportGenerator
 
     result = TestResult()
     result.is_success = True
@@ -298,7 +298,7 @@ def check_report_no_flag_on_normal_test():
 @fact
 def check_html_no_expected_failure_for_passed():
     """HTML does not show expected-failure annotation when test passes without @fails."""
-    from punit.reports.HtmlReportGenerator import HtmlReportGenerator
+    from punit.reports import HtmlReportGenerator
 
     result = TestResult()
     result.is_success = True
@@ -312,7 +312,7 @@ def check_html_no_expected_failure_for_passed():
 @fact
 def check_html_no_expected_failure_for_failed_without_fails():
     """HTML does not show expected-failure annotation when test fails but has no @fails."""
-    from punit.reports.HtmlReportGenerator import HtmlReportGenerator
+    from punit.reports import HtmlReportGenerator
 
     result = TestResult()
     result.is_success = False
@@ -326,7 +326,7 @@ def check_html_no_expected_failure_for_failed_without_fails():
 @fact
 def check_junit_no_expected_failure_for_passed():
     """JUnit does not add expected-failure element for passed test without @fails."""
-    from punit.reports.JUnitReportGenerator import JUnitReportGenerator
+    from punit.reports import JUnitReportGenerator
 
     result = TestResult()
     result.is_success = True
@@ -346,7 +346,7 @@ def check_junit_no_expected_failure_for_passed():
 @fact
 def check_json_no_expected_failure_for_passed():
     """JSON does not include expected_failure key for normal passing tests."""
-    from punit.reports.JsonReportGenerator import JsonReportGenerator
+    from punit.reports import JsonReportGenerator
 
     result = TestResult()
     result.is_success = True
@@ -363,7 +363,7 @@ def check_json_no_expected_failure_for_passed():
 @fact
 def check_json_no_expected_failure_for_failed_without_fails():
     """JSON does not include expected_failure for normal failure."""
-    from punit.reports.JsonReportGenerator import JsonReportGenerator
+    from punit.reports import JsonReportGenerator
 
     result = TestResult()
     result.is_success = False
@@ -380,7 +380,7 @@ def check_json_no_expected_failure_for_failed_without_fails():
 @fact
 def check_report_html_shows_expected_failure_text_when_passed():
     """HTML shows '(expected failure)' when a test passes but has @fails."""
-    from punit.reports.HtmlReportGenerator import HtmlReportGenerator
+    from punit.reports import HtmlReportGenerator
 
     result = TestResult()
     result.is_success = True
@@ -389,7 +389,7 @@ def check_report_html_shows_expected_failure_text_when_passed():
     result.test_name = 'test_pass_with_fails'
 
     html = HtmlReportGenerator().generate([result])
-    
+
     assert 'expected failure: bug #42' in html, f'Missing reason text in HTML: {html}'
 
 

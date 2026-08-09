@@ -10,9 +10,9 @@ from .facts import fact
 from .lifecycle import Lifecycle, lifecycle
 from .mocks.mock import Mock
 from .results import fails
-from .setups import Setup, setup
+from .setups import setup
 from .conditions import skip
-from .teardowns import Teardown, teardown
+from .teardowns import teardown
 from .theories import theory, inlinedata
 from .traits import trait
 from .parallelism import parallel, sequential
@@ -31,8 +31,8 @@ __all__ = [
     'numeric', 'approx',
     'strings',
     'fact',
-    'setup', 'Setup',
-    'teardown', 'Teardown',
+    'setup',
+    'teardown',
     'theory', 'inlinedata',
     'trait',
     'fails',

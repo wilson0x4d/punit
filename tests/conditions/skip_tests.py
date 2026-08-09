@@ -8,17 +8,19 @@ import json
 import xml.etree.ElementTree as et  # type: ignore[import-untyped]
 
 from punit import fact, skip
-from punit.TestResult import TestResult
+from punit.test_result import TestResult
 from punit.runner import _get_skip_condition
-from punit.reports.HtmlReportGenerator import HtmlReportGenerator
-from punit.reports.JUnitReportGenerator import JUnitReportGenerator
-from punit.reports.JsonReportGenerator import JsonReportGenerator
+from punit.reports import (
+    HtmlReportGenerator,
+    JUnitReportGenerator,
+    JsonReportGenerator,
+)
 
 
 class _SimulatedDecorator:
     """Simulates a decorator that sets __punit_decorator."""
 
-    def __call__(self, func):
+    def __call__(self, func):  # type: ignore
         if not hasattr(func, '__punit_decorator'):
             setattr(func, '__punit_decorator', '@simulated')
         return func

@@ -13,7 +13,7 @@ from typing import Any, Callable, Coroutine, Union, cast
 from ..metadata import CallableMetadata
 
 
-class Theory:
+class TheoryDescriptor:
     """
     Wraps a parameterised test (``@theory``) and its collected data points.
 
@@ -129,7 +129,7 @@ def theory(target: Callable) -> Callable:
             another pUnit decorator attribute.
 
     """
-    from .TheoryManager import TheoryManager
+    from .theory_manager import TheoryManager
     unwrapped = inspect.unwrap(target)
     if not isinstance(unwrapped, (FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType)):
         raise Exception('@theory can only be applied to functions and methods.')
@@ -139,12 +139,12 @@ def theory(target: Callable) -> Callable:
             f'Function "{unwrapped.__name__}" has already been decorated.'
         )
     setattr(unwrapped, '__punit_decorator', '@theory')
-    theory: Theory = Theory(target)
-    TheoryManager.instance().put(theory)
+    theory_descriptor: TheoryDescriptor = TheoryDescriptor(target)
+    TheoryManager.instance().put(theory_descriptor)
     return target
 
 
-def inlinedata(*args) -> Callable:
+def inlinedata(*args: Any) -> Callable[..., Any]:
     """Decorates a 'Theory-based' test with inline data points for parameterization.
 
     Each call to ``@inlinedata`` provides one set of arguments that will be passed
@@ -172,9 +172,9 @@ def inlinedata(*args) -> Callable:
             assert a + b == c
 
     """
-    def wrapper(target: Callable) -> Callable:
+    def wrapper(target: Callable[..., Any]) -> Callable[..., Any]:
         if args is not None and len(args) > 0:
-            from .TheoryManager import TheoryManager
+            from .theory_manager import TheoryManager
             TheoryManager.instance().withData(target, args)
         return target
     return wrapper

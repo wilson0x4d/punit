@@ -17,6 +17,6 @@ Example
 
 """
 
-from .fails import fails
+from .decorators import fails
 
 __all__ = ['fails']

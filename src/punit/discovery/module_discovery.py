@@ -7,17 +7,17 @@ import re
 from ..facts import FactManager
 from ..theories import TheoryManager
 from ..cli import CommandLineInterface
-from ..traits import Trait
+from ..traits import TraitDescriptor
 
 
-class TestModuleDiscovery:
+class ModuleDiscovery:
 
     __cli: CommandLineInterface
-    __excludePatterns: list[re.Pattern]
-    __excludeTraits: list[Trait]
+    __excludePatterns: list[re.Pattern[str]]
+    __excluded_traits: list[TraitDescriptor]
     __filenames: list[str]
-    __includePatterns: list[re.Pattern]
-    __includeTraits: list[Trait]
+    __includePatterns: list[re.Pattern[str]]
+    __included_traits: list[TraitDescriptor]
     __workdir: str
 
     def __init__(self, workdir: str, includePatterns: list[str], excludePatterns: list[str], cli: CommandLineInterface) -> None:
@@ -31,8 +31,8 @@ class TestModuleDiscovery:
                         re.IGNORECASE))
         self.__filenames = []
         self.__includePatterns = []
-        self.__excludeTraits = cli.excludeTraits
-        self.__includeTraits = cli.includeTraits
+        self.__excluded_traits = cli.excluded_traits
+        self.__included_traits = cli.included_traits
         if includePatterns is not None:
             for pattern in includePatterns:
                 self.__includePatterns.append(
@@ -98,12 +98,12 @@ class TestModuleDiscovery:
         return self.__filenames
 
     def discover(self) -> list[str]:
-        FactManager.instance().excludeTraits = self.__excludeTraits
-        FactManager.instance().includeTraits = self.__includeTraits
-        TheoryManager.instance().excludeTraits = self.__excludeTraits
-        TheoryManager.instance().includeTraits = self.__includeTraits
+        FactManager.instance().excluded_traits = self.__excluded_traits
+        FactManager.instance().included_traits = self.__included_traits
+        TheoryManager.instance().excluded_traits = self.__excluded_traits
+        TheoryManager.instance().included_traits = self.__included_traits
         if self.__cli.verbose:
-            print(f'.. starting test discovery')
+            print('.. starting test discovery')
         self.__filenames = self.__walkDirectory(self.__workdir)
         if self.__cli.verbose:
             print('.. finished test discovery.')

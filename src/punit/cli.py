@@ -7,8 +7,8 @@ import os
 import sys
 from typing import Optional
 from . import __version__, __commit__
-from .filters.FilterManager import FilterManager
-from .traits import Trait
+from .filters import FilterManager
+from .traits import TraitDescriptor
 
 
 class CommandLineInterface:
@@ -30,11 +30,11 @@ class CommandLineInterface:
     __aliases: dict[str, str]
     __parallelism: int | None
     __excludePatterns: list[str]
-    __excludeTraits: list[Trait]
+    __excluded_traits: list[TraitDescriptor]
     __failfast: bool
     __help: bool
     __includePatterns: list[str]
-    __includeTraits: list[Trait]
+    __included_traits: list[TraitDescriptor]
     __no_default_patterns: bool
     __no_exitcode: bool
     __no_pathfix: bool
@@ -46,16 +46,15 @@ class CommandLineInterface:
     __workdir: str | None
     __files: list[str]
 
-
     def __init__(self) -> None:
         self.__aliases = dict[str, str]()
         self.__parallelism = None
         self.__excludePatterns = []
-        self.__excludeTraits = []
+        self.__excluded_traits = []
         self.__failfast = False
         self.__help = False
         self.__includePatterns = []
-        self.__includeTraits = []
+        self.__included_traits = []
         self.__no_default_patterns = False
         self.__no_exitcode = False
         self.__no_pathfix = False
@@ -97,11 +96,11 @@ class CommandLineInterface:
                 isExclude = arg.startswith('!')
                 arg = arg.lstrip('!')
                 parts = arg.split('=')
-                trait = Trait(parts[0], parts[1]) if len(parts) == 2 else Trait(arg)
+                trait = TraitDescriptor(parts[0], parts[1]) if len(parts) == 2 else TraitDescriptor(arg)
                 if isExclude:
-                    self.__excludeTraits.append(trait)
+                    self.__excluded_traits.append(trait)
                 else:
-                    self.__includeTraits.append(trait)
+                    self.__included_traits.append(trait)
                 extractTrait = False
                 continue
             elif extractExcludePattern:
@@ -134,7 +133,7 @@ class CommandLineInterface:
                         pass
                     case _:
                         print(f'Unsupported value "{arg}" for --report argument, aborting.')
-                        print(f'(valid values are "json" and "junit")')
+                        print('(valid values are "json" and "junit")')
                         os._exit(4)
                 continue
             if extractOutputFilename:
@@ -217,8 +216,8 @@ class CommandLineInterface:
         return self.__excludePatterns
 
     @property
-    def excludeTraits(self) -> list[Trait]:
-        return self.__excludeTraits
+    def excluded_traits(self) -> list[TraitDescriptor]:
+        return self.__excluded_traits
 
     @property
     def help(self) -> bool:
@@ -229,8 +228,8 @@ class CommandLineInterface:
         return self.__includePatterns
 
     @property
-    def includeTraits(self) -> list[Trait]:
-        return self.__includeTraits
+    def included_traits(self) -> list[TraitDescriptor]:
+        return self.__included_traits
 
     @property
     def outputFilename(self) -> str | None:

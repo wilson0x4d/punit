@@ -23,11 +23,14 @@ Example
 
 """
 
-from .Theory import Theory, theory, inlinedata
-from .TheoryManager import TheoryManager
+from .decorators import theory, inlinedata
+from .theory_descriptor import TheoryDescriptor
+from .theory_manager import TheoryManager
 
 
 __all__ = [
-    'Theory', 'theory', 'inlinedata',
-    'TheoryManager'
+    'TheoryDescriptor',
+    'TheoryManager',
+    'inlinedata',
+    'theory',
 ]

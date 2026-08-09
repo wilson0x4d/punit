@@ -14,7 +14,7 @@ capture) are routed to the receiver for the current task.
 import sys
 
 from punit import fact
-from punit.TestResult import TestResult
+from punit.test_result import TestResult
 
 
 @fact
@@ -55,7 +55,7 @@ def release_output_stops_receiving() -> None:
     assert result.stdout == 'before-release\n'
     result.release_output()
     # After release_output, the receiver is None so stdout is None too
-    assert result.stdout is None
+    assert result.stdout is None  # type: ignore
 
 
 @fact

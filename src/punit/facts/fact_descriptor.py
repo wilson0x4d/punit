@@ -1,12 +1,6 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
 
-"""
-A **Fact** is a test that validates an invariant arrangement of state.  State is usually hardcoded as part of the test definition.
-
-Facts validate invariant state -- the conditions and assertions are fully codified within the test definition itself. Unlike ``@theory``, facts do not require data providers; each decorated function runs exactly once.
-"""
-
 import inspect
 from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, ModuleType
 from typing import Any, Callable, Coroutine, Union, cast
@@ -14,7 +8,7 @@ from typing import Any, Callable, Coroutine, Union, cast
 from ..metadata import CallableMetadata
 
 
-class Fact:
+class FactDescriptor:
     """Wraps a test function or method decorated with ``@fact``.
 
     Example
@@ -30,9 +24,9 @@ class Fact:
 
     """
 
-    __target: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]
+    __target: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable[..., Any]]
 
-    def __init__(self, target: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]):
+    def __init__(self, target: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable[..., Any]]):
         self.__metadata = CallableMetadata(target)
         self.__target = target
 
@@ -41,7 +35,7 @@ class Fact:
         return self.__metadata
 
     @property
-    def target(self) -> Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]:
+    def target(self) -> Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable[..., Any]]:
         return self.__target
 
     async def execute(
@@ -55,7 +49,7 @@ class Fact:
         a fresh instance is created.  Otherwise the provided instance is used
         directly, allowing lifecycle managers to control instance creation.
         """
-        coro: Coroutine | None = None
+        coro: Coroutine[Any, Any, Any] | None = None
         if class_instance is not None or (
             hasattr(self.__target, '__qualname__')
             and self.__target.__qualname__.find('.') > -1
@@ -76,7 +70,7 @@ class Fact:
                 else:
                     if class_instance is None:
                         class_instance = cast(
-                            Any, cast(Callable, qntarget)()
+                            Any, cast(Callable[..., Any], qntarget)()
                         )
                     coro = self.__target(class_instance)
         else:
@@ -84,48 +78,3 @@ class Fact:
         if inspect.iscoroutine(coro):
             await coro
         return class_instance
-
-
-def fact(target: Callable) -> Callable:
-    """Decorates a function or method as a 'Fact-based' test.
-
-    Args:
-        target: The function or method to decorate as a Fact test
-
-    Returns:
-        The original, undecorated target -- no wrapper is installed
-
-    Example
-    -------
-
-    .. code-block:: python
-
-        from punit import fact
-
-        @fact
-        def myFunction():
-            assert 1 == 1
-
-        class MyClass:
-            @fact
-            def myMethod(self):
-                assert 1 == 1
-
-    Raises:
-        Exception: If target is not a function/method, or if it already carries
-            another pUnit decorator attribute.
-
-    """
-    from .FactManager import FactManager
-    unwrapped = inspect.unwrap(target)
-    if not isinstance(unwrapped, (FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType)):
-        raise Exception('@fact can only be applied to functions and methods.')
-    if hasattr(unwrapped, '__punit_decorator'):
-        raise Exception(
-            f'@fact and {getattr(unwrapped, "__punit_decorator")} cannot decorate the same function. '
-            f'Function "{unwrapped.__name__}" has already been decorated.'
-        )
-    setattr(unwrapped, '__punit_decorator', '@fact')
-    fact: Fact = Fact(target)
-    FactManager.instance().put(fact)
-    return target

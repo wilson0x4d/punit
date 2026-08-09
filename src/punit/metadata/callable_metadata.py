@@ -2,17 +2,17 @@
 # SPDX-License-Identifier: MIT
 
 from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, ModuleType
-from typing import Callable, Optional, Union, cast
+from typing import Any, Callable, Optional, Union
 
 
 class CallableMetadata:
 
-    __callable: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]
+    __callable: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable[..., Any]]
     __class_name: str
     __module_name: str
     __name: str
 
-    def __init__(self, callable: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable]) -> None:
+    def __init__(self, callable: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable[..., Any]]) -> None:
         self.__callable = callable
         parts = callable.__qualname__.replace(f'{callable.__module__}.', '').split('.')[0:-1]
         self.__class_name = '.'.join(p for p in parts if p != '<locals>')

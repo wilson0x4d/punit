@@ -32,11 +32,13 @@ Example
 
 """
 
-from .Teardown import Teardown, teardown
-from .TeardownManager import TeardownManager
+from .decorators import teardown
+from .teardown_descriptor import TeardownDescriptor
+from .teardown_manager import TeardownManager
 
 
 __all__ = [
-    'Teardown', 'teardown',
-    'TeardownManager'
+    'TeardownDescriptor',
+    'TeardownManager',
+    'teardown',
 ]

@@ -1,51 +1,10 @@
 # SPDX-FileCopyrightText: © 2024 Shaun Wilson
 # SPDX-License-Identifier: MIT
-##
 
-from typing import Callable, Optional
-
-
-class Trait:
-    """A categorical name/value pair associated with a test.
-
-    Traits can be used to group tests together for inclusion or exclusion during
-    execution, allowing more flexible testing strategies. Common use-cases include:
-
-    * Grouping by area of functionality (e.g., UI, business logic)
-    * Grouping by dependencies (e.g., integration, mock)
-    * Flagging tests as slow or flaky to control execution order
-
-    Example
-    -------
-
-    .. code-block:: python
-
-        from punit import fact, trait
-
-        @fact
-        @trait('category', 'ui')
-        def test_ui_feature():
-            assert True
-
-    """
-
-    __name: str
-    __value: str | None
-
-    def __init__(self, name: str, value: Optional[str] = None):
-        self.__name = name
-        self.__value = value
-
-    @property
-    def name(self) -> str:
-        return self.__name
-
-    @property
-    def value(self) -> str | None:
-        return self.__value
+from typing import Any, Callable, Optional
 
 
-def trait(name: str, value: Optional[str] = None) -> Callable:
+def trait(name: str, value: Optional[str] = None) -> Callable[..., Any]:
     """Decorates a Fact or Theory as having a specific Trait.
 
     Once applied, the trait can be referenced during test execution to include or
@@ -80,9 +39,10 @@ def trait(name: str, value: Optional[str] = None) -> Callable:
     Note: The ``@trait`` decorator can be applied more than once to a single test.
 
     """
-    def wrapper(target: Callable) -> Callable:
-        from .TraitManager import TraitManager
-        trait = Trait(name, value)
+    def wrapper(target: Callable[..., Any]) -> Callable[..., Any]:
+        from .trait_descriptor import TraitDescriptor
+        from .trait_manager import TraitManager
+        trait = TraitDescriptor(name, value)
         TraitManager.instance().put(target, trait)
         return target
     return wrapper

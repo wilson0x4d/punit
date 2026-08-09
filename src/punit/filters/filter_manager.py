@@ -8,20 +8,20 @@ import select
 import sys
 from typing import Optional
 
-from .Filter import Filter
+from .filter_descriptor import FilterDescriptor
 
 
 class FilterManager:
 
     __instance: Optional['FilterManager'] = None
-    __filters: list[Filter]
+    __filter_descriptors: list[FilterDescriptor]
 
     def __init__(self) -> None:
-        self.__filters = list[Filter]()
+        self.__filter_descriptors = list[FilterDescriptor]()
 
     @property
-    def filters(self) -> list[Filter]:
-        return self.__filters
+    def filters(self) -> list[FilterDescriptor]:
+        return self.__filter_descriptors
 
     @staticmethod
     def instance() -> FilterManager:
@@ -32,12 +32,12 @@ class FilterManager:
         return instance
 
     def add(self, pattern: str) -> None:
-        self.__filters.append(Filter(pattern))
+        self.__filter_descriptors.append(FilterDescriptor(pattern))
 
     def remove(self, pattern: str) -> None:
-        for filt in [e for e in self.__filters]:
+        for filt in [e for e in self.__filter_descriptors]:
             if filt.pattern == pattern:
-                self.__filters.remove(filt)
+                self.__filter_descriptors.remove(filt)
                 break
 
     def load(self, filepath: str) -> None:
@@ -63,7 +63,7 @@ class FilterManager:
             if len(line) == 0:
                 # comments and empty lines
                 continue
-            self.__filters.append(Filter(line))
+            self.__filter_descriptors.append(FilterDescriptor(line))
 
     def print(self) -> None:
         if len(FilterManager.instance().filters) > 0:

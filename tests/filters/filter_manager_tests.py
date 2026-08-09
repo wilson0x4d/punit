@@ -3,7 +3,7 @@
 
 from punit import fact
 
-from punit.filters.FilterManager import FilterManager
+from punit.filters import FilterManager
 
 
 @fact

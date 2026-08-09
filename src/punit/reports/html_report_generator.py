@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 import traceback
-from ..TestResult import TestResult
+from ..test_result import TestResult
 
 
 class HtmlReportGenerator:
@@ -75,7 +75,7 @@ class HtmlReportGenerator:
                 )
             if test_result.is_skip:
                 lines.append(
-                    f'<span style="color: grey; font-style: italic;"> (skipped)</span>'
+                    '<span style="color: grey; font-style: italic;"> (skipped)</span>'
                 )
             class_name = "" if test_result.class_name is None else f"{test_result.class_name}."
             data = test_result.properties.get('data')

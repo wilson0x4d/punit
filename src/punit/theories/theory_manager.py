@@ -4,21 +4,20 @@
 
 from __future__ import annotations
 
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
-from ..filters.FilterManager import FilterManager
-from ..traits.Trait import Trait
-from ..traits.TraitManager import TraitManager
-from .Theory import Theory
+from ..filters import FilterManager
+from ..traits import TraitDescriptor, TraitManager
+from .theory_descriptor import TheoryDescriptor
 
 
 class TheoryManager:
 
-    __excludeTraits: list[Trait]
-    __includeTraits: list[Trait]
+    __excluded_traits: list[TraitDescriptor]
+    __included_traits: list[TraitDescriptor]
     __instance: Optional['TheoryManager'] = None
-    __modules: dict[str, list[Theory]]
-    __datas: dict[Callable, list[tuple]]
+    __modules: dict[str, list[TheoryDescriptor]]
+    __datas: dict[Callable[..., Any], list[tuple[Any, ...]]]
 
     def __init__(self) -> None:
         if TheoryManager.__instance is not None:
@@ -33,61 +32,61 @@ class TheoryManager:
         return TheoryManager.__instance
 
     @property
-    def excludeTraits(self) -> list[Trait]:
-        return [] if self.__excludeTraits is None else self.__excludeTraits
+    def excluded_traits(self) -> list[TraitDescriptor]:
+        return [] if self.__excluded_traits is None else self.__excluded_traits
 
-    @excludeTraits.setter
-    def excludeTraits(self, value: list[Trait]) -> None:
-        self.__excludeTraits = value
+    @excluded_traits.setter
+    def excluded_traits(self, value: list[TraitDescriptor]) -> None:
+        self.__excluded_traits = value
 
     @property
-    def includeTraits(self) -> list[Trait]:
-        return [] if self.__includeTraits is None else self.__includeTraits
+    def included_traits(self) -> list[TraitDescriptor]:
+        return [] if self.__included_traits is None else self.__included_traits
 
-    @includeTraits.setter
-    def includeTraits(self, value: list[Trait]) -> None:
-        self.__includeTraits = value
+    @included_traits.setter
+    def included_traits(self, value: list[TraitDescriptor]) -> None:
+        self.__included_traits = value
 
-    def __excludeByTraits(self, theory: Theory) -> bool:
-        traits = TraitManager.instance().get(theory.target)
-        if self.excludeTraits is not None and len(self.__excludeTraits) > 0:
-            for trait in self.excludeTraits:
+    def __exclude_by_traits(self, theory_descriptor: TheoryDescriptor) -> bool:
+        traits = TraitManager.instance().get(theory_descriptor.target)
+        if self.excluded_traits is not None and len(self.__excluded_traits) > 0:
+            for trait in self.excluded_traits:
                 for L_trait in traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return True
-        if self.includeTraits is not None and len(self.includeTraits) > 0:
-            for trait in self.includeTraits:
+        if self.included_traits is not None and len(self.included_traits) > 0:
+            for trait in self.included_traits:
                 for L_trait in traits:
                     if trait.name == L_trait.name and (trait.value is None or (trait.value == L_trait.value)):
                         return False
             return True
         return False
 
-    def get(self, module_name: str) -> list[Theory]:
+    def get(self, module_name: str) -> list[TheoryDescriptor]:
         l = self.__modules.get(module_name)
         if l is None:
             l = []
             self.__modules[module_name] = l
         return l
 
-    def put(self, theory: Theory) -> None:
+    def put(self, theory_descriptor: TheoryDescriptor) -> None:
         filters = FilterManager.instance().filters
         matches_filter: bool = False
         for filt in filters:
-            if filt.re.fullmatch(theory.metadata.filter_name) is not None:
+            if filt.re.fullmatch(theory_descriptor.metadata.filter_name) is not None:
                 matches_filter = not filt.isExclude
                 break
         if matches_filter:
-            l = self.get(theory.target.__module__)
-            d = self.__datas.get(theory.target)
+            l = self.get(theory_descriptor.target.__module__)
+            d = self.__datas.get(theory_descriptor.target)
             if d is not None:
                 d.reverse()
                 for data in d:
-                    theory.datas.append(data)
-            if not self.__excludeByTraits(theory):
-                l.append(theory)
+                    theory_descriptor.datas.append(data)
+            if not self.__exclude_by_traits(theory_descriptor):
+                l.append(theory_descriptor)
 
-    def withData(self, target: Callable, data: tuple) -> None:
+    def withData(self, target: Callable[..., Any], data: tuple[Any, ...]) -> None:
         # TODO: data acquisition should be deferred until put() since that is where `Filter` logic
         # is applied, but for current implementation `@inlinedata()` is not affected. more advanced
         # data decorators may benefit from deferral (for example, data coming from an API or DB.)

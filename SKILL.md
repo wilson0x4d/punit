@@ -215,7 +215,7 @@ The callable is invoked at test execution time; the test is skipped if it return
 ### TestResult.is_skip
 
 ```python
-from punit.TestResult import TestResult
+from punit.test_result import TestResult
 
 result = TestResult()
 result.is_skip is False                    # default
@@ -518,7 +518,7 @@ def test_pool(m):
 ### TestResult properties
 
 ```python
-from punit.TestResult import TestResult
+from punit.test_result import TestResult
 
 result = TestResult()
 result.class_name      # e.g. 'MyTests' (None for bare-function tests)
@@ -660,5 +660,5 @@ from punit.mocks import (
     neg, contains, is_any, is_gt, is_gte, is_lt, is_lte, is_in, is_type,
 )
 from punit.reports import HtmlReportGenerator, JUnitReportGenerator, JsonReportGenerator
-from punit.TestResult import TestResult
+from punit.test_result import TestResult
 ```

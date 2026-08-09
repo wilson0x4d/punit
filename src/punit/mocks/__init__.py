@@ -31,6 +31,8 @@ Usage::
         m.method.returns('result')
 """
 
+from .call import Call
+from .call_list import CallList
 from .matcher import (
     Matcher,
     neg,
@@ -43,12 +45,8 @@ from .matcher import (
     is_lt,
     is_type,
 )
-from .mock import (
-    Call,
-    CallList,
-    Mock,
-    MockError
-)
+from .mock import Mock
+from .mock_error import MockError
 from .patch import patch
 
 __all__ = [

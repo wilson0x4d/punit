@@ -5,20 +5,20 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
-from .Teardown import Teardown
+from .teardown_descriptor import TeardownDescriptor
 
 
 class TeardownManager:
 
     __instance: Optional['TeardownManager'] = None
     # NOTE: dict key is (scope_type, module_name, class_or_empty)
-    __teardowns: dict[Tuple[str, str, str], Teardown]
+    __teardown_descriptors: dict[Tuple[str, str, str], TeardownDescriptor]
     __teardown_error_count: int
 
     def __init__(self) -> None:
         if TeardownManager.__instance is not None:
             raise Exception('Cannot create more than one instance of TeardownManager')  # pragma: no cover
-        self.__teardowns = {}
+        self.__teardown_descriptors = {}
         self.__teardown_error_count = 0
 
     @staticmethod
@@ -31,7 +31,7 @@ class TeardownManager:
     def teardown_error_count(self) -> int:
         return self.__teardown_error_count
 
-    def get(self, scope_type: str, module_name: str, class_name: Optional[str] = None) -> Optional[Teardown]:
+    def get(self, scope_type: str, module_name: str, class_name: Optional[str] = None) -> Optional[TeardownDescriptor]:
         """Look up a teardown by (scope_type, module_name, class_name).
 
         For class-scoped lookups ``class_name`` must match the first segment of
@@ -45,19 +45,19 @@ class TeardownManager:
         else:
             key = (scope_type, module_name, class_name)
 
-        return self.__teardowns.get(key)
+        return self.__teardown_descriptors.get(key)
 
-    def put(self, td: Teardown) -> None:
+    def put(self, teardown_descriptor: TeardownDescriptor) -> None:
         """Store a teardown keyed by (scope_type, module_name, class_or_empty)."""
-        cn = td.metadata.class_name
+        cn = teardown_descriptor.metadata.class_name
         if cn is not None and len(cn) > 0:
-            key: Tuple[str, str, str] = (td.scope_type, td.metadata.module_name, cn)
+            key: Tuple[str, str, str] = (teardown_descriptor.scope_type, teardown_descriptor.metadata.module_name, cn)
         else:
-            key = (td.scope_type, td.metadata.module_name, '')
+            key = (teardown_descriptor.scope_type, teardown_descriptor.metadata.module_name, '')
 
         # Only one teardown per scope; last decorator wins if accidentally
         # applied twice.
-        self.__teardowns[key] = td
+        self.__teardown_descriptors[key] = teardown_descriptor
 
     def record_error(self) -> None:
         """Called when a teardown function raises an exception."""

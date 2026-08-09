@@ -4,20 +4,20 @@
 from __future__ import annotations
 
 from types import FunctionType, MethodType
-from typing import Callable, Optional
+from typing import Any, Callable, Optional
 
-from .Trait import Trait
+from .trait_descriptor import TraitDescriptor
 
 
 class TraitManager:
 
     __instance: Optional['TraitManager'] = None
-    __traits: dict[Callable | FunctionType | MethodType, dict[str, Trait]]
+    __traits: dict[Callable[..., Any] | FunctionType | MethodType, dict[str, TraitDescriptor]]
 
     def __init__(self) -> None:
         if TraitManager.__instance is not None:
             raise Exception('Cannot create more than one instance of TraitManager')  # pragma: no cover
-        self.__traits = dict[Callable | FunctionType | MethodType, dict[str, Trait]]()
+        self.__traits = dict[Callable[..., Any] | FunctionType | MethodType, dict[str, TraitDescriptor]]()
 
     @staticmethod
     def instance() -> TraitManager:
@@ -25,16 +25,16 @@ class TraitManager:
             TraitManager.__instance = TraitManager()
         return TraitManager.__instance
 
-    def get(self, callable: Callable | FunctionType | MethodType) -> list[Trait]:
+    def get(self, callable: Callable[..., Any] | FunctionType | MethodType) -> list[TraitDescriptor]:
         d = self.__traits.get(callable)
         if d is None:
-            d = dict[str, Trait]()
+            d = dict[str, TraitDescriptor]()
             self.__traits[callable] = d
         return [e for e in d.values()]
 
-    def put(self, callable: Callable, trait: Trait) -> None:
+    def put(self, callable: Callable[..., Any], trait: TraitDescriptor) -> None:
         d = self.__traits.get(callable)
         if d is None:
-            d = dict[str, Trait]()
+            d = dict[str, TraitDescriptor]()
             self.__traits[callable] = d
         d[trait.name] = trait
