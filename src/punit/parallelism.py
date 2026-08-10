@@ -318,10 +318,8 @@ async def _execute_fact(
     finally:
         # -- teardown --
         if result.is_success is not None:
-            # For PER_RUN: signal done, fire teardown when last test finishes.
             if state is not None:
-                LifecycleManager.release(state)
-                if state.teardown_ready:
+                if LifecycleManager.release(state):
                     metadata = fact.metadata
                     scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
                     from .teardowns import TeardownManager
@@ -334,7 +332,6 @@ async def _execute_fact(
                         except Exception:
                             pass
             else:
-                # PER_TEST or no class — always fire teardown.
                 metadata = fact.metadata
                 scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
                 from .teardowns import TeardownManager
@@ -447,17 +444,31 @@ async def _execute_theory(
     finally:
         # -- teardown --
         if result.is_success is not None:
-            metadata = theory_descriptor.metadata
-            scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
-            from .teardowns import TeardownManager
-            td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
-            if td is not None:
-                try:
-                    coro = td.execute(module, class_instance)
-                    if inspect.iscoroutine(coro):
-                        await coro
-                except Exception:
-                    pass
+            if state is not None:
+                if LifecycleManager.release(state):
+                    metadata = theory_descriptor.metadata
+                    scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                    from .teardowns import TeardownManager
+                    td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
+                    if td is not None:
+                        try:
+                            coro = td.execute(module, class_instance)
+                            if inspect.iscoroutine(coro):
+                                await coro
+                        except Exception:
+                            pass
+            else:
+                metadata = theory_descriptor.metadata
+                scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                from .teardowns import TeardownManager
+                td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
+                if td is not None:
+                    try:
+                        coro = td.execute(module, class_instance)
+                        if inspect.iscoroutine(coro):
+                            await coro
+                    except Exception:
+                        pass
         result.release_output()
 
     return result

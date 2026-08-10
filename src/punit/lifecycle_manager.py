@@ -126,14 +126,19 @@ class LifecycleManager:
             return factory(), None
 
     @staticmethod
-    def release(state: '_InstanceState | None') -> None:
+    def release(state: '_InstanceState | None') -> bool:
         """Signal that one consumer has finished with a PER_RUN instance.
 
-        The **last** consumer to call ``release`` sets
-        ``state.teardown_ready`` so the caller can fire teardown.
+        Returns ``True`` on the **first** call (when ``teardown_ready``
+        transitions ``False`` → ``True``), ``False`` on subsequent calls.
+        The caller fires teardown only when ``True`` is returned.
         """
         if state is not None:
-            state.teardown_ready = True
+            if not state.teardown_ready:
+                state.teardown_ready = True
+                return True
+            return False
+        return False
 
     @staticmethod
     def clear(target: Any) -> None:
