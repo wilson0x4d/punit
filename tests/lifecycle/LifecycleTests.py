@@ -36,7 +36,7 @@ class DefaultPerTest:
     def setup_method(self) -> None:
         seen = getattr(self, '_seen_ids', None)
         if seen is None:
-            seen = self._seen_ids = set()
+            seen = self._seen_ids = set[int]()
         if id(self) in seen:
             raise AssertionError(
                 f"Instance {id(self)} already seen — instance was reused instead of created fresh"

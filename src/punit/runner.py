@@ -830,7 +830,7 @@ class TestRunner:
         for fact in facts:
             if _is_sequential(fact.target):
                 continue
-            key = fact.metadata.class_name or ''
+            key: str | None = fact.metadata.class_name or ''
             if key == '':
                 key = None
             if key not in class_fact_groups:
@@ -890,7 +890,7 @@ class TestRunner:
         for theory in theories:
             if _is_sequential(theory.target):
                 continue
-            key = theory.metadata.class_name or ''
+            key: str | None = theory.metadata.class_name or ''
             if key == '':
                 key = None
             for data in theory.datas:
@@ -949,7 +949,7 @@ class TestRunner:
         # Parallel facts already dispatched in _run_parallel_facts.
         all_class_facts: dict[str | None, list[Any]] = {}
         for fact in facts:
-            key = fact.metadata.class_name or ''
+            key: str | None = fact.metadata.class_name or ''
             if key == '':
                 key = None
             if key not in all_class_facts:
@@ -1007,7 +1007,7 @@ class TestRunner:
         for theory in theories:
             if not _is_sequential(theory.target):
                 continue
-            key = theory.metadata.class_name or ''
+            key: str | None = theory.metadata.class_name or ''
             if key == '':
                 key = None
             for data in theory.datas:

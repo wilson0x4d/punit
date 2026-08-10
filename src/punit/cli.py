@@ -144,9 +144,11 @@ class CommandLineInterface:
                 extract_parallel = False
                 try:
                     self.__parallelism = int(arg)
+                    continue
                 except ValueError:
-                    self.__parallelism = 0
-                continue
+                    self.__parallelism = int(os.environ.get('PUNIT__PARALLELISM', default=os.cpu_count() / 2))  # type: ignore
+                    if self.__parallelism is None or self.__parallelism <= 1:
+                        self.__parallelism = 1
             match arg:
                 case '-h' | '--help':
                     self.__help = True
@@ -344,6 +346,7 @@ Options:
 
     def print_summary(self) -> None:
         self.print_version()
+        print(f'Parallelism:\n\t{self.parallelism}')
         print(f'Working Directory:\n\t{self.__workdir}')
         print(f'Fail Fast: \n\t{"Yes" if self.__failfast else "No"}')
         if len(self.__includePatterns) > 0:
