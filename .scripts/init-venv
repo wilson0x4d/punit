@@ -1,5 +1,5 @@
 #!/bin/bash
-# SPDX-FileCopyrightText: © 2024 Shaun Wilson
+# SPDX-FileCopyrightText: © 2026 Shaun Wilson
 # SPDX-License-Identifier: MIT
 ##
 #
@@ -10,12 +10,25 @@
 # source .scripts/init-venv
 #
 ##
-set -euo pipefail
+set -eo pipefail
+
+if [[ -z "$(which uv)" ]]; then
+    if ! [[ ":PATH:" == *"$HOME/.local/bin"* ]]; then
+        export PATH="$HOME/.local/bin:$PATH"
+    fi
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    uv --version
+fi
+
+# pin python version
+if [[ ! -z "$PYTHON_VERSION" ]]; then
+    uv python pin "$PYTHON_VERSION"
+fi
 
 # resolve
 SCRIPT_DIR=$(dirname $(realpath "${BASH_SOURCE[0]}"))
-WORKSPACE_NAME=$(basename `dirname "$SCRIPT_DIR"`)
-PYTHONPATH=$(realpath "$SCRIPT_DIR/../src")
+SRC_DIR=$(realpath "$SCRIPT_DIR/../src")
+WORKSPACE_NAME=$(basename `dirname "$SRC_DIR"`)
 
 # initialize
 if [ ! -z "$(which deactivate)" ]; then
@@ -23,7 +36,7 @@ if [ ! -z "$(which deactivate)" ]; then
     deactivate
 fi
 if [ ! -d ".venv" ]; then
-    "python${PYTHON_VERSION:-3}" -m venv --prompt "$WORKSPACE_NAME" .venv
+    uv venv --prompt "$WORKSPACE_NAME" .venv
 fi
 
 # activate
@@ -32,11 +45,9 @@ echo -n -e "\033]0;$WORKSPACE_NAME\007"
 source .venv/bin/activate
 
 # tools and deps
-pip install --upgrade pip
-pip install .
-pip install .[dev]
-export MYPYPATH="$PYTHONPATH"
+uv sync --no-install-project
+export PYTHONPATH="$SRC_DIR"
+export MYPYPATH="$SRC_DIR"
 if ! [[ ":PATH:" == *":$SCRIPT_DIR:"* ]]; then
     export PATH="$SCRIPT_DIR:$PATH"
 fi
-echo "✅ initialized \`.venv/\`" >&2

@@ -17,3 +17,5 @@ htmlcov/
 CHANGELOG.*
 .ignore
 tmp/
+uv.lock
+.python-version
