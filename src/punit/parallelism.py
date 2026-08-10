@@ -100,7 +100,8 @@ from typing import Any, Callable
 
 from .theories import TheoryDescriptor
 from .test_result import TestResult
-from .lifecycle_manager import LifecycleManager
+from .lifecycle import Lifecycle
+from .lifecycle_manager import LifecycleManager, _InstanceState
 
 
 class _TaskInfo:
@@ -231,6 +232,7 @@ async def _execute_fact(
     filename: str,
     host_name: str,
     package_name: str | None,
+    test_count: int = -1,
 ) -> TestResult:
     """Execute a single Fact and return a populated TestResult."""
     result = TestResult()
@@ -243,6 +245,8 @@ async def _execute_fact(
 
     class_instance: Any = None
     state: Any = None
+    per_run_state: _InstanceState | None = None
+    per_test_state: _InstanceState | None = None
     try:
         metadata = fact.metadata
         unwrapped = inspect.unwrap(fact.target)
@@ -255,8 +259,14 @@ async def _execute_fact(
             lifecycle = LifecycleManager.get_lifecycle(cls)
             factory = lambda cn=metadata.class_name: getattr(module, cn)()  # type: ignore[misc]
             class_instance, state = LifecycleManager.get_or_create(
-                cls, lifecycle, factory,
+                cls, lifecycle, factory, test_count,
             )
+            if lifecycle == Lifecycle.PER_RUN and test_count > 0:
+                per_run_state = state
+            elif lifecycle == Lifecycle.PER_RUN:
+                pass  # No counter: fall through to existing per-test teardown via release()
+            else:
+                per_test_state = state
 
         # -- skip check --
         skip_cond = getattr(unwrapped, '__punit_skip_condition', None)
@@ -318,8 +328,9 @@ async def _execute_fact(
     finally:
         # -- teardown --
         if result.is_success is not None:
-            if state is not None:
-                if LifecycleManager.release(state):
+            if per_run_state is not None and per_run_state.pending_test_count > 0:
+                # PER_RUN: teardown managed by counter in release()
+                if LifecycleManager.release(per_run_state):
                     metadata = fact.metadata
                     scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
                     from .teardowns import TeardownManager
@@ -332,17 +343,32 @@ async def _execute_fact(
                         except Exception:
                             pass
             else:
-                metadata = fact.metadata
-                scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
-                from .teardowns import TeardownManager
-                td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
-                if td is not None:
-                    try:
-                        coro = td.execute(module, class_instance)
-                        if inspect.iscoroutine(coro):
-                            await coro
-                    except Exception:
-                        pass
+                # PER_TEST or ungrouped PER_RUN: per-test teardown
+                if state is not None:
+                    if LifecycleManager.release(state):
+                        metadata = fact.metadata
+                        scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                        from .teardowns import TeardownManager
+                        td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
+                        if td is not None:
+                            try:
+                                coro = td.execute(module, class_instance)
+                                if inspect.iscoroutine(coro):
+                                    await coro
+                            except Exception:
+                                pass
+                else:
+                    metadata = fact.metadata
+                    scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                    from .teardowns import TeardownManager
+                    td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
+                    if td is not None:
+                        try:
+                            coro = td.execute(module, class_instance)
+                            if inspect.iscoroutine(coro):
+                                await coro
+                        except Exception:
+                            pass
         result.release_output()
 
     return result
@@ -356,6 +382,7 @@ async def _execute_theory(
     filename: str,
     host_name: str,
     package_name: str | None,
+    test_count: int = -1,
 ) -> TestResult:
     """Execute a single theory data-point and return a populated TestResult."""
     result = TestResult()
@@ -369,6 +396,8 @@ async def _execute_theory(
 
     class_instance: Any = None
     state: Any = None
+    per_run_state: _InstanceState | None = None
+    per_test_state: _InstanceState | None = None
     try:
         metadata = theory_descriptor.metadata
         unwrapped = inspect.unwrap(theory_descriptor.target)
@@ -381,8 +410,14 @@ async def _execute_theory(
             lifecycle = LifecycleManager.get_lifecycle(cls)
             factory = lambda cn=metadata.class_name: getattr(module, cn)()  # type: ignore[misc]
             class_instance, state = LifecycleManager.get_or_create(
-                cls, lifecycle, factory,
+                cls, lifecycle, factory, test_count,
             )
+            if lifecycle == Lifecycle.PER_RUN and test_count > 0:
+                per_run_state = state
+            elif lifecycle == Lifecycle.PER_RUN:
+                pass
+            else:
+                per_test_state = state
 
         # -- skip check --
         skip_cond = getattr(unwrapped, '__punit_skip_condition', None)
@@ -444,8 +479,9 @@ async def _execute_theory(
     finally:
         # -- teardown --
         if result.is_success is not None:
-            if state is not None:
-                if LifecycleManager.release(state):
+            if per_run_state is not None and per_run_state.pending_test_count > 0:
+                # PER_RUN with counter: managed by release()
+                if LifecycleManager.release(per_run_state):
                     metadata = theory_descriptor.metadata
                     scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
                     from .teardowns import TeardownManager
@@ -458,17 +494,32 @@ async def _execute_theory(
                         except Exception:
                             pass
             else:
-                metadata = theory_descriptor.metadata
-                scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
-                from .teardowns import TeardownManager
-                td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
-                if td is not None:
-                    try:
-                        coro = td.execute(module, class_instance)
-                        if inspect.iscoroutine(coro):
-                            await coro
-                    except Exception:
-                        pass
+                # PER_TEST or ungrouped PER_RUN: per-test teardown
+                if state is not None:
+                    if LifecycleManager.release(state):
+                        metadata = theory_descriptor.metadata
+                        scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                        from .teardowns import TeardownManager
+                        td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
+                        if td is not None:
+                            try:
+                                coro = td.execute(module, class_instance)
+                                if inspect.iscoroutine(coro):
+                                    await coro
+                            except Exception:
+                                pass
+                else:
+                    metadata = theory_descriptor.metadata
+                    scope = 'class' if (metadata.class_name and len(metadata.class_name) > 0) else 'module'
+                    from .teardowns import TeardownManager
+                    td = TeardownManager.instance().get(scope, module.__name__, metadata.class_name or '')
+                    if td is not None:
+                        try:
+                            coro = td.execute(module, class_instance)
+                            if inspect.iscoroutine(coro):
+                                await coro
+                        except Exception:
+                            pass
         result.release_output()
 
     return result

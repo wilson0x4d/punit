@@ -824,19 +824,52 @@ class TestRunner:
         # skip the global cache.
         LifecycleManager.instance()
         facts = FactManager.instance().get(test_module.__name__)
-        coros: list[Any] = []
+
+        # Group facts by class for PER_RUN lifecycle support
+        class_fact_groups: dict[str | None, list[Any]] = {}
         for fact in facts:
             if _is_sequential(fact.target):
                 continue
-            coro = _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
-            coros.append(coro)
-        if coros:
-            test_results = await asyncio.gather(*coros)
-            for test_result in test_results:
-                results.append(test_result)
-                self.print_test_result(test_result)
-                if self.__cli.failfast and not test_result.is_success:
-                    return
+            key = fact.metadata.class_name or ''
+            if key == '':
+                key = None
+            if key not in class_fact_groups:
+                class_fact_groups[key] = []
+            class_fact_groups[key].append(fact)
+
+        for class_name, facts_list in class_fact_groups.items():
+            resolved_class = None
+            if class_name is not None and len(class_name) > 0:
+                resolved_class = test_module
+                for part in class_name.split("."):
+                    resolved_class = getattr(resolved_class, part)
+                lc = LifecycleManager.get_lifecycle(resolved_class)
+            else:
+                lc = Lifecycle.PER_TEST
+
+            if lc == Lifecycle.PER_RUN and resolved_class is not None:
+                # PER_RUN: batch dispatch with test_count
+                coros = [_execute_fact(f, test_module, module_report_name, filename, host_name, self.__test_package_name, len(facts_list)) for f in facts_list]
+                if coros:
+                    test_results = await asyncio.gather(*coros)
+                    for test_result in test_results:
+                        results.append(test_result)
+                        self.print_test_result(test_result)
+                        if self.__cli.failfast and not test_result.is_success:
+                            return
+                # NOTE: do NOT call LifecycleManager.clear() here — sequential
+                # facts will share the same instance. Clear in
+                # _run_sequential_facts instead.
+            else:
+                # PER_TEST / bare function: independent dispatch
+                coros = [_execute_fact(f, test_module, module_report_name, filename, host_name, self.__test_package_name) for f in facts_list]
+                if coros:
+                    test_results = await asyncio.gather(*coros)
+                    for test_result in test_results:
+                        results.append(test_result)
+                        self.print_test_result(test_result)
+                        if self.__cli.failfast and not test_result.is_success:
+                            return
 
     async def _run_parallel_theories(
         self,
@@ -851,20 +884,53 @@ class TestRunner:
         # workers.
         LifecycleManager.instance()
         theories = TheoryManager.instance().get(test_module.__name__)
-        coros: list[Any] = []
+
+        # Group theory data-points by class for PER_RUN lifecycle support
+        class_theory_groups: dict[str | None, list[tuple[Any, ...]]] = {}
         for theory in theories:
+            if _is_sequential(theory.target):
+                continue
+            key = theory.metadata.class_name or ''
+            if key == '':
+                key = None
             for data in theory.datas:
-                if _is_sequential(theory.target):
-                    continue
-                coro = _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
-                coros.append(coro)
-        if coros:
-            test_results = await asyncio.gather(*coros)
-            for test_result in test_results:
-                results.append(test_result)
-                self.print_test_result(test_result)
-                if self.__cli.failfast and not test_result.is_success:
-                    return
+                if key not in class_theory_groups:
+                    class_theory_groups[key] = []
+                class_theory_groups[key].append((theory, data))
+
+        for class_name, theory_data_list in class_theory_groups.items():
+            resolved_class = None
+            if class_name is not None and len(class_name) > 0:
+                resolved_class = test_module
+                for part in class_name.split("."):
+                    resolved_class = getattr(resolved_class, part)
+                lc = LifecycleManager.get_lifecycle(resolved_class)
+            else:
+                lc = Lifecycle.PER_TEST
+
+            if lc == Lifecycle.PER_RUN and resolved_class is not None:
+                # PER_RUN: batch dispatch with test_count
+                coros = [_execute_theory(td[0], td[1], test_module, module_report_name, filename, host_name, self.__test_package_name, len(theory_data_list)) for td in theory_data_list]
+                if coros:
+                    test_results = await asyncio.gather(*coros)
+                    for test_result in test_results:
+                        results.append(test_result)
+                        self.print_test_result(test_result)
+                        if self.__cli.failfast and not test_result.is_success:
+                            return
+                # NOTE: do NOT call LifecycleManager.clear() here — sequential
+                # theories will share the same instance. Clear in
+                # _run_sequential_theories instead.
+            else:
+                # PER_TEST / bare function: independent dispatch
+                coros = [_execute_theory(td[0], td[1], test_module, module_report_name, filename, host_name, self.__test_package_name) for td in theory_data_list]
+                if coros:
+                    test_results = await asyncio.gather(*coros)
+                    for test_result in test_results:
+                        results.append(test_result)
+                        self.print_test_result(test_result)
+                        if self.__cli.failfast and not test_result.is_success:
+                            return
 
     async def _run_sequential_facts(
         self,
@@ -877,14 +943,52 @@ class TestRunner:
     ) -> None:
         """Run @sequential facts sequentially."""
         facts = FactManager.instance().get(test_module.__name__)
+
+        # Group ALL facts (sequential + non-sequential) by class so that
+        # PER_RUN classes get proper lifecycle handling.
+        # Parallel facts already dispatched in _run_parallel_facts.
+        all_class_facts: dict[str | None, list[Any]] = {}
         for fact in facts:
-            if not _is_sequential(fact.target):
+            key = fact.metadata.class_name or ''
+            if key == '':
+                key = None
+            if key not in all_class_facts:
+                all_class_facts[key] = []
+            all_class_facts[key].append(fact)
+
+        for class_name, all_facts_list in all_class_facts.items():
+            sequential_facts = [f for f in all_facts_list if _is_sequential(f.target)]
+            if not sequential_facts:
                 continue
-            test_result = await _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
-            results.append(test_result)
-            self.print_test_result(test_result)
-            if self.__cli.failfast and not test_result.is_success:
-                return
+
+            resolved_class = None
+            if class_name is not None and len(class_name) > 0:
+                resolved_class = test_module
+                for part in class_name.split("."):
+                    resolved_class = getattr(resolved_class, part)
+                lc = LifecycleManager.get_lifecycle(resolved_class)
+            else:
+                lc = Lifecycle.PER_TEST
+
+            if lc == Lifecycle.PER_RUN and resolved_class is not None:
+                # PER_RUN: sequential facts run on same instance as parallel.
+                # release() has teardown_ready guard so teardown won't re-fire.
+                test_count = len(all_facts_list)
+                for fact in sequential_facts:
+                    test_result = await _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name, test_count)
+                    results.append(test_result)
+                    self.print_test_result(test_result)
+                    if self.__cli.failfast and not test_result.is_success:
+                        return
+                LifecycleManager.clear(resolved_class)
+            else:
+                # PER_TEST / bare function: independent dispatch
+                for fact in sequential_facts:
+                    test_result = await _execute_fact(fact, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                    results.append(test_result)
+                    self.print_test_result(test_result)
+                    if self.__cli.failfast and not test_result.is_success:
+                        return
 
     async def _run_sequential_theories(
         self,
@@ -897,15 +1001,47 @@ class TestRunner:
     ) -> None:
         """Run @sequential theory data-points sequentially."""
         theories = TheoryManager.instance().get(test_module.__name__)
+
+        # Group sequential theory data-points by class
+        class_theory_groups: dict[str | None, list[tuple[Any, ...]]] = {}
         for theory in theories:
             if not _is_sequential(theory.target):
                 continue
+            key = theory.metadata.class_name or ''
+            if key == '':
+                key = None
             for data in theory.datas:
-                test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
-                results.append(test_result)
-                self.print_test_result(test_result)
-                if self.__cli.failfast and not test_result.is_success:
-                    return
+                if key not in class_theory_groups:
+                    class_theory_groups[key] = []
+                class_theory_groups[key].append((theory, data))
+
+        for class_name, theory_data_list in class_theory_groups.items():
+            resolved_class = None
+            if class_name is not None and len(class_name) > 0:
+                resolved_class = test_module
+                for part in class_name.split("."):
+                    resolved_class = getattr(resolved_class, part)
+                lc = LifecycleManager.get_lifecycle(resolved_class)
+            else:
+                lc = Lifecycle.PER_TEST
+
+            if lc == Lifecycle.PER_RUN and resolved_class is not None:
+                # PER_RUN: dispatch with test_count
+                for theory, data in theory_data_list:
+                    test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name, len(theory_data_list))
+                    results.append(test_result)
+                    self.print_test_result(test_result)
+                    if self.__cli.failfast and not test_result.is_success:
+                        return
+                LifecycleManager.clear(resolved_class)
+            else:
+                # PER_TEST / bare function: independent dispatch
+                for theory, data in theory_data_list:
+                    test_result = await _execute_theory(theory, data, test_module, module_report_name, filename, host_name, self.__test_package_name)
+                    results.append(test_result)
+                    self.print_test_result(test_result)
+                    if self.__cli.failfast and not test_result.is_success:
+                        return
 
     async def _run_parallel_facts_parallel_only(
         self,

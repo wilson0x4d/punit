@@ -35,12 +35,14 @@ class _InstanceState:
     - ``_setup_lock`` — serialises setup across parallel tests.
     """
 
-    __slots__ = ('setup_fired', 'teardown_ready', '_setup_lock')
+    __slots__ = ('setup_fired', 'pending_test_count', 'teardown_ready', '_setup_lock', '_counter_lock')
 
-    def __init__(self) -> None:
+    def __init__(self, test_count: int = -1) -> None:
         self.setup_fired = False
+        self.pending_test_count = max(test_count, 0) if test_count is not None else 0
         self.teardown_ready = False
         self._setup_lock = threading.Lock()
+        self._counter_lock = threading.Lock()
 
 
 class LifecycleManager:
@@ -87,6 +89,7 @@ class LifecycleManager:
         target: Any,
         lifecycle: Lifecycle,
         factory: Callable[[], Any],
+        test_count: int = -1,
     ) -> tuple[Any, '_InstanceState | None']:
         """Return a class instance respecting the given lifecycle.
 
@@ -117,7 +120,7 @@ class LifecycleManager:
                         return instance, state
                     # First call — create instance and state.
                     instance = factory()
-                    state = _InstanceState()
+                    state = _InstanceState(test_count)
                     mgr.__run_instances[target] = (instance, state)
                     return instance, state
             # Fallback: no manager — use a state with no-op tracking.
@@ -129,15 +132,20 @@ class LifecycleManager:
     def release(state: '_InstanceState | None') -> bool:
         """Signal that one consumer has finished with a PER_RUN instance.
 
-        Returns ``True`` on the **first** call (when ``teardown_ready``
-        transitions ``False`` → ``True``), ``False`` on subsequent calls.
-        The caller fires teardown only when ``True`` is returned.
+        For *PER_RUN* tests with a set ``pending_test_count``, returns
+        ``True`` only on the **last** call (when the counter reaches
+        zero).  For *PER_TEST* or when ``pending_test_count`` is ``0``,
+        returns ``False`` (teardown is managed elsewhere).
         """
-        if state is not None:
-            if not state.teardown_ready:
-                state.teardown_ready = True
-                return True
+        if state is not None and state.pending_test_count > 0:
+            with state._counter_lock:
+                state.pending_test_count -= 1
+                if state.pending_test_count <= 0:
+                    state.teardown_ready = True
+                    return True
             return False
+        elif state is not None:
+            state.teardown_ready = True
         return False
 
     @staticmethod
