@@ -107,7 +107,7 @@ from .lifecycle_manager import LifecycleManager, _InstanceState
 
 
 async def _run_with_timeout(
-    fn: Callable,
+    fn: Callable[..., Any],
     timeout_seconds: float,
 ) -> TestResult:
     """Execute *fn* (which returns a TestResult) with a timeout.
@@ -659,7 +659,7 @@ def sequential(target: Callable[..., Any] | type) -> Callable[..., Any]:
     return target
 
 
-def parallel(target: Callable[..., Any]) -> Callable[..., Any]:
+def parallel(target: Callable[..., Any] | type) -> Callable[..., Any]:
     """Mark a test function, method, or class for **parallel** execution.
 
     When pUnit detects any ``@parallel``-decorated tests in a test package at

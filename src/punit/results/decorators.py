@@ -3,10 +3,10 @@
 
 import inspect
 from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType
-from typing import Callable
+from typing import Any, Callable
 
 
-def fails(*, reason: str) -> Callable:
+def fails(*, reason: str) -> Callable[..., Any]:
     """Mark a test as expected to fail for the given *reason*.
 
     This is a marker decorato, it does **not** wrap the target function.

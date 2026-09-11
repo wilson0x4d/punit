@@ -14,10 +14,10 @@ from ..metadata import CallableMetadata
 
 
 def theory(
-    target: Union[Callable, None] = None,
+    target: Union[Callable[..., Any], None] = None,
     *,
     timeout: float | None = None,
-) -> Union[Callable, Callable[[Callable], Callable]]:
+) -> Callable[..., Any]:
     """
     Decorates a function or method as a 'Theory-based' parameterized test.
 

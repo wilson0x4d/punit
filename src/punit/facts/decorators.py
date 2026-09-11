@@ -18,7 +18,7 @@ def fact(
     target: Union[Callable[..., Any], None] = None,
     *,
     timeout: float | None = None,
-) -> Union[Callable[..., Any], Callable[[Callable[..., Any]], Callable[..., Any]]]:
+) -> Callable[..., Any]:
     """
     Decorates a function or method as a 'Fact-based' test.
 

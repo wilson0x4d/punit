@@ -3,6 +3,7 @@
 
 from punit import strings
 import asyncio
+import inspect
 from punit import theory, inlinedata
 
 
@@ -46,6 +47,14 @@ class TheoryClass:
         """Instance Method BVT"""
         self.__valueTest = self.__valueTest + 1
         assert (a == '3' and b == '4' and c == '5') or (a == '4' and b == '5' and c == '6')
+
+    @theory
+    @inlinedata('5','6','7')
+    @inlinedata('6','7','8')
+    def meth1b(self, a, b, c) -> None:
+        """Instance Method introspection."""
+        unwrapped = inspect.unwrap(self.meth1)
+        assert getattr(unwrapped, '__punit_decorator', None) == '@theory'
 
     @theory
     @inlinedata('5','6','7')

@@ -23,12 +23,10 @@ Example
 """
 
 import inspect
-from typing import Any, Callable, Optional, TypeVar
-
-T = TypeVar('T', bound=Callable[..., object])
+from typing import Any, Callable, Optional
 
 
-def skip(when: Optional[bool | Callable[..., Any]] = None) -> Callable[[T], T]:
+def skip(when: Optional[bool | Callable[..., Any]] = None) -> Callable[..., Any]:
     """Decorator that marks a test for conditional or unconditional skip.
 
     Parameters
@@ -43,7 +41,7 @@ def skip(when: Optional[bool | Callable[..., Any]] = None) -> Callable[[T], T]:
 
     Returns
     -------
-    T
+    Callable[..., Any]
         The original target with ``__punit_skip_condition`` set.
 
     Example
@@ -70,7 +68,7 @@ def skip(when: Optional[bool | Callable[..., Any]] = None) -> Callable[[T], T]:
             pass
 
     """
-    def decorator(target: T) -> T:
+    def decorator(target: Callable[..., Any]) -> Callable[..., Any]:
         unwrapped = inspect.unwrap(target)
         if not inspect.isfunction(unwrapped):
             raise Exception('@skip can only be applied to functions and methods.')
