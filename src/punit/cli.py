@@ -70,8 +70,18 @@ class CommandLineInterface:
         """
         Parse command-line arguments using a finite-state machine.
 
-        :param argv: List of argument strings (typically ``sys.argv``).
-        :returns: ``self`` for method chaining.
+        Parameters
+        ----------
+
+        argv : list[str]
+            List of argument strings (typically ``sys.argv``).
+
+        Returns
+        -------
+
+        CommandLineInterface
+            ``self`` for method chaining.
+
         """
         aliasName: str | None = None
         extractFilter: bool = False

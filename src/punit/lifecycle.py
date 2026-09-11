@@ -55,7 +55,20 @@ from typing import Any
 
 
 class Lifecycle(enum.StrEnum):
-    """Controls class instance management for test classes."""
+    """
+    Controls class instance management for test classes.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit import Lifecycle
+
+        print(Lifecycle.PER_TEST)  # 'per_test'
+        print(Lifecycle.PER_RUN)   # 'per_run'
+
+    """
 
     PER_TEST = 'per_test'
     PER_RUN = 'per_run'
@@ -99,5 +112,20 @@ def lifecycle(lifecycle: Lifecycle = Lifecycle.PER_TEST):
 
 
 def get_lifecycle(target: Any) -> Lifecycle:
-    """Return the lifecycle for a class, defaulting to ``PER_TEST``."""
+    """
+    Return the lifecycle for a class, defaulting to ``PER_TEST``.
+
+    Parameters
+    ----------
+
+    target : Any
+        The class whose lifecycle is being queried.
+
+    Returns
+    -------
+
+    Lifecycle
+        The lifecycle setting, or ``PER_TEST`` if not explicitly set.
+
+    """
     return getattr(target, '__punit_lifecycle', Lifecycle.PER_TEST)

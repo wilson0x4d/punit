@@ -6,6 +6,22 @@ from typing import Any, Callable, Optional, Union
 
 
 class CallableMetadata:
+    """
+    Stores introspected metadata extracted from a callable.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.metadata import CallableMetadata
+
+        meta = CallableMetadata(my_function)
+        print(meta.module_name)
+        print(meta.class_name)
+        print(meta.name)
+
+    """
 
     __callable: Union[FunctionType, MethodType, BuiltinFunctionType, BuiltinMethodType, Callable[..., Any]]
     __class_name: str
@@ -21,6 +37,7 @@ class CallableMetadata:
 
     @property
     def class_name(self) -> Optional[str]:
+        """The fully-qualified class name if the callable is a method, otherwise None."""
         return self.__class_name
 
     @property
@@ -32,8 +49,10 @@ class CallableMetadata:
 
     @property
     def module_name(self) -> str:
+        """The module name where the callable is defined."""
         return self.__module_name
 
     @property
     def name(self) -> str:
+        """The callable's function or method name."""
         return self.__name

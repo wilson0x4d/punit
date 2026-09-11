@@ -12,6 +12,21 @@ from .fact_descriptor import FactDescriptor
 
 
 class FactManager:
+    """
+    Singleton that stores and manages FactDescriptor instances per module.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.facts import FactManager, FactDescriptor
+
+        manager = FactManager.instance()
+        manager.put(FactDescriptor(my_fact_function))
+        facts = manager.get('tests.my_module')
+
+    """
 
     __excluded_traits: list[TraitDescriptor]
     __instance: Optional['FactManager'] = None
@@ -25,12 +40,14 @@ class FactManager:
 
     @staticmethod
     def instance() -> FactManager:
+        """Return the singleton FactManager instance."""
         if FactManager.__instance is None:
             FactManager.__instance = FactManager()
         return FactManager.__instance
 
     @property
     def excluded_traits(self) -> list[TraitDescriptor]:
+        """Traits to exclude when filtering fact descriptors."""
         return [] if self.__excluded_traits is None else self.__excluded_traits
 
     @excluded_traits.setter
@@ -39,6 +56,7 @@ class FactManager:
 
     @property
     def included_traits(self) -> list[TraitDescriptor]:
+        """Traits to include when filtering fact descriptors."""
         return [] if self.__included_traits is None else self.__included_traits
 
     @included_traits.setter
@@ -46,6 +64,7 @@ class FactManager:
         self.__included_traits = value
 
     def __exclude_by_traits(self, fact_descriptor: FactDescriptor) -> bool:
+        """Return True if the fact should be excluded based on applied trait filters."""
         traits = TraitManager.instance().get(fact_descriptor.target)
         if self.excluded_traits is not None and len(self.excluded_traits) > 0:
             for trait in self.excluded_traits:
@@ -61,6 +80,7 @@ class FactManager:
         return False
 
     def get(self, module_name: str) -> list[FactDescriptor]:
+        """Return fact descriptors for *module_name*, creating an empty list if none exist."""
         fact_descriptors = self.__modules.get(module_name)
         if fact_descriptors is None:
             fact_descriptors = []
@@ -68,6 +88,7 @@ class FactManager:
         return fact_descriptors
 
     def put(self, fact_descriptor: FactDescriptor) -> None:
+        """Add a fact descriptor if it passes filter and trait checks."""
         filters = FilterManager.instance().filters
         matches_filter: bool = False
         for filt in filters:

@@ -95,12 +95,18 @@ class Mock:
 
     @classmethod
     def register_origin(cls, origin: type) -> None:
-        """Register *origin* so that Mock instances pass ``isinstance(_, origin)``.
+        """
+        Register *origin* so that Mock instances pass ``isinstance(_, origin)``.
 
         Dispatches to the origin's ``register`` method (for ABCs and
         runtime_checkable Protocols).
 
-        :param origin: The type this mock stands in for.
+        Parameters
+        ----------
+
+        origin : type
+            The type this mock stands in for.
+
         """
         if hasattr(origin, 'register') and callable(getattr(origin, 'register')):
             origin.register(cls)  # type: ignore[union-attr]
@@ -117,14 +123,23 @@ class Mock:
         """
         Create a new Mock instance.
 
-        :param origin: The type this mock stands in for (enables isinstance checks).
-        :param delegate: A real object whose methods are forwarded when not configured.
-        :param name: Debug identifier for the mock. Defaults to ``'Mock'``.
-        :param validate: If True, validate call arguments against inspectable signatures.
-        :param returns: A convenience kwarg that assigns a return value for the Mock, similar to calling `returns(...)`.
-        :param kwargs: Arbitrary keyword arguments set as initial attribute values.
-            Each key becomes an accessible attribute that returns the given value.
-            The special key ``side_effect`` is applied to this mock's calling behavior.
+        Parameters
+        ----------
+
+        origin : type | None
+            The type this mock stands in for (enables isinstance checks).
+        delegate : Any
+            A real object whose methods are forwarded when not configured.
+        name : str
+            Debug identifier for the mock. Defaults to ``'Mock'``.
+        returns : Any
+            A convenience kwarg that assigns a return value for the Mock, similar
+            to calling ``returns(...)``.
+        kwargs : Any
+            Arbitrary keyword arguments set as initial attribute values.  Each key
+            becomes an accessible attribute that returns the given value.  The
+            special key ``side_effect`` is applied to this mock's calling behavior.
+
         """
         # Allocate internal state in a dedicated container (keeps it insulated
         # from user-set kwargs which become accessible Mock attributes).
@@ -527,13 +542,33 @@ class Mock:
         self.__side_effect(value)
 
     def when(self, *args: Any, **kwargs: Any) -> Mock:
-        """Create a conditionally-dispatched subgraph mock keyed by matcher arguments.
+        """
+        Create a conditionally-dispatched subgraph mock keyed by matcher arguments.
 
         Identical matcher tuples always return the same subgraph (dedup via canonical name).
         The matched subgraph's ``__call__`` is forwarded matching call args for dispatch
         to further nested conditions or flat config.
 
-        :raises MockError: if no matcher arguments are provided (ambiguous condition).
+        Parameters
+        ----------
+
+        *args : Any
+            Matcher arguments for positional parameter matching.
+        **kwargs : Any
+            Matcher arguments for keyword parameter matching.
+
+        Returns
+        -------
+
+        Mock
+            A subgraph mock that will be invoked when arguments match.
+
+        Raises
+        ------
+
+        MockError
+            If no matcher arguments are provided (ambiguous condition).
+
         """
         if not args and not kwargs:
             raise MockError('when() requires at least one matcher argument')
@@ -551,7 +586,24 @@ class Mock:
         return subgraph
 
     def returns(self, value_or_callable: Any) -> Mock:
-        """Set fixed return value or callable. Callable receives the mocked instance as its sole argument. Clears side_effect."""
+        """
+        Set fixed return value or callable.
+
+        Callable receives the mocked instance as its sole argument. Clears side_effect.
+
+        Parameters
+        ----------
+
+        value_or_callable : Any
+            The fixed return value or a callable that receives the mocked instance.
+
+        Returns
+        -------
+
+        Mock
+            ``self`` for method chaining.
+
+        """
         self._u.configured['__return_value__'] = value_or_callable
         self._u.has_return_value = True
         self._u.has_side_effect = False
@@ -563,16 +615,23 @@ class Mock:
         preserve_stubs: bool = True,
         preserve_sideeffects: bool = True,
     ) -> None:
-        """Reset this mock's call tracking and optionally its configuration.
+        """
+        Reset this mock's call tracking and optionally its configuration.
 
-        :param preserve_stubs: If ``True`` (default), retain child stubs created by
+        Parameters
+        ----------
+
+        preserve_stubs : bool
+            If ``True`` (default), retain child stubs created by
             attribute access or from an *origin*.  If ``False``, recursively clear
             all children so that subsequent attribute access creates fresh mocks.
-        :param preserve_sideeffects: If ``True`` (default), keep fluent-configuration
+        preserve_sideeffects : bool
+            If ``True`` (default), keep fluent-configuration
             values such as ``__return_value__`` and ``__side_effect__`` intact.  If
             ``False``, wipe all ``__*-prefixed* configuration keys from
             ``_u.configured`` and reset the has_* flags, but leave structural
             stubs (origin-prepopulated members) untouched.
+
         """
         for m in self.__traverse():
             m._u.call_records = list[Call]()

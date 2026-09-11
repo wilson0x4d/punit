@@ -12,6 +12,21 @@ from .filter_descriptor import FilterDescriptor
 
 
 class FilterManager:
+    """
+    Singleton that manages filter descriptors for test discovery and execution.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.filters import FilterManager
+
+        manager = FilterManager.instance()
+        manager.add('test_*')
+        manager.remove('test_skip_*')
+
+    """
 
     __instance: Optional['FilterManager'] = None
     __filter_descriptors: list[FilterDescriptor]
@@ -21,10 +36,12 @@ class FilterManager:
 
     @property
     def filters(self) -> list[FilterDescriptor]:
+        """The list of active filter descriptors."""
         return self.__filter_descriptors
 
     @staticmethod
     def instance() -> FilterManager:
+        """Return the singleton FilterManager instance."""
         instance = FilterManager.__instance
         if instance is None:
             instance = FilterManager()
@@ -32,15 +49,22 @@ class FilterManager:
         return instance
 
     def add(self, pattern: str) -> None:
+        """Add a filter pattern to the manager."""
         self.__filter_descriptors.append(FilterDescriptor(pattern))
 
     def remove(self, pattern: str) -> None:
+        """Remove a filter pattern by its string representation."""
         for filt in [e for e in self.__filter_descriptors]:
             if filt.pattern == pattern:
                 self.__filter_descriptors.remove(filt)
                 break
 
     def load(self, filepath: str) -> None:
+        """Load filter patterns from a file, one per line.
+
+        Lines starting with ``#`` are treated as comments. Empty lines are
+        ignored.
+        """
         # treat as a filepath containing one or more filter patterns
         lines: list[str] = []
         if filepath == 'stdin':
@@ -66,6 +90,7 @@ class FilterManager:
             self.__filter_descriptors.append(FilterDescriptor(line))
 
     def print(self) -> None:
+        """Print all active filter patterns to stdout."""
         if len(FilterManager.instance().filters) > 0:
             print('Filters:')
             for filt in self.filters:

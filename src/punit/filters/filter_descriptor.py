@@ -10,6 +10,18 @@ class FilterDescriptor:
 
     Patterns use ``*`` for multi-character wildcards and ``?`` for single characters.
     Prefix with ``!`` to mark the filter as an exclusion rule.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.filters import FilterDescriptor
+
+        filt = FilterDescriptor('test_*.py')
+        print(filt.isExclude)  # False
+        print(filt.pattern)    # 'test_*.py'
+
     """
 
     __isExclude: bool
@@ -37,12 +49,15 @@ class FilterDescriptor:
 
     @property
     def isExclude(self) -> bool:
+        """True if this filter is an exclusion rule (pattern prefixed with ``!``)."""
         return self.__isExclude
 
     @property
     def pattern(self) -> str:
+        """The original glob-style pattern string."""
         return self.__pattern
 
     @property
     def re(self) -> re.Pattern[str]:
+        """The compiled regex derived from the glob-style pattern."""
         return self.__re

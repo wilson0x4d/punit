@@ -9,13 +9,24 @@ from ..metadata import CallableMetadata
 
 
 class TeardownDescriptor:
-    """Wraps a ``@teardown``-decorated cleanup function or method.
+    """
+    Wraps a ``@teardown``-decorated cleanup function or method.
 
     Teardowns execute immediately after each test runs, allowing you to release
     resources or reset state without cluttering test bodies with try/finally blocks.
 
     Like setups, teardowns come in module-scoped and class-scoped variants. The
     two scopes are independent of each other.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.teardowns import TeardownDescriptor
+
+        descriptor = TeardownDescriptor(my_teardown_function)
+        await descriptor.execute(module)
 
     Example
     -------

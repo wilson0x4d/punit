@@ -9,11 +9,15 @@ from ..test_result import TestResult
 
 
 class JUnitError:
+    """Holds error/failure details for a JUnit test case."""
+
     message: Optional[str] = None
     type: Optional[str] = None
 
 
 class JUnitTestCase:
+    """Represents a single test case in JUnit XML output."""
+
     # attrs
     classname: Optional[str] = None
     disabled: Optional[bool] = None
@@ -55,6 +59,8 @@ class JUnitTestCase:
 
 
 class JUnitTestSuite:
+    """Represents a test suite in JUnit XML output."""
+
     # attrs
     name: Optional[str] = None
     hostname: Optional[str] = None
@@ -114,8 +120,38 @@ class JUnitTestSuite:
 
 
 class JUnitReportGenerator:
+    """
+    Generate JUnit XML-format test report from a list of TestResult objects.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.reports import JUnitReportGenerator
+
+        generator = JUnitReportGenerator()
+        xml_output = generator.generate(test_results)
+
+    """
 
     def generate(self, test_results: list[TestResult]) -> str:
+        """
+        Generate a JUnit XML report string from the given test results.
+
+        Parameters
+        ----------
+
+        test_results : list[TestResult]
+            The test results to include in the report.
+
+        Returns
+        -------
+
+        str
+            A JUnit XML-formatted string containing the test results.
+
+        """
         # transform to intermediary model
         testSuites: dict[str, JUnitTestSuite] = {}
         testSuite: JUnitTestSuite | None

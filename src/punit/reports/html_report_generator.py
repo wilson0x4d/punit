@@ -6,8 +6,38 @@ from ..test_result import TestResult
 
 
 class HtmlReportGenerator:
+    """
+    Generate an HTML-format test report from a list of TestResult objects.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.reports import HtmlReportGenerator
+
+        generator = HtmlReportGenerator()
+        html_output = generator.generate(test_results)
+
+    """
 
     def generate(self, test_results: list[TestResult]) -> str:
+        """
+        Generate an HTML report string from the given test results.
+
+        Parameters
+        ----------
+
+        test_results : list[TestResult]
+            The test results to include in the report.
+
+        Returns
+        -------
+
+        str
+            An HTML-formatted string containing the test results.
+
+        """
         failureCount = 0
         totalCount = 0
         for test_result in test_results:

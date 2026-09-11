@@ -5,7 +5,8 @@ from typing import Any, Callable, Optional
 
 
 def trait(name: str, value: Optional[str] = None) -> Callable[..., Any]:
-    """Decorates a Fact or Theory as having a specific Trait.
+    """
+    Decorates a Fact or Theory as having a specific Trait.
 
     Once applied, the trait can be referenced during test execution to include or
     exclude the test. The ``--trait`` flag accepts several forms:
@@ -15,12 +16,19 @@ def trait(name: str, value: Optional[str] = None) -> Callable[..., Any]:
     * Multiple ``--trait`` flags match any (OR logic)
     * Exclusions take priority over inclusions
 
-    Args:
-        name: The categorical trait name (e.g., 'integration', 'category')
-        value: Optional trait value for more specific matching (e.g., 'redis')
+    Parameters
+    ----------
 
-    Returns:
-        A wrapper that attaches the trait to the target via TraitManager
+    name : str
+        The categorical trait name (e.g., 'integration', 'category').
+    value : str | None
+        Optional trait value for more specific matching (e.g., 'redis').
+
+    Returns
+    -------
+
+    Callable[..., Any]
+        A wrapper that attaches the trait to the target via TraitManager.
 
     Example
     -------

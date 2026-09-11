@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MIT
 
 """
-Provides mocking facilities via a m:class:`Mock` class and/or a m:class:`patch` class.
+Provides mocking facilities via a :class:`Mock` class and a :class:`patch` class.
 
 Usage::
 
@@ -12,7 +12,7 @@ Usage::
     mock = (
         Mock()
         .do_stuff.returns(42)
-        
+
     )
 
     # Constructor kwargs for fixture-style initialization

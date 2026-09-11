@@ -7,16 +7,23 @@ from typing import Any, Callable
 
 
 def teardown(target: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorates a function or method as a Teardown that runs after each test.
+    """
+    Decorates a function or method as a Teardown that runs after each test.
 
     A teardown may be synchronous or asynchronous, just like Facts and Theories.
     If a teardown raises an exception, the corresponding test is marked as failed.
 
-    Args:
-        target: The function or method to decorate as a Teardown
+    Parameters
+    ----------
 
-    Returns:
-        The original, undecorated target -- no wrapper is installed
+    target : Callable[..., Any]
+        The function or method to decorate as a Teardown.
+
+    Returns
+    -------
+
+    Callable[..., Any]
+        The original, undecorated target -- no wrapper is installed.
 
     Example
     -------
@@ -34,9 +41,12 @@ def teardown(target: Callable[..., Any]) -> Callable[..., Any]:
             def tearDownClass(self):
                 reset_temp_files()
 
-    Raises:
-        Exception: If target is not a function/method, or if it already carries
-            another pUnit decorator attribute.
+    Raises
+    ------
+
+    Exception
+        If *target* is not a function/method, or if it already carries
+        another pUnit decorator attribute.
 
     """
     from .teardown_descriptor import TeardownDescriptor

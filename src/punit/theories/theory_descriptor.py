@@ -6,6 +6,7 @@
 A **Theory** is a `test` that makes `assertions` for a variant arrangement of `state`. For a **Theory**, state is usually acquired from an external source, separated from the test definition. In **pUnit**, **Theories** are tests that have been decorated with ``@theory`` and at least one data decorator such as ``@inlinedata(...)``.
 """
 
+import asyncio
 import inspect
 from types import BuiltinFunctionType, BuiltinMethodType, FunctionType, MethodType, ModuleType
 from typing import Any, Callable, Coroutine, Union, cast
@@ -57,12 +58,49 @@ class TheoryDescriptor:
         module: ModuleType,
         data: tuple,
         class_instance: Any | None = None,
+        *,
+        timeout: float | None = None,
     ) -> Any | None:
         """Execute the theory, optionally using *class_instance*.
 
         When *class_instance* is ``None`` and the target is a class-method,
         a fresh instance is created.  Otherwise the provided instance is used
         directly.
+        """
+        if timeout is not None:
+            return await asyncio.wait_for(
+                asyncio.to_thread(self.__execute, module, data, class_instance),
+                timeout=timeout,
+            )
+        coro, class_instance = self.__resolve_and_call(module, data, class_instance)
+        if inspect.iscoroutine(coro):
+            await coro
+        return class_instance
+
+    def __execute(self, module: ModuleType, data: tuple, class_instance: Any | None = None) -> Any | None:
+        """Resolve class instance, call the target, and return the result.
+
+        If the target returns a coroutine it is awaited via ``asyncio.run``
+        so it completes before this thread returns.  Otherwise the result is
+        returned directly.
+
+        This method is called either directly on the event loop (when no
+        timeout is set) or inside a worker thread (when timeout is set).
+        """
+        coro, class_instance = self.__resolve_and_call(module, data, class_instance)
+        if inspect.iscoroutine(coro):
+            return asyncio.run(coro)
+        return class_instance
+
+    def __resolve_and_call(
+        self,
+        module: ModuleType,
+        data: tuple,
+        class_instance: Any | None = None,
+    ) -> tuple[Coroutine[Any, Any, Any] | None, Any | None]:
+        """Resolve class instance and call ``__target``.
+
+        Returns a tuple of ``(coroutine_or_none, class_instance)``.
         """
         coro: Coroutine | None = None
         if class_instance is not None or (
@@ -92,23 +130,28 @@ class TheoryDescriptor:
                     coro = self.__target(*args)
         else:
             coro = self.__target(*data)
-        if inspect.iscoroutine(coro):
-            await coro
-        return class_instance
+        return coro, class_instance
 
 
 def theory(target: Callable) -> Callable:
-    """Decorates a function or method as a 'Theory-based' parameterized test.
+    """
+    Decorates a function or method as a 'Theory-based' parameterized test.
 
     Theories validate behavior across a variant arrangement of state. A theory
     decorator alone is insufficient for execution -- you must also supply data
     using at least one data decorator (such as ``@inlinedata``).
 
-    Args:
-        target: The function or method to decorate as a Theory test
+    Parameters
+    ----------
 
-    Returns:
-        The original, undecorated target -- no wrapper is installed
+    target : Callable
+        The function or method to decorate as a Theory test.
+
+    Returns
+    -------
+
+    Callable
+        The original, undecorated target -- no wrapper is installed.
 
     Example
     -------
@@ -124,9 +167,12 @@ def theory(target: Callable) -> Callable:
         def myFunction(a, b, c):
             assert a + b == c
 
-    Raises:
-        Exception: If target is not a function/method, or if it already carries
-            another pUnit decorator attribute.
+    Raises
+    ------
+
+    Exception
+        If *target* is not a function/method, or if it already carries
+        another pUnit decorator attribute.
 
     """
     from .theory_manager import TheoryManager
@@ -145,18 +191,25 @@ def theory(target: Callable) -> Callable:
 
 
 def inlinedata(*args: Any) -> Callable[..., Any]:
-    """Decorates a 'Theory-based' test with inline data points for parameterization.
+    """
+    Decorates a 'Theory-based' test with inline data points for parameterization.
 
     Each call to ``@inlinedata`` provides one set of arguments that will be passed
     to the theory function as a tuple. Multiple ``@inlinedata`` decorators may be
     stacked; each one adds another data point.
 
-    Args:
-        *args: One or more positional values for this data point. These become
-            the tuple of arguments passed to the theory function.
+    Parameters
+    ----------
 
-    Returns:
-        A wrapper that attaches the data point to the target via TheoryManager
+    *args : Any
+        One or more positional values for this data point. These become
+        the tuple of arguments passed to the theory function.
+
+    Returns
+    -------
+
+    Callable[..., Any]
+        A wrapper that attaches the data point to the target via TheoryManager.
 
     Example
     -------

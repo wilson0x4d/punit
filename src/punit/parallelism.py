@@ -98,10 +98,58 @@ import time
 from types import ModuleType
 from typing import Any, Callable
 
-from .theories import TheoryDescriptor
+from .facts.fact_descriptor import FactDescriptor
+from .theories.theory_descriptor import TheoryDescriptor
+    
 from .test_result import TestResult
 from .lifecycle import Lifecycle
 from .lifecycle_manager import LifecycleManager, _InstanceState
+
+
+async def _run_with_timeout(
+    fn: Callable,
+    timeout_seconds: float,
+) -> TestResult:
+    """Execute *fn* (which returns a TestResult) with a timeout.
+
+    If *fn* is a coroutine function the coroutine is awaited directly via
+    ``asyncio.wait_for``.  Otherwise the function is dispatched to the default
+    thread pool via ``asyncio.to_thread`` so the event loop is not blocked and
+    the timeout can be enforced.
+
+    On timeout ``result.stop_time`` is set, ``result.is_success`` is ``False``,
+    and ``result.exception`` is a ``TimeoutError`` containing the actual elapsed
+    time.
+    """
+    start_time = time.time()
+    result = TestResult()
+    result.capture_output()
+    try:
+        if inspect.iscoroutinefunction(fn):
+            try:
+                result = await asyncio.wait_for(fn(), timeout=timeout_seconds)
+            except asyncio.TimeoutError:
+                elapsed = time.time() - start_time
+                result.is_success = False
+                result.exception = TimeoutError(f"Test timed out (ran for {elapsed:.1f}s)")
+                result.stop_time = time.time()
+                return result
+        else:
+            try:
+                result = await asyncio.wait_for(
+                    asyncio.to_thread(fn), timeout=timeout_seconds,
+                )
+            except asyncio.TimeoutError:
+                elapsed = time.time() - start_time
+                result.is_success = False
+                result.exception = TimeoutError(f"Test timed out (ran for {elapsed:.1f}s)")
+                result.stop_time = time.time()
+                return result
+    finally:
+        if result.stop_time is None:
+            result.stop_time = time.time()
+        result.release_output()
+    return result
 
 
 class _TaskInfo:
@@ -226,7 +274,7 @@ class ThreadPool:
 
 
 async def _execute_fact(
-    fact: Any,
+    fact: FactDescriptor,
     module: ModuleType,
     module_report_name: str,
     filename: str,
@@ -307,9 +355,15 @@ async def _execute_fact(
                     return result
 
         # -- test --
+        timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
         try:
-            await fact.execute(module, class_instance)
+            await fact.execute(module, class_instance, timeout=timeout_seconds)
             result.is_success = True
+        except asyncio.TimeoutError:
+            result.is_success = False
+            result.exception = TimeoutError(
+                f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+            )
         except Exception as ex:
             result.is_success = False
             result.exception = ex
@@ -317,9 +371,11 @@ async def _execute_fact(
         # -- fails inversion --
         fails_reason = getattr(unwrapped, '__punit_fails_reason', None)
         if fails_reason is not None:
-            result.is_success = not result.is_success
-            if not result.exception:
-                result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+            # Don't invert timeouts — they are real failures
+            if not isinstance(result.exception, TimeoutError):
+                result.is_success = not result.is_success
+                if not result.exception:
+                    result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
         result.stop_time = time.time()
         result.class_name = metadata.class_name
@@ -458,9 +514,15 @@ async def _execute_theory(
                     return result
 
         # -- test --
+        timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
         try:
-            await theory_descriptor.execute(module, data, class_instance)
+            await theory_descriptor.execute(module, data, class_instance, timeout=timeout_seconds)
             result.is_success = True
+        except asyncio.TimeoutError:
+            result.is_success = False
+            result.exception = TimeoutError(
+                f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+            )
         except Exception as ex:
             result.is_success = False
             result.exception = ex
@@ -468,9 +530,11 @@ async def _execute_theory(
         # -- fails inversion --
         fails_reason = getattr(unwrapped, '__punit_fails_reason', None)
         if fails_reason is not None:
-            result.is_success = not result.is_success
-            if not result.exception:
-                result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+            # Don't invert timeouts — they are real failures
+            if not isinstance(result.exception, TimeoutError):
+                result.is_success = not result.is_success
+                if not result.exception:
+                    result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
         result.stop_time = time.time()
         result.class_name = metadata.class_name

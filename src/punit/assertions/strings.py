@@ -27,12 +27,20 @@ def are_same(a: str | None, b: str | None) -> bool:
     """
     Check if two strings contain the same characters in the same order.
 
-    Args:
-        a: The first string
-        b: The second string
+    Parameters
+    ----------
 
-    Returns:
-        True if the strings contain the same characters in the same order, False otherwise
+    a : str | None
+        The first string.
+    b : str | None
+        The second string.
+
+    Returns
+    -------
+
+    bool
+        True if the strings contain the same characters in the same order, False otherwise.
+
     """
     if a is None and b is not None:
         return False
@@ -89,11 +97,18 @@ def is_none_or_empty(string: str | None) -> bool:
     """
     Check if a string is None or empty.
 
-    Args:
-        string: The string to check
+    Parameters
+    ----------
 
-    Returns:
-        True if the string is None or empty, False otherwise
+    string : str | None
+        The string to check.
+
+    Returns
+    -------
+
+    bool
+        True if the string is None or empty, False otherwise.
+
     """
     if string is None:
         return True
@@ -104,10 +119,16 @@ def is_none_or_whitespace(string: str | None) -> bool:
     """
     Check if a string is None or whitespace.
 
-    Args:
-        string: The string to check.
+    Parameters
+    ----------
 
-    Returns:
+    string : str | None
+        The string to check.
+
+    Returns
+    -------
+
+    bool
         True if the string is None or whitespace, False otherwise.
 
     Example
@@ -120,6 +141,7 @@ def is_none_or_whitespace(string: str | None) -> bool:
         assert not strings.is_none_or_whitespace('hello')
         assert strings.is_none_or_whitespace(' \t')
         assert strings.is_none_or_whitespace(None)
+
     """
     if string is None:
         return True

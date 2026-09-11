@@ -19,6 +19,13 @@ from .theories import TheoryManager
 
 
 async def async_main() -> None:
+    """
+    Orchestrate CLI parsing, module discovery, test execution, and report generation.
+
+    This is the main entry point invoked by :func:`main`.  It handles argument
+    parsing, test discovery, running the test suite via :class:`TestRunner`,
+    and producing output (summary, verbose output, or report files).
+    """
     start_time = time.time()
     cli = CommandLineInterface.parse()
     if cli.help:  # pragma: no cover
@@ -107,6 +114,10 @@ async def async_main() -> None:
 
 
 def main() -> None:
+    """Run :func:`async_main` via ``asyncio.run()``.
+
+    This is the CLI entry point invoked by ``python -m punit``.
+    """
     asyncio.run(async_main())
 
 

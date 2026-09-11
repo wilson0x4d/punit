@@ -73,9 +73,16 @@ class patch:
         """
         Create a new patch for the given dotted path.
 
-        :param target_path: Dotted attribute path to replace (e.g. ``'myapp.database.connect'``).
-        :param origin: Optional type for Mock virtual-subclass registration.
-        :param kwargs: Additional keyword arguments forwarded to the Mock constructor.
+        Parameters
+        ----------
+
+        target_path : str
+            Dotted attribute path to replace (e.g. ``'myapp.database.connect'``).
+        origin : type | None
+            Optional type for Mock virtual-subclass registration.
+        kwargs : Any
+            Additional keyword arguments forwarded to the Mock constructor.
+
         """
         self._module, self._attr_name = self.__resolve_path(target_path)
         self._original = getattr(self._module, self._attr_name)
@@ -142,9 +149,24 @@ class patch:
         ``'tests.mocks.fake.TestFake.apply'``, the parent is the ``TestFake`` class and
         ``attr_name`` is ``'apply'``.
 
-        :param target_path: Dotted attribute path.
-        :returns: A tuple of the resolved parent object and the last segment as *attr_name*.
-        :raises AttributeError: If the module or attribute does not exist.
+        Parameters
+        ----------
+
+        target_path : str
+            Dotted attribute path.
+
+        Returns
+        -------
+
+        tuple[Any, str]
+            A tuple of the resolved parent object and the last segment as *attr_name*.
+
+        Raises
+        ------
+
+        AttributeError
+            If the module or attribute does not exist.
+
         """
         parts = target_path.split('.')
         module_path_parts: list[str] = []

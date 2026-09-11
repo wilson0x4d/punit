@@ -9,8 +9,38 @@ from ..test_result import TestResult
 
 
 class JsonReportGenerator:
+    """
+    Generate a JSON-format test report from a list of TestResult objects.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.reports import JsonReportGenerator
+
+        generator = JsonReportGenerator()
+        json_output = generator.generate(test_results)
+
+    """
 
     def generate(self, test_results: list[TestResult]) -> str:
+        """
+        Generate a JSON report string from the given test results.
+
+        Parameters
+        ----------
+
+        test_results : list[TestResult]
+            The test results to include in the report.
+
+        Returns
+        -------
+
+        str
+            A JSON-formatted string containing the test results.
+
+        """
         test_results.sort(key=lambda e: e.module_name)  # type: ignore[arg-type, return-value]
         results = list[dict[str, Any]]()
         for test_result in test_results:

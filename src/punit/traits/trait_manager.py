@@ -10,6 +10,21 @@ from .trait_descriptor import TraitDescriptor
 
 
 class TraitManager:
+    """
+    Singleton that maps callables to their associated TraitDescriptors.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.traits import TraitManager, TraitDescriptor
+
+        manager = TraitManager.instance()
+        manager.put(my_function, TraitDescriptor('category', 'api'))
+        traits = manager.get(my_function)
+
+    """
 
     __instance: Optional['TraitManager'] = None
     __traits: dict[Callable[..., Any] | FunctionType | MethodType, dict[str, TraitDescriptor]]
@@ -21,11 +36,13 @@ class TraitManager:
 
     @staticmethod
     def instance() -> TraitManager:
+        """Return the singleton TraitManager instance."""
         if TraitManager.__instance is None:
             TraitManager.__instance = TraitManager()
         return TraitManager.__instance
 
     def get(self, callable: Callable[..., Any] | FunctionType | MethodType) -> list[TraitDescriptor]:
+        """Return all traits associated with *callable*."""
         d = self.__traits.get(callable)
         if d is None:
             d = dict[str, TraitDescriptor]()
@@ -33,6 +50,7 @@ class TraitManager:
         return [e for e in d.values()]
 
     def put(self, callable: Callable[..., Any], trait: TraitDescriptor) -> None:
+        """Associate *trait* with *callable*, keyed by the trait's name."""
         d = self.__traits.get(callable)
         if d is None:
             d = dict[str, TraitDescriptor]()

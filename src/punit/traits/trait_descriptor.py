@@ -5,7 +5,8 @@ from typing import Optional
 
 
 class TraitDescriptor:
-    """A categorical name/value pair associated with a test.
+    """
+    A categorical name/value pair associated with a test.
 
     Traits can be used to group tests together for inclusion or exclusion during
     execution, allowing more flexible testing strategies. Common use-cases include:
@@ -13,6 +14,17 @@ class TraitDescriptor:
     * Grouping by area of functionality (e.g., UI, business logic)
     * Grouping by dependencies (e.g., integration, mock)
     * Flagging tests as slow or flaky to control execution order
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.traits import TraitDescriptor
+
+        t = TraitDescriptor('category', 'api')
+        print(t.name)   # 'category'
+        print(t.value)  # 'api'
 
     Example
     -------
@@ -37,8 +49,10 @@ class TraitDescriptor:
 
     @property
     def name(self) -> str:
+        """The categorical trait name."""
         return self.__name
 
     @property
     def value(self) -> str | None:
+        """The optional trait value for more specific matching."""
         return self.__value

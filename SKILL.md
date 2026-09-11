@@ -20,12 +20,13 @@ Follow these rules when generating test code with pUnit:
 
 1. **`assert` must have a message**: Every `assert` must include a message argument after the condition — `assert False, 'reason'`, not just `assert False`. The message must be a string literal (not a bare expression) and **include both the expected and actual values** that caused the assertion to fail — e.g. `assert actual == expected, f"(expected={expected}, actual={actual})"`.
 2. **Use `@fact` for single-state tests, `@theory` + `@inlinedata` for multi-state**.
-3. **Never use base classes** — all tests use decorators.
-4. **For exception assertions**, prefer `raises[ExcType](fn)` over using `contextlib` or bare `try/except` blocks.
-5. **For numeric approximate equality**, prefer `approx()` over manual tolerance math.
-6. **For mock verification**, prefer `mock.called_with(matchers)` over manual call tracking.
-7. **When `module_setup` / `module_teardown` names exist in test code**, recognize them as module-scoped `@setup`/`@teardown` targets by convention.
-8. **`@lifecycle(Lifecycle.PER_RUN)`** means a single shared class instance across all test methods — `@setup` fires once before the first test, `@teardown` once after the last.
+3. **All test-executing decorators support async**: `@fact`, `@theory`, `@setup`, and `@teardown` accept both synchronous and asynchronous functions/methods.
+4. **Never use base classes** — all tests use decorators.
+5. **For exception assertions**, prefer `raises[ExcType](fn)` over using `contextlib` or bare `try/except` blocks.
+6. **For numeric approximate equality**, prefer `approx()` over manual tolerance math.
+7. **For mock verification**, prefer `mock.called_with(matchers)` over manual call tracking.
+8. **When `module_setup` / `module_teardown` names exist in test code**, recognize them as module-scoped `@setup`/`@teardown` targets by convention.
+9. **`@lifecycle(Lifecycle.PER_RUN)`** means a single shared class instance across all test methods — `@setup` fires once before the first test, `@teardown` once after the last.
 
 ---
 
@@ -86,7 +87,14 @@ class MyTests:
     @fact
     @classmethod
     def class_test(cls) -> None: pass
+
+    @fact(timeout=5)
+    async def timed_test() -> None:
+        await asyncio.sleep(0.1)
+        assert True
 ```
+
+`timeout` accepts a float in seconds. For synchronous tests it spawns a thread that may not terminate until pUnit exits — prefer async/await when using `timeout`.
 
 ### Theories
 
@@ -102,8 +110,21 @@ from punit import theory, inlinedata
 def verify_square(x: int, expected: int) -> None:
     assert x * x == expected
 
-# Theory data accessible in results via TestResult.properties['data']
 ```
+
+Theory data is accessible in results via `TestResult.properties['data']`.
+
+`@theory` also accepts a `timeout` parameter:
+
+```python
+@theory(timeout=5)
+@inlinedata(0, 0)
+@inlinedata(1, 1)
+def verify_square(x: int, expected: int) -> None:
+    assert x * x == expected
+```
+
+`timeout` accepts a float in seconds. For synchronous tests it spawns a thread that may not terminate until pUnit exits — prefer async/await when using `timeout`.
 
 ### Setup & Teardown
 
@@ -113,17 +134,17 @@ Two independent scopes based on whether the decorated function is a bare functio
 from punit import fact, setup, teardown
 
 @setup
-def module_setup() -> None:
-    open_temp_file()
+async def module_setup() -> None:
+    await connect_db()
 
 @teardown
-def module_teardown() -> None:
-    close_temp_file()
+async def module_teardown() -> None:
+    await db_pool.close()
 
 class MyTests:
     @setup
-    def class_setup(self) -> None:
-        self.state = 'ready'
+    async def class_setup(self) -> None:
+        self.state = await load_config()
 
     @teardown
     def class_teardown(self) -> None:

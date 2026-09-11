@@ -11,6 +11,27 @@ from ..traits import TraitDescriptor
 
 
 class ModuleDiscovery:
+    """
+    Discovers Python test modules using glob patterns and working directory traversal.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.discovery import ModuleDiscovery
+        from punit.cli import CommandLineInterface
+
+        cli = CommandLineInterface.parse()
+        discovery = ModuleDiscovery(
+            workdir=cli.workdir,
+            includePatterns=cli.includePatterns,
+            excludePatterns=cli.excludePatterns,
+            cli=cli,
+        )
+        filenames = discovery.discover()
+
+    """
 
     __cli: CommandLineInterface
     __excludePatterns: list[re.Pattern[str]]
@@ -42,6 +63,7 @@ class ModuleDiscovery:
         self.__workdir = workdir
 
     def __convertPatternToRegex(self, pattern: str) -> str:
+        """Convert a glob-style pattern to a regex string."""
         result = re.escape(pattern)\
             .replace('\\\\', '/')\
             .replace('\\*', r'.*')\
@@ -49,18 +71,21 @@ class ModuleDiscovery:
         return result
 
     def __testAnyInclude(self, input: str) -> bool:
+        """Return True if *input* matches any include pattern."""
         for pat in self.__includePatterns:
             if len(pat.findall(input)) > 0:
                 return True
         return False
 
     def __testAnyExclude(self, input: str) -> bool:
+        """Return True if *input* matches any exclude pattern."""
         for pat in self.__excludePatterns:
             if len(pat.findall(input)) > 0:
                 return True
         return False
 
     def __walkDirectory(self, path: str) -> list[str]:
+        """Walk *path* recursively, returning files that match include/exclude patterns."""
         filenames = []
         if os.path.isdir(path):
             for dname, dlist, flist in os.walk(path, topdown=True):
@@ -95,9 +120,11 @@ class ModuleDiscovery:
 
     @property
     def filenames(self) -> list[str]:
+        """The list of discovered filenames."""
         return self.__filenames
 
     def discover(self) -> list[str]:
+        """Discover test modules and return the list of matching filenames."""
         FactManager.instance().excluded_traits = self.__excluded_traits
         FactManager.instance().included_traits = self.__included_traits
         TheoryManager.instance().excluded_traits = self.__excluded_traits

@@ -278,6 +278,7 @@ class TestRunner:
             result.capture_output()
             try:
                 skip_condition = _get_skip_condition(fact.target)
+                unwrapped = inspect.unwrap(fact.target)
                 skipped: bool = False
                 if skip_condition is not None:
                     if callable(skip_condition):
@@ -290,9 +291,15 @@ class TestRunner:
                     result.is_skip = True
                     result.is_success = True
                 elif setup_ok:
+                    timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
                     try:
-                        await fact.execute(test_module, class_instance)
+                        await fact.execute(test_module, class_instance, timeout=timeout_seconds)
                         result.is_success = True
+                    except asyncio.TimeoutError:
+                        result.is_success = False
+                        result.exception = TimeoutError(
+                            f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+                        )
                     except Exception as ex:
                         result.is_success = False
                         result.exception = ex
@@ -301,10 +308,12 @@ class TestRunner:
 
                 fails_reason = _get_fails_reason(fact.target)
                 if fails_reason is not None:
-                    result.expected_failure_reason = fails_reason
-                    result.is_success = not result.is_success
-                    if not result.exception:
-                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+                    # Don't invert timeouts — they are real failures
+                    if not isinstance(result.exception, TimeoutError):
+                        result.expected_failure_reason = fails_reason
+                        result.is_success = not result.is_success
+                        if not result.exception:
+                            result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
                 result.stop_time = time.time()
                 result.class_name = fact.metadata.class_name
@@ -354,6 +363,7 @@ class TestRunner:
             try:
                 class_instance: Any = None
                 skip_condition = _get_skip_condition(fact.target)
+                unwrapped = inspect.unwrap(fact.target)
                 skipped: bool = False
                 if skip_condition is not None:
                     if callable(skip_condition):
@@ -370,9 +380,15 @@ class TestRunner:
                         cls, Lifecycle.PER_TEST, factory,
                     )
                     if await self.__setup(test_module, module_name, class_name, class_instance):
+                        timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
                         try:
-                            await fact.execute(test_module, class_instance)
+                            await fact.execute(test_module, class_instance, timeout=timeout_seconds)
                             result.is_success = True
+                        except asyncio.TimeoutError:
+                            result.is_success = False
+                            result.exception = TimeoutError(
+                                f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+                            )
                         except Exception as ex:
                             result.is_success = False
                             result.exception = ex
@@ -380,9 +396,15 @@ class TestRunner:
                         result.is_success = False
                 else:
                     if await self.__setup(test_module, module_name, None, class_instance):
+                        timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
                         try:
-                            await fact.execute(test_module, class_instance)
+                            await fact.execute(test_module, class_instance, timeout=timeout_seconds)
                             result.is_success = True
+                        except asyncio.TimeoutError:
+                            result.is_success = False
+                            result.exception = TimeoutError(
+                                f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+                            )
                         except Exception as ex:
                             result.is_success = False
                             result.exception = ex
@@ -391,10 +413,12 @@ class TestRunner:
 
                 fails_reason = _get_fails_reason(fact.target)
                 if fails_reason is not None:
-                    result.expected_failure_reason = fails_reason
-                    result.is_success = not result.is_success
-                    if not result.exception:
-                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+                    # Don't invert timeouts — they are real failures
+                    if not isinstance(result.exception, TimeoutError):
+                        result.expected_failure_reason = fails_reason
+                        result.is_success = not result.is_success
+                        if not result.exception:
+                            result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
                 result.stop_time = time.time()
                 result.class_name = fact.metadata.class_name
@@ -481,6 +505,7 @@ class TestRunner:
             result.capture_output()
             try:
                 skip_condition = _get_skip_condition(theory.target)
+                unwrapped = inspect.unwrap(theory.target)
                 skipped: bool = False
                 if skip_condition is not None:
                     if callable(skip_condition):
@@ -493,9 +518,15 @@ class TestRunner:
                     result.is_skip = True
                     result.is_success = True
                 elif setup_ok:
+                    timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
                     try:
-                        await theory.execute(test_module, data, class_instance)
+                        await theory.execute(test_module, data, class_instance, timeout=timeout_seconds)
                         result.is_success = True
+                    except asyncio.TimeoutError:
+                        result.is_success = False
+                        result.exception = TimeoutError(
+                            f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+                        )
                     except Exception as ex:
                         result.is_success = False
                         result.exception = ex
@@ -504,11 +535,13 @@ class TestRunner:
 
                 fails_reason = _get_fails_reason(theory.target)
                 if fails_reason is not None:
-                    result.is_expected_failure = True
-                    result.expected_failure_reason = fails_reason
-                    result.is_success = not result.is_success
-                    if not result.exception:
-                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+                    # Don't invert timeouts — they are real failures
+                    if not isinstance(result.exception, TimeoutError):
+                        result.is_expected_failure = True
+                        result.expected_failure_reason = fails_reason
+                        result.is_success = not result.is_success
+                        if not result.exception:
+                            result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
                 result.stop_time = time.time()
                 result.class_name = theory.metadata.class_name
@@ -559,6 +592,7 @@ class TestRunner:
             try:
                 class_instance: Any = None
                 skip_condition = _get_skip_condition(theory.target)
+                unwrapped = inspect.unwrap(theory.target)
                 skipped: bool = False
                 if skip_condition is not None:
                     if callable(skip_condition):
@@ -575,9 +609,15 @@ class TestRunner:
                         cls, Lifecycle.PER_TEST, factory,
                     )
                     if await self.__setup(test_module, module_name, class_name, class_instance):
+                        timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
                         try:
-                            await theory.execute(test_module, data, class_instance)
+                            await theory.execute(test_module, data, class_instance, timeout=timeout_seconds)
                             result.is_success = True
+                        except asyncio.TimeoutError:
+                            result.is_success = False
+                            result.exception = TimeoutError(
+                                f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+                            )
                         except Exception as ex:
                             result.is_success = False
                             result.exception = ex
@@ -585,9 +625,15 @@ class TestRunner:
                         result.is_success = False
                 else:
                     if await self.__setup(test_module, module_name, None, class_instance):
+                        timeout_seconds = getattr(unwrapped, '__punit_timeout', None)
                         try:
-                            await theory.execute(test_module, data, class_instance)
+                            await theory.execute(test_module, data, class_instance, timeout=timeout_seconds)
                             result.is_success = True
+                        except asyncio.TimeoutError:
+                            result.is_success = False
+                            result.exception = TimeoutError(
+                                f"Test timed out (ran for {time.time() - (result.start_time or 0):.1f}s)",
+                            )
                         except Exception as ex:
                             result.is_success = False
                             result.exception = ex
@@ -596,11 +642,13 @@ class TestRunner:
 
                 fails_reason = _get_fails_reason(theory.target)
                 if fails_reason is not None:
-                    result.is_expected_failure = True
-                    result.expected_failure_reason = fails_reason
-                    result.is_success = not result.is_success
-                    if not result.exception:
-                        result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
+                    # Don't invert timeouts — they are real failures
+                    if not isinstance(result.exception, TimeoutError):
+                        result.is_expected_failure = True
+                        result.expected_failure_reason = fails_reason
+                        result.is_success = not result.is_success
+                        if not result.exception:
+                            result.exception = RuntimeError(f'Unexpected pass ({fails_reason})')
 
                 result.stop_time = time.time()
                 result.class_name = theory.metadata.class_name

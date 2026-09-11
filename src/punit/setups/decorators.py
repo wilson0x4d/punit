@@ -7,17 +7,24 @@ from typing import Any, Callable
 
 
 def setup(target: Callable[..., Any]) -> Callable[..., Any]:
-    """Decorates a function or method as a Setup that runs before each test.
+    """
+    Decorates a function or method as a Setup that runs before each test.
 
     A setup may be synchronous or asynchronous. If it raises an exception, the
     corresponding test is marked as failed but no further processing occurs for
     that test.
 
-    Args:
-        target: The function or method to decorate as a Setup
+    Parameters
+    ----------
 
-    Returns:
-        The original, undecorated target -- no wrapper is installed
+    target : Callable[..., Any]
+        The function or method to decorate as a Setup.
+
+    Returns
+    -------
+
+    Callable[..., Any]
+        The original, undecorated target -- no wrapper is installed.
 
     Example
     -------
@@ -42,9 +49,12 @@ def setup(target: Callable[..., Any]) -> Callable[..., Any]:
         def test_query():
             assert query(_connection) is not None
 
-    Raises:
-        Exception: If target is not a function/method, or if it already carries
-            another pUnit decorator attribute.
+    Raises
+    ------
+
+    Exception
+        If *target* is not a function/method, or if it already carries
+        another pUnit decorator attribute.
 
     """
     from .setup_descriptor import SetupDescriptor

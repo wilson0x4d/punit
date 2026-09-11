@@ -9,13 +9,24 @@ from ..metadata import CallableMetadata
 
 
 class SetupDescriptor:
-    """Wraps a ``@setup``-decorated initialization function or method.
+    """
+    Wraps a ``@setup``-decorated initialization function or method.
 
     Setups execute immediately before each test runs, allowing you to prepare
     resources or reset state without cluttering test bodies with try/finally blocks.
 
     Setups come in two scopes: module-scoped (bare function) and class-scoped
     (method inside a test class). The two scopes are independent of each other.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.setups import SetupDescriptor
+
+        descriptor = SetupDescriptor(my_setup_function)
+        await descriptor.execute(module)
 
     Example
     -------

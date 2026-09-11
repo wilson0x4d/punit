@@ -12,6 +12,21 @@ from .theory_descriptor import TheoryDescriptor
 
 
 class TheoryManager:
+    """
+    Singleton that stores and manages TheoryDescriptor instances per module.
+
+    Usage
+    -----
+
+    .. code-block:: python
+
+        from punit.theories import TheoryManager, TheoryDescriptor
+
+        manager = TheoryManager.instance()
+        manager.put(TheoryDescriptor(my_theory_function))
+        theories = manager.get('tests.my_module')
+
+    """
 
     __excluded_traits: list[TraitDescriptor]
     __included_traits: list[TraitDescriptor]
@@ -27,12 +42,14 @@ class TheoryManager:
 
     @staticmethod
     def instance() -> TheoryManager:
+        """Return the singleton TheoryManager instance."""
         if TheoryManager.__instance is None:
             TheoryManager.__instance = TheoryManager()
         return TheoryManager.__instance
 
     @property
     def excluded_traits(self) -> list[TraitDescriptor]:
+        """Traits to exclude when filtering theory descriptors."""
         return [] if self.__excluded_traits is None else self.__excluded_traits
 
     @excluded_traits.setter
@@ -41,6 +58,7 @@ class TheoryManager:
 
     @property
     def included_traits(self) -> list[TraitDescriptor]:
+        """Traits to include when filtering theory descriptors."""
         return [] if self.__included_traits is None else self.__included_traits
 
     @included_traits.setter
@@ -48,6 +66,7 @@ class TheoryManager:
         self.__included_traits = value
 
     def __exclude_by_traits(self, theory_descriptor: TheoryDescriptor) -> bool:
+        """Return True if the theory should be excluded based on applied trait filters."""
         traits = TraitManager.instance().get(theory_descriptor.target)
         if self.excluded_traits is not None and len(self.__excluded_traits) > 0:
             for trait in self.excluded_traits:
@@ -63,6 +82,7 @@ class TheoryManager:
         return False
 
     def get(self, module_name: str) -> list[TheoryDescriptor]:
+        """Return theory descriptors for *module_name*, creating an empty list if none exist."""
         l = self.__modules.get(module_name)
         if l is None:
             l = []
@@ -70,6 +90,7 @@ class TheoryManager:
         return l
 
     def put(self, theory_descriptor: TheoryDescriptor) -> None:
+        """Add a theory descriptor if it passes filter and trait checks."""
         filters = FilterManager.instance().filters
         matches_filter: bool = False
         for filt in filters:
@@ -87,9 +108,7 @@ class TheoryManager:
                 l.append(theory_descriptor)
 
     def withData(self, target: Callable[..., Any], data: tuple[Any, ...]) -> None:
-        # TODO: data acquisition should be deferred until put() since that is where `Filter` logic
-        # is applied, but for current implementation `@inlinedata()` is not affected. more advanced
-        # data decorators may benefit from deferral (for example, data coming from an API or DB.)
+        """Associate a data point with *target* for later resolution in ``put()``."""
         d = self.__datas.get(target)
         if d is None:
             d = []
