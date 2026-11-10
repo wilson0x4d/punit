@@ -25,7 +25,7 @@ if [ ! -f "$SKILL_SRC" ]; then
 fi
 echo "SKILL_SRC: $SKILL_SRC"
 
-for DEST_DIR in "$HOME/.opencode/skills/$WORKSPACE_NAME" "$HOME/.claude/skills/$WORKSPACE_NAME"; do
+for DEST_DIR in "$HOME/.agents/skills/$WORKSPACE_NAME" "$HOME/.opencode/skills/$WORKSPACE_NAME" "$HOME/.claude/skills/$WORKSPACE_NAME"; do
     if [ ! -d "$(dirname $DEST_DIR)" ]; then
         echo "⏭ SKIPPED (directory not found): $(dirname $DEST_DIR)"
         continue

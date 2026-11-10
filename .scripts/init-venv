@@ -12,14 +12,6 @@
 ##
 set -eo pipefail
 
-if [[ -z "$(which uv)" ]]; then
-    if ! [[ ":PATH:" == *"$HOME/.local/bin"* ]]; then
-        export PATH="$HOME/.local/bin:$PATH"
-    fi
-    curl -LsSf https://astral.sh/uv/install.sh | sh
-    uv --version
-fi
-
 # pin python version
 if [[ ! -z "$PYTHON_VERSION" ]]; then
     uv python pin "$PYTHON_VERSION"
@@ -45,7 +37,7 @@ echo -n -e "\033]0;$WORKSPACE_NAME\007"
 source .venv/bin/activate
 
 # tools and deps
-uv sync --no-install-project
+uv sync --all-extras
 export PYTHONPATH="$SRC_DIR"
 export MYPYPATH="$SRC_DIR"
 if ! [[ ":PATH:" == *":$SCRIPT_DIR:"* ]]; then

@@ -19,3 +19,4 @@ CHANGELOG.*
 tmp/
 uv.lock
 .python-version
+.ignore
